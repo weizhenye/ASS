@@ -2,7 +2,7 @@ ASS.js is a parser for ASS file and displays subtitle on HTML5 video.
 
 [DEMO](https://weizhenye.github.com/ASS/)
 
-[TODO list](https://github.com/weizhenye/ASS#TODO)
+[TODO list](https://github.com/weizhenye/ASS#todo)
 
 # Usage
 	<video id="video" src="example.mp4"></video>
