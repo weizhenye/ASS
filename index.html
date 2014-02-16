@@ -1,79 +1,126 @@
-<!DOCTYPE html>
+<!-- ASS♂We♂Can -->
+<!DOCTYPE HTML>
 <html>
+<head>
+	<meta charset="UTF-8">
+	<title>ASS.js - A Parser For ASS File</title>
+	<meta name="keywords" content="ASS, subtitle, JavaScript">
+	<link rel="stylesheet" href="control.css">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Ass : A parser for ASS file" />
+<header>ASS.js - A Parser For ASS File</header>
+<a id="github" href="https://github.com/weizhenye/ASS" class="icon-github"><span> View on GitHub</span></a>
+<div id="demo">
+	<div id="error"><span class="icon-notification"></span> File format error</div>
+	<div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
+</div>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+<script src="control.js"></script>
+<script src="ASS.js"></script>
+<script>
+var	$ = function(id){ return document.getElementById(id); }
+var	$c = function(tag){ return document.createElement(tag); }
+var	dropVideo = $('drop-video'),
+	dropASS = $('drop-ASS'),
+	ass = new ASS(),
+	_Timer;
+dropVideo.ondragleave = dropASS.ondragleave = function(){this.style.borderColor = '#CCC';}
+dropVideo.ondragover = dropASS.ondragover = function(e){
+	e.stopPropagation();
+	e.preventDefault();
+	e.dataTransfer.dropEffect = 'copy';
+	this.style.borderColor = '#888';
+}
+dropVideo.ondrop = function(e){
+	e.stopPropagation();
+	e.preventDefault();
+	this.style.borderColor = '#CCC';
 
-    <title>Ass</title>
-  </head>
+	var	file = e.dataTransfer.files[0],
+		video = $c('video'),
+		src;
+	if(window.URL && window.URL.createObjectURL)
+		src = window.URL.createObjectURL(file);
+	else if(window.webkitURL && window.webkitURL.createObjectURL)
+		src = window.webkitURL.createObjectURL(file);
+	else if(window.createObjectURL)
+		src = window.createObjectURL(file);
+	else if(window.createBlobURL)
+		src = window.createBlobURL(file);
+	video.src = src;
+	video.id = 'video';
+	video.style.width = '640px';
+	video.style.height = '360px';
+	video.style.backgroundColor = '#000';
+	video.style.display = 'inline-block';
+	video.style.position = 'absolute';
+	$('demo').insertBefore(video, dropVideo);
+	dropVideo.style.display = 'none';
+	video.onerror = function(e){
+		console.log(e);
+		ass.video = undefined;
+		$('demo').removeChild($('ASS-container'));
+		dropVideo.style.display = 'inline-block';
+		fadeOut($('error'));
+	}
+	ass.init('', video);
+	control(ass);
+}
+dropASS.ondrop = function(e){
+	e.stopPropagation();
+	e.preventDefault();
+	this.style.borderColor = '#CCC';
 
-  <body>
+	var	file = e.dataTransfer.files[0];
+		reader = new FileReader(file);
+	if(!/\.ass$/i.test(file.name)){
+		fadeOut($('error'));
+		return;
+	}
+	reader.readAsText(file);
+	reader.onload = function(ev){
+		var	data = ev.target.result;
+		ass.init(ev.target.result, undefined);
+		if(!/^\[Script Info\]/i.test(data)){
+			ass.ASS = {ScriptInfo: {}, V4Styles: {Format: {}, Style: {}}, Events: {Format: {}, Dialogue: []}};
+			fadeOut($('error'));
+		}else{
+			var	info = $c('div');
+			info.id = 'info';
+			$('demo').insertBefore(info, dropASS);
+			dropASS.style.display = 'none';
+			var	dl = $c('dl'),
+				dt = $c('dt');
+			dt.innerHTML = 'File Infomation';
+			dl.appendChild(dt);
+			for(var	i in ass.ASS.ScriptInfo){
+				var	dd = $c('dd');
+				dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.ASS.ScriptInfo[i];
+				dl.appendChild(dd);
+			}
+			info.appendChild(dl);
+		}
+	}
+}
+function fadeOut(d){
+	clearInterval(_Timer);
+	d.style.opacity = 1;
+	d.style.display = 'block';
+	var	op = 200;
+	_Timer = setInterval(function(){
+		op -= 2;
+		if(op < 0) op = 0;
+		d.style.opacity = Math.min(1, op / 100);
+		if(op == 0){
+			clearInterval(_Timer);
+			d.style.display = 'none';
+			op = 200;
+		}
+	},60);
+}
+</script>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/weizhenye/ASS">View on GitHub</a>
-
-          <h1 id="project_title">Ass</h1>
-          <h2 id="project_tagline">A parser for ASS file</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/weizhenye/ASS/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/weizhenye/ASS/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
-
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
-
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Ass maintained by <a href="https://github.com/weizhenye">weizhenye</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
-  </body>
+</body>
 </html>
