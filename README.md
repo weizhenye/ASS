@@ -48,7 +48,7 @@ You may write [control.js](https://github.com/weizhenye/ASS/blob/master/control.
 
 Items with <del>strikethrough</del> means they won't be supported or they are ignored.
 
-### [Script Info]
+#### [Script Info]
 
 * <del>Synch Point</del>
 * __Collisions__
@@ -57,7 +57,7 @@ Items with <del>strikethrough</del> means they won't be supported or they are ig
 * __WrapStyle__
 
 
-### [V4+ Styles]
+#### [V4+ Styles]
 
 There is no outline for text in CSS, text-stroke is webkit only and has poor performance, so I use text-shadow to replace outline and ignore shadow.
 
@@ -65,7 +65,7 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * <del>BackColour</del>
 * <del>Shadow</del>
 
-### [Events]
+#### [Events]
 
 * <del>Picture</del>
 * <del>Sound</del>
@@ -88,7 +88,7 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __\fad(inTime,outTime)__
 		- __\fade(a1,a2,a3,time1,time2,time3,time4)__
 		- __\clip(x1,y1,x2,y2)__
-		- <del>\p</del> maybe I'll use &lt;canvas> to draw it in future.
+		- __\p__
 
-### <del>[Fonts]</del>
-### <del>[Graphics]</del>
+#### <del>[Fonts]</del>
+#### <del>[Graphics]</del>
