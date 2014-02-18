@@ -128,7 +128,7 @@ function ASS(){
 		}
 		document.getElementsByTagName('head')[0].innerHTML += '<style>' + CSSstr + '</style>';
 		this.ASS.Events.Dialogue.sort(function(a, b){
-			return (a.Start > b.Start) ? 1 : -1;
+			return a.Start - b.Start;
 		});
 		this.updateScale();
 		console.log(this.ASS);
@@ -139,7 +139,7 @@ function ASS(){
 			for(var	i = 0; i < that.runline.length; ++i){
 				if(that.runline[i].End < that.video.currentTime){
 					that.stage.removeChild(that.runline[i]);
-					that.runline.splice(i,1);
+					that.runline.splice(i, 1);
 				}
 			}
 			if(that.position < that.ASS.Events.Dialogue.length){
@@ -236,7 +236,7 @@ function ASS(){
 				if(/^fsp/.test(cmds[j])) diaChild.style.letterSpacing = this.scale * cmds[j].match(/^fsp(.*)/)[1] + 'px';
 				if(/^fr/.test(cmds[j])){
 					var	tt = cmds[j].match(/^fr(\w)(.*)/);
-					if(/^fr\d/.test(cmds[j])){
+					if(/^fr\d|-/.test(cmds[j])){
 						tt[1] = 'z';
 						tt[2] = cmds[j].match(/^fr(.*)/)[1];
 					}
@@ -449,7 +449,7 @@ function ASS(){
 		for(var	i = 0; i < this.runline.length; ++i){
 			if(this.runline[i].End < this.video.currentTime){
 				this.stage.removeChild(this.runline[i]);
-				this.runline.splice(i,1);
+				this.runline.splice(i, 1);
 			}
 		}
 	}
