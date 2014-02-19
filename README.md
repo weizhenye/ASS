@@ -51,9 +51,6 @@ Items with <del>strikethrough</del> means they won't be supported or they are ig
 #### [Script Info]
 
 * <del>Synch Point</del>
-* __Collisions__
-* <del>PlayDepth</del>
-* <del>Timer</del>
 * __WrapStyle__
 
 
