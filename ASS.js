@@ -14,6 +14,7 @@ function ASS(){
 	};
 	this.runline = [];
 	this.position = 0;
+	this.channel = [];
 	this.scale = 1;
 	this.stage = document.createElement('div');
 	this.init = function(data, video){
@@ -128,7 +129,7 @@ function ASS(){
 		}
 		document.getElementsByTagName('head')[0].innerHTML += '<style>' + CSSstr + '</style>';
 		this.ASS.Events.Dialogue.sort(function(a, b){
-			return (a.Start > b.Start) ? 1 : -1;
+			return (a.Start - b.Start) || (b.End - a.End);
 		});
 		this.updateScale();
 		console.log(this.ASS);
@@ -138,8 +139,9 @@ function ASS(){
 		runTimer = setInterval(function(){
 			for(var	i = 0; i < that.runline.length; ++i){
 				if(that.runline[i].End < that.video.currentTime){
+					that.freeChannel(that.runline[i]);
 					that.stage.removeChild(that.runline[i]);
-					that.runline.splice(i,1);
+					that.runline.splice(i, 1);
 				}
 			}
 			if(that.position < that.ASS.Events.Dialogue.length){
@@ -181,6 +183,9 @@ function ASS(){
 			);
 			if(!sol) dia.style.textShadow = 'none';
 		}
+		dia.Layer = data.Layer;
+		dia.Start = data.Start;
+		dia.End = data.End;
 
 		this.stage.appendChild(dia);
 		data.Text = data.Text.replace(/\\n/g, (this.ASS.ScriptInfo.WrapStyle == 2) ? '<br>' : '&nbsp;');
@@ -236,7 +241,7 @@ function ASS(){
 				if(/^fsp/.test(cmds[j])) diaChild.style.letterSpacing = this.scale * cmds[j].match(/^fsp(.*)/)[1] + 'px';
 				if(/^fr/.test(cmds[j])){
 					var	tt = cmds[j].match(/^fr(\w)(.*)/);
-					if(/^fr\d/.test(cmds[j])){
+					if(/^fr\d|-/.test(cmds[j])){
 						tt[1] = 'z';
 						tt[2] = cmds[j].match(/^fr(.*)/)[1];
 					}
@@ -320,10 +325,10 @@ function ASS(){
 				diaChild.father.appendChild(diaChild);
 			}
 			nowFather = diaChild;
-			var	ta = ['y', 'x', 'z'];
+			var	ta = ['y', 'x', 'z'];// TODO: 
 			for(var	j in ta){
 				if(!diaChild['fr' + ta[j]]) continue;
-				if(ta[j] == 'z') diaChild['fr' + ta[j]] *= -1;
+				if(ta[j] == 'z') diaChild['frz'] *= -1;
 				var	tf = ' rotate' + ta[j].toUpperCase() + '(' + diaChild['fr' + ta[j]] + 'deg)';
 				diaChild.style.webkitTransform += tf;
 				diaChild.style.mozTransform += tf;
@@ -350,7 +355,7 @@ function ASS(){
 					c + ' ' + diaChild.bord + 'px 0 ' + diaChild.bord + 'px, ' +
 					c + ' 0 -' + diaChild.bord + 'px ' + diaChild.bord + 'px'
 				);
-				if(parseInt(diaChild.bord) == 0) diaChild.style.textShadow = 'none';
+				if(!parseInt(diaChild.bord)) diaChild.style.textShadow = 'none';
 			}
 		}
 		dia.MarginL = parseInt(data.MarginL) || parseInt(s.MarginL);
@@ -397,25 +402,13 @@ function ASS(){
 				dia.style.textAlign = 'right';
 				dia.style.marginRight = this.scale * dia.MarginR + 'px';
 			}
-			if(dia.a <= 3){
-				dia.style.bottom = '0';
-				dia.style.marginBottom = this.scale * dia.MarginV + 'px';
-			}
-			if(dia.a >= 4 && dia.a <= 6){
-				dia.style.top = (this.stage.offsetHeight - dia.offsetHeight) / 2 + 'px';
-			}
-			if(dia.a >= 7){
-				dia.style.top = '0';
-				dia.style.marginTop = this.scale * dia.MarginV + 'px';
-			}
 			if(dia.offsetWidth > this.stage.offsetWidth - this.scale * (dia.MarginL + dia.MarginR)){
 				dia.style.marginLeft = this.scale * dia.MarginL + 'px';
 				dia.style.marginRight = this.scale * dia.MarginR + 'px';
 			}
+			// Solve WrapStyle first
+			dia.style.top = this.getChannel(dia) + 'px';
 		}
-		dia.style.zIndex = data.Layer;
-		dia.Start = data.Start;
-		dia.End = data.End;
 
 		// TODO
 		// if(/^Karaoke/i.test(data.Effect)){}
@@ -423,10 +416,56 @@ function ASS(){
 		// if(/^Scroll up/i.test(data.Effect)){}
 		// if(/^Scroll down/i.test(data.Effect)){}
 	}
+	this.getChannel = function(dia){
+		var	L = dia.Layer,
+			SW = this.stage.offsetWidth - dia.MarginL - dia.MarginR,
+			SH = this.stage.offsetHeight,
+			W = dia.offsetWidth,
+			H = dia.offsetHeight,
+			count = 0;
+		if(!this.channel[L]){
+			this.channel[L] = [];
+			for(var	i = 0; i <= SH; ++i) this.channel[L][i] = [0, 0, 0];
+			for(var	i = 0; i <= dia.MarginV; ++i)
+				this.channel[L][i] = this.channel[L][SH - i] = [23333, 23333, 23333];
+		}
+		function judge(i){
+			var	T = that.channel[L][i];
+			if ((dia.a % 3 == 1 && (T[0] || (T[1] && W + T[1] / 2 > SW / 2) || (W + T[2] > SW))) ||
+				(dia.a % 3 == 2 && ((2 * T[0] + W > SW) || T[1] || (2 * T[2] + W > SW))) ||
+				(dia.a % 3 == 0 && ((T[0] + W > SW) || (T[1] && W + T[1] / 2 > SW / 2) || T[2]))){
+				count = 0;
+			}else ++count;
+			if(count > H){
+				dia.channel = i;
+				return 1;
+			}else return 0;
+		}
+		if(dia.a <= 3){
+			for(var i = SH; i >= 0; --i)
+				if(judge(i)) break;
+		}else if(dia.a >= 7){
+			for(var i = 0; i <= SH; ++i)
+				if(judge(i)) break;
+		}else{
+			for(var i = SH / 2; i <= SH; ++i)
+				if(judge(i)) break;
+		}
+		if(dia.a > 3) dia.channel = dia.channel - H;
+		for(var	i = dia.channel; i <= dia.channel + H; ++i)
+			this.channel[L][i][(dia.a - 1) % 3] = W;
+
+		return dia.channel;
+	}
+	this.freeChannel = function(dia){
+		for(var	i = dia.channel; i <= dia.channel + dia.offsetHeight; ++i)
+			this.channel[dia.Layer][i][(dia.a - 1) % 3] = 0;
+	}
 	this.setCurrentTime = function(time){
 		for(var	i = 0; i < this.runline.length; ++i)
 			this.stage.removeChild(this.runline[i]);
 		this.runline = [];
+		this.channel = [];
 		this.position = (function(){
 			var	m,
 				l = 0,
@@ -449,7 +488,7 @@ function ASS(){
 		for(var	i = 0; i < this.runline.length; ++i){
 			if(this.runline[i].End < this.video.currentTime){
 				this.stage.removeChild(this.runline[i]);
-				this.runline.splice(i,1);
+				this.runline.splice(i, 1);
 			}
 		}
 	}
