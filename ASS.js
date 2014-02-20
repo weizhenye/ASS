@@ -422,12 +422,11 @@ function ASS(){
 			SH = this.stage.offsetHeight,
 			W = dia.offsetWidth,
 			H = dia.offsetHeight,
+			V = dia.MarginV,
 			count = 0;
 		if(!this.channel[L]){
 			this.channel[L] = [];
 			for(var	i = 0; i <= SH; ++i) this.channel[L][i] = [0, 0, 0];
-			for(var	i = 0; i <= dia.MarginV; ++i)
-				this.channel[L][i] = this.channel[L][SH - i] = [23333, 23333, 23333];
 		}
 		function judge(i){
 			var	T = that.channel[L][i];
@@ -442,13 +441,13 @@ function ASS(){
 			}else return 0;
 		}
 		if(dia.a <= 3){
-			for(var i = SH; i >= 0; --i)
+			for(var i = SH - V; i >= V; --i)
 				if(judge(i)) break;
 		}else if(dia.a >= 7){
-			for(var i = 0; i <= SH; ++i)
+			for(var i = V; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}else{
-			for(var i = SH / 2; i <= SH; ++i)
+			for(var i = SH / 2; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}
 		if(dia.a > 3) dia.channel = dia.channel - H;
