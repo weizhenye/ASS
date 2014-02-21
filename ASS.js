@@ -171,18 +171,7 @@ function ASS(){
 		dia.style.fontSize = this.scale * s.Fontsize + 'px';
 		dia.style.letterSpacing = this.scale * s.Spacing + 'px';
 		dia.SecondaryColour = s.SecondaryColour;
-		if(s.BorderStyle == '1'){
-			var	sol;
-			if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) sol = this.scale * s.Outline;
-			else sol = s.Outline;
-			dia.style.textShadow = (
-				s.OutlineColour + ' -' + sol + 'px 0 ' + sol + 'px, ' +
-				s.OutlineColour + ' 0 ' + sol + 'px ' + sol + 'px, ' +
-				s.OutlineColour + ' ' + sol + 'px 0 ' + sol + 'px, ' +
-				s.OutlineColour + ' 0 -' + sol + 'px ' + sol + 'px'
-			);
-			if(!sol) dia.style.textShadow = 'none';
-		}
+		if(s.BorderStyle == '1') dia.style.textShadow = createTextShadow(s.OutlineColour, s.Outline);
 		dia.Layer = data.Layer;
 		dia.Start = data.Start;
 		dia.End = data.End;
@@ -223,11 +212,7 @@ function ASS(){
 				}
 				if(cmds[j] == 'u1') diaChild.style.textDecoration += ' underline';
 				if(cmds[j] == 's1') diaChild.style.textDecoration += ' line-through';
-				if(/^bord/.test(cmds[j])){
-					var	tt = cmds[j].match(/^bord(.*)/)[1];
-					if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) diaChild.bord = this.scale * tt;
-					else diaChild.bord = tt;
-				}
+				if(/^bord/.test(cmds[j])) diaChild.bord = cmds[j].match(/^bord(.*)/)[1];
 				if(/^fn/.test(cmds[j])) diaChild.style.fontFamily = '\'' + cmds[j].match(/fn(.*)/)[1] + '\', Arial';
 				if(/^fs\d/.test(cmds[j])) diaChild.style.fontSize = this.scale * cmds[j].match(/^fs(.*)/)[1] + 'px';
 				if(/^fsc/.test(cmds[j])){
@@ -302,17 +287,7 @@ function ASS(){
 					diaChild.style.fontSize = this.scale * ss.Fontsize + 'px';
 					diaChild.style.letterSpacing = this.scale * ss.Spacing + 'px';
 					diaChild.SecondaryColour = ss.SecondaryColour;
-					if(ss.BorderStyle == '1'){
-						var	ssol;
-						if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) ssol = this.scale * ss.Outline;
-						else ssol = ss.Outline;
-						diaChild.style.textShadow = (
-							ss.OutlineColour + ' -' + ssol + 'px 0 ' + ssol + 'px, ' +
-							ss.OutlineColour + ' 0 ' + ssol + 'px ' + ssol + 'px, ' +
-							ss.OutlineColour + ' ' + ssol + 'px 0 ' + ssol + 'px, ' +
-							ss.OutlineColour + ' 0 -' + ssol + 'px ' + ssol + 'px'
-						);
-					}
+					if(ss.BorderStyle == '1') diaChild.style.textShadow = createTextShadow(ss.OutlineColour, ss.Outline);
 				}
 				if(/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])){
 					cmds[j] += '\\' + cmds[j+1];
@@ -344,18 +319,9 @@ function ASS(){
 				var	ss = diaChild.className ? this.ASS.V4Styles.Style[diaChild.className.match(/ASS-style-(.*)/)[1]] : s;
 				var	c = color2RGBA('&H' + (diaChild.alpha3 || '00') + diaChild.OutlineColor);
 				if(!diaChild.OutlineColor) c = ss.OutlineColor;
-				if(diaChild.bord == undefined){
-					console.log(diaChild.bord, ss.Outline );
-					if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) diaChild.bord = this.scale * ss.Outline;
-					else diaChild.bord = ss.Outline;
-				}
-				diaChild.style.textShadow = (
-					c + ' -' + diaChild.bord + 'px 0 ' + diaChild.bord + 'px, ' +
-					c + ' 0 ' + diaChild.bord + 'px ' + diaChild.bord + 'px, ' +
-					c + ' ' + diaChild.bord + 'px 0 ' + diaChild.bord + 'px, ' +
-					c + ' 0 -' + diaChild.bord + 'px ' + diaChild.bord + 'px'
-				);
-				if(!parseInt(diaChild.bord)) diaChild.style.textShadow = 'none';
+				if(diaChild.bord == undefined) diaChild.bord = ss.Outline;
+				console.log(c, diaChild.bord);
+				diaChild.style.textShadow = createTextShadow(c, diaChild.bord);
 			}
 		}
 		dia.MarginL = parseInt(data.MarginL) || parseInt(s.MarginL);
@@ -505,5 +471,15 @@ function ASS(){
 			g = parseInt(t[3], 16),
 			r = parseInt(t[4], 16);
 		return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a.toFixed(1) + ')';
+	}
+	function createTextShadow(color, width){
+		if(!parseInt(width)) return 'none';
+		if(!/No/i.test(that.ASS.ScriptInfo['ScaledBorderAndShadow'])) width *= that.scale;
+		var	ts = '';
+		for(var	i = -1; i <= 1; ++i)
+			for(var	j = -1; j <= 1; ++j)
+				for(var	k = 1; k <= width; ++k)
+					ts += color + ' ' + i * k + 'px ' + j * k + 'px, ';
+		return ts.substr(0, ts.length - 2);
 	}
 }
