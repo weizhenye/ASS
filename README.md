@@ -46,7 +46,7 @@ You may write [control.js](https://github.com/weizhenye/ASS/blob/master/control.
 
 # TODO
 
-Items with <del>strikethrough</del> means they won't be supported or they are ignored.
+Items with <del>strikethrough</del> means they won't be supported.
 
 #### [Script Info]
 
@@ -56,11 +56,9 @@ Items with <del>strikethrough</del> means they won't be supported or they are ig
 
 #### [V4+ Styles]
 
-There is no outline for text in CSS, text-stroke is webkit only and has poor performance, so I use text-shadow to replace outline and ignore shadow.
+There is no outline for text in CSS, text-stroke is webkit only and has poor performance, so I use text-shadow to replace outline.
 
 * __SecondaryColour__ for karaoke
-* <del>BackColour</del>
-* <del>Shadow</del>
 
 #### [Events]
 
@@ -75,8 +73,7 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __Scroll down__
 		- __Banner__
 	+ __Text__(Style override codes)
-		- <del>\shad</del>
-		- <del>\be</del>
+		- __\be__
 		- __\k__ Karaoke
 		- __\q__ WrapStyle
 		- __\t__

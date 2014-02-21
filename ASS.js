@@ -171,18 +171,7 @@ function ASS(){
 		dia.style.fontSize = this.scale * s.Fontsize + 'px';
 		dia.style.letterSpacing = this.scale * s.Spacing + 'px';
 		dia.SecondaryColour = s.SecondaryColour;
-		if(s.BorderStyle == '1'){
-			var	sol;
-			if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) sol = this.scale * s.Outline;
-			else sol = s.Outline;
-			dia.style.textShadow = (
-				s.OutlineColour + ' -' + sol + 'px 0 ' + sol + 'px, ' +
-				s.OutlineColour + ' 0 ' + sol + 'px ' + sol + 'px, ' +
-				s.OutlineColour + ' ' + sol + 'px 0 ' + sol + 'px, ' +
-				s.OutlineColour + ' 0 -' + sol + 'px ' + sol + 'px'
-			);
-			if(!sol) dia.style.textShadow = 'none';
-		}
+		if(s.BorderStyle == '1') dia.style.textShadow = createTextShadow(s.OutlineColour, s.Outline, s.BackColour, s.Shadow);
 		dia.Layer = data.Layer;
 		dia.Start = data.Start;
 		dia.End = data.End;
@@ -223,11 +212,8 @@ function ASS(){
 				}
 				if(cmds[j] == 'u1') diaChild.style.textDecoration += ' underline';
 				if(cmds[j] == 's1') diaChild.style.textDecoration += ' line-through';
-				if(/^bord/.test(cmds[j])){
-					var	tt = cmds[j].match(/^bord(.*)/)[1];
-					if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) diaChild.bord = this.scale * tt;
-					else diaChild.bord = tt;
-				}
+				if(/^bord/.test(cmds[j])) diaChild.bord = cmds[j].match(/^bord(.*)/)[1];
+				if(/^shad/.test(cmds[j])) diaChild.shad = cmds[j].match(/^shad(.*)/)[1];
 				if(/^fn/.test(cmds[j])) diaChild.style.fontFamily = '\'' + cmds[j].match(/fn(.*)/)[1] + '\', Arial';
 				if(/^fs\d/.test(cmds[j])) diaChild.style.fontSize = this.scale * cmds[j].match(/^fs(.*)/)[1] + 'px';
 				if(/^fsc/.test(cmds[j])){
@@ -254,7 +240,7 @@ function ASS(){
 					while(t[2].length < 6) tt[2] = '0' + tt[2];
 					if(tt[1] == '1' || tt[1] == '') diaChild.PrimaryColour = tt[2];
 					if(tt[1] == '2') diaChild.SecondaryColour = tt[2];
-					if(tt[1] == '3') diaChild.OutlineColor = tt[2];
+					if(tt[1] == '3') diaChild.OutlineColour = tt[2];
 					if(tt[1] == '4') diaChild.BackColour = tt[2];
 				}
 				if(/^\da&H/.test(cmds[j])){
@@ -268,7 +254,7 @@ function ASS(){
 				if(/^a\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
 				if(/^an\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
 				if(/^pos/.test(cmds[j])) dia.pos = dia.pos || cmds[j];
-				if(/^org/.test(cmds[j])){// TODO: transform-origin is stage's property
+				if(/^org/.test(cmds[j])){// TODO: transform-origin should be stage's property
 					var	tt = cmds[j].match(/^org\((\d+).*?(\d+)\)/),
 						to = parseInt(tt[1] / this.video.offsetWidth * 100) + '% ' + parseInt(tt[2] / this.video.offsetHeight * 100) + '%';
 					diaChild.style.webkitTransformOrigin = to;
@@ -302,17 +288,7 @@ function ASS(){
 					diaChild.style.fontSize = this.scale * ss.Fontsize + 'px';
 					diaChild.style.letterSpacing = this.scale * ss.Spacing + 'px';
 					diaChild.SecondaryColour = ss.SecondaryColour;
-					if(ss.BorderStyle == '1'){
-						var	ssol;
-						if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) ssol = this.scale * ss.Outline;
-						else ssol = ss.Outline;
-						diaChild.style.textShadow = (
-							ss.OutlineColour + ' -' + ssol + 'px 0 ' + ssol + 'px, ' +
-							ss.OutlineColour + ' 0 ' + ssol + 'px ' + ssol + 'px, ' +
-							ss.OutlineColour + ' ' + ssol + 'px 0 ' + ssol + 'px, ' +
-							ss.OutlineColour + ' 0 -' + ssol + 'px ' + ssol + 'px'
-						);
-					}
+					if(ss.BorderStyle == '1') diaChild.style.textShadow = createTextShadow(ss.OutlineColour, ss.Outline, ss.BackColour, ss.Shadow);
 				}
 				if(/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])){
 					cmds[j] += '\\' + cmds[j+1];
@@ -340,22 +316,15 @@ function ASS(){
 			}else if(diaChild.alpha1){
 				diaChild.style.opacity = 1 - parseInt(diaChild.alpha1, 16) / 255;
 			}
-			if(diaChild.OutlineColor || diaChild.bord != undefined){
+			if(diaChild.OutlineColour || diaChild.bord != undefined || diaChild.BackColour || diaChild.shad != undefined){
 				var	ss = diaChild.className ? this.ASS.V4Styles.Style[diaChild.className.match(/ASS-style-(.*)/)[1]] : s;
-				var	c = color2RGBA('&H' + (diaChild.alpha3 || '00') + diaChild.OutlineColor);
-				if(!diaChild.OutlineColor) c = ss.OutlineColor;
-				if(diaChild.bord == undefined){
-					console.log(diaChild.bord, ss.Outline );
-					if(/Yes/i.test(this.ASS.ScriptInfo['ScaledBorderAndShadow'])) diaChild.bord = this.scale * ss.Outline;
-					else diaChild.bord = ss.Outline;
-				}
-				diaChild.style.textShadow = (
-					c + ' -' + diaChild.bord + 'px 0 ' + diaChild.bord + 'px, ' +
-					c + ' 0 ' + diaChild.bord + 'px ' + diaChild.bord + 'px, ' +
-					c + ' ' + diaChild.bord + 'px 0 ' + diaChild.bord + 'px, ' +
-					c + ' 0 -' + diaChild.bord + 'px ' + diaChild.bord + 'px'
-				);
-				if(!parseInt(diaChild.bord)) diaChild.style.textShadow = 'none';
+				var	oc = color2RGBA('&H' + (diaChild.alpha3 || '00') + diaChild.OutlineColour),
+					bc = color2RGBA('&H' + (diaChild.alpha4 || '00') + diaChild.BackColour);
+				if(!diaChild.OutlineColour) oc = ss.OutlineColour;
+				if(!diaChild.BackColour) bc = ss.BackColour;
+				if(diaChild.bord == undefined) diaChild.bord = ss.Outline;
+				if(diaChild.shad == undefined) diaChild.shad = ss.Shadow;
+				diaChild.style.textShadow = createTextShadow(oc, diaChild.bord, bc, diaChild.shad);
 			}
 		}
 		dia.MarginL = parseInt(data.MarginL) || parseInt(s.MarginL);
@@ -370,6 +339,7 @@ function ASS(){
 			}else dia.a = dia.a.match(/an(\d+)/)[1];
 		}else dia.a = s.Alignment;
 		dia.a == parseInt(dia.a);
+		// Solve WrapStyle first
 		if(dia.pos){
 			var	xy = dia.pos.match(/^pos\((.*?)\s*,\s*(.*)\)/);
 			if(dia.a % 3 == 1){
@@ -406,7 +376,6 @@ function ASS(){
 				dia.style.marginLeft = this.scale * dia.MarginL + 'px';
 				dia.style.marginRight = this.scale * dia.MarginR + 'px';
 			}
-			// Solve WrapStyle first
 			dia.style.top = this.getChannel(dia) + 'px';
 		}
 
@@ -422,12 +391,11 @@ function ASS(){
 			SH = this.stage.offsetHeight,
 			W = dia.offsetWidth,
 			H = dia.offsetHeight,
+			V = dia.MarginV,
 			count = 0;
 		if(!this.channel[L]){
 			this.channel[L] = [];
 			for(var	i = 0; i <= SH; ++i) this.channel[L][i] = [0, 0, 0];
-			for(var	i = 0; i <= dia.MarginV; ++i)
-				this.channel[L][i] = this.channel[L][SH - i] = [23333, 23333, 23333];
 		}
 		function judge(i){
 			var	T = that.channel[L][i];
@@ -442,19 +410,17 @@ function ASS(){
 			}else return 0;
 		}
 		if(dia.a <= 3){
-			for(var i = SH; i >= 0; --i)
+			for(var i = SH - V; i >= V; --i)
 				if(judge(i)) break;
 		}else if(dia.a >= 7){
-			for(var i = 0; i <= SH; ++i)
+			for(var i = V; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}else{
-			for(var i = SH / 2; i <= SH; ++i)
+			for(var i = (SH - H) / 2; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}
 		if(dia.a > 3) dia.channel = dia.channel - H;
-		for(var	i = dia.channel; i <= dia.channel + H; ++i)
-			this.channel[L][i][(dia.a - 1) % 3] = W;
-
+		for(var	i = dia.channel; i <= dia.channel + H; ++i) this.channel[L][i][(dia.a - 1) % 3] = W;
 		return dia.channel;
 	}
 	this.freeChannel = function(dia){
@@ -506,5 +472,28 @@ function ASS(){
 			g = parseInt(t[3], 16),
 			r = parseInt(t[4], 16);
 		return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a.toFixed(1) + ')';
+	}
+	function createTextShadow(oc, ow, sc, sw){
+		ow = parseFloat(ow);
+		sw = parseFloat(sw);
+		if(!ow && !sw) return 'none';
+		if(!/No/i.test(that.ASS.ScriptInfo['ScaledBorderAndShadow'])){
+			ow *= that.scale;
+			sw *= that.scale;
+		}
+		if(ow){
+			var	ts = '';
+			for(var	i = -1; i <= 1; ++i)
+				for(var	j = -1; j <= 1; ++j){
+					for(var	k = 1; k < ow; ++k)
+						ts += oc + ' ' + i * k + 'px ' + j * k + 'px, ';
+					ts += oc + ' ' + i * ow + 'px ' + j * ow + 'px, ';
+				}
+		}
+		if(sw){
+			sw += ow;
+			ts += sc + ' ' + sw + 'px ' + sw + 'px ' + sw + 'px';
+		}else ts = ts.substr(0, ts.length - 2);
+		return ts;
 	}
 }
