@@ -320,7 +320,6 @@ function ASS(){
 				var	c = color2RGBA('&H' + (diaChild.alpha3 || '00') + diaChild.OutlineColor);
 				if(!diaChild.OutlineColor) c = ss.OutlineColor;
 				if(diaChild.bord == undefined) diaChild.bord = ss.Outline;
-				console.log(c, diaChild.bord);
 				diaChild.style.textShadow = createTextShadow(c, diaChild.bord);
 			}
 		}
@@ -413,7 +412,7 @@ function ASS(){
 			for(var i = V; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}else{
-			for(var i = SH / 2; i <= SH - V; ++i)
+			for(var i = (SH - H) / 2; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}
 		if(dia.a > 3) dia.channel = dia.channel - H;
