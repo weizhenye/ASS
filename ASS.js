@@ -407,7 +407,6 @@ function ASS(){
 		if(dia.a <= 3){
 			for(var i = SH - V; i >= V; --i)
 				if(judge(i)) break;
-			dia.channel -= H;
 		}else if(dia.a >= 7){
 			for(var i = V; i <= SH - V; ++i)
 				if(judge(i)) break;
@@ -415,6 +414,7 @@ function ASS(){
 			for(var i = (SH - H) / 2; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}
+		if(dia.a > 3) dia.channel -= H;
 		for(var	i = dia.channel; i <= dia.channel + H; ++i)
 			this.channel[L][i][(dia.a - 1) % 3] = W;
 		return dia.channel;
