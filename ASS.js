@@ -233,7 +233,7 @@ function ASS(){
 				}
 				if(/^\d?c&H/.test(cmds[j])){
 					var	tt = cmds[j].match(/^(\d?)c&H(\w+)/);
-					while(t[2].length < 6) tt[2] = '0' + tt[2];
+					while(tt[2].length < 6) tt[2] = '0' + tt[2];
 					if(tt[1] == '1' || tt[1] == '') diaChild.PrimaryColour = tt[2];
 					if(tt[1] == '2') diaChild.SecondaryColour = tt[2];
 					if(tt[1] == '3') diaChild.OutlineColour = tt[2];
