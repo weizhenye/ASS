@@ -200,16 +200,12 @@ function ASS(){
 			diaChild.innerHTML = kv[1];
 			for(var	j = 0; j < cmds.length; ++j){
 				if(/^b\d/.test(cmds[j])){
-					var	tt = cmds[j].match(/^b(.*)/)[1];
-					if(tt == '0') diaChild.style.fontWeight = 'normal';
-					else if(tt == '1') diaChild.style.fontWeight = 'bold';
-					else diaChild.style.fontWeight = tt;
+					if(cmds[j] == 'b0') diaChild.style.fontWeight = 'normal';
+					else if(cmds[j] == 'b1') diaChild.style.fontWeight = 'bold';
+					else diaChild.style.fontWeight = cmds[j].match(/^b(.*)/)[1];
 				}
-				if(/^i\d/.test(cmds[j])){
-					var	tt = cmds[j].match(/^i(.*)/)[1];
-					if(tt == '0') diaChild.style.fontStyle = 'normal';
-					if(tt == '1') diaChild.style.fontStyle = 'italic';
-				}
+				if(cmds[j] == 'i0') diaChild.style.fontStyle = 'normal';
+				if(cmds[j] == 'i1') diaChild.style.fontStyle = 'italic';
 				if(cmds[j] == 'u1') diaChild.style.textDecoration += ' underline';
 				if(cmds[j] == 's1') diaChild.style.textDecoration += ' line-through';
 				if(/^bord/.test(cmds[j])) diaChild.bord = cmds[j].match(/^bord(.*)/)[1];
@@ -250,7 +246,7 @@ function ASS(){
 					if(tt[1] == '3') diaChild.alpha3 = tt[2];
 					if(tt[1] == '4') diaChild.alpha4 = tt[2];
 				}
-				if(/^alpha&H/.test(cmds[j])) diaChild.alpha1 = cmds[j].match(/^alpha&H(\w+)/)[1];
+				if(/^alpha&H/.test(cmds[j])) diaChild.alpha = cmds[j].match(/^alpha&H(\w+)/)[1];
 				if(/^a\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
 				if(/^an\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
 				if(/^pos/.test(cmds[j])) dia.pos = dia.pos || cmds[j];
@@ -301,20 +297,19 @@ function ASS(){
 				diaChild.father.appendChild(diaChild);
 			}
 			nowFather = diaChild;
-			var	ta = ['y', 'x', 'z'];// TODO: 
-			for(var	j in ta){
-				if(!diaChild['fr' + ta[j]]) continue;
-				if(ta[j] == 'z') diaChild['frz'] *= -1;
-				var	tf = ' rotate' + ta[j].toUpperCase() + '(' + diaChild['fr' + ta[j]] + 'deg)';
+			['y', 'x', 'z'].forEach(function(e){// TODO: 
+				if(!diaChild['fr' + e]) continue;
+				if(e == 'z') diaChild['frz'] *= -1;
+				var	tf = ' rotate' + e.toUpperCase() + '(' + diaChild['fr' + e] + 'deg)';
 				diaChild.style.webkitTransform += tf;
 				diaChild.style.mozTransform += tf;
 				diaChild.style.msTransform += tf;
 				diaChild.style.transform += tf;
-			}
+			});
 			if(diaChild.PrimaryColour){
 				diaChild.style.color = color2RGBA('&H' + (diaChild.alpha1 ? diaChild.alpha1 : '00') + diaChild.PrimaryColour);
-			}else if(diaChild.alpha1){
-				diaChild.style.opacity = 1 - parseInt(diaChild.alpha1, 16) / 255;
+			}else if(diaChild.alpha){
+				diaChild.style.opacity = 1 - parseInt(diaChild.alpha, 16) / 255;
 			}
 			if(diaChild.OutlineColour || diaChild.bord != undefined || diaChild.BackColour || diaChild.shad != undefined){
 				var	ss = diaChild.className ? this.ASS.V4Styles.Style[diaChild.className.match(/ASS-style-(.*)/)[1]] : s;
@@ -338,10 +333,10 @@ function ASS(){
 				else dia.a = ali - 5;
 			}else dia.a = dia.a.match(/an(\d+)/)[1];
 		}else dia.a = s.Alignment;
-		dia.a == parseInt(dia.a);
+		dia.a = parseInt(dia.a);
 		// Solve WrapStyle first
 		if(dia.pos){
-			var	xy = dia.pos.match(/^pos\((.*?)\s*,\s*(.*)\)/);
+			var	xy = dia.pos.match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
 			if(dia.a % 3 == 1){
 				dia.style.left = this.scale * xy[1] + 'px';
 				dia.style.textAlign = 'left';
@@ -412,6 +407,7 @@ function ASS(){
 		if(dia.a <= 3){
 			for(var i = SH - V; i >= V; --i)
 				if(judge(i)) break;
+			dia.channel -= H;
 		}else if(dia.a >= 7){
 			for(var i = V; i <= SH - V; ++i)
 				if(judge(i)) break;
@@ -419,8 +415,8 @@ function ASS(){
 			for(var i = (SH - H) / 2; i <= SH - V; ++i)
 				if(judge(i)) break;
 		}
-		if(dia.a > 3) dia.channel = dia.channel - H;
-		for(var	i = dia.channel; i <= dia.channel + H; ++i) this.channel[L][i][(dia.a - 1) % 3] = W;
+		for(var	i = dia.channel; i <= dia.channel + H; ++i)
+			this.channel[L][i][(dia.a - 1) % 3] = W;
 		return dia.channel;
 	}
 	this.freeChannel = function(dia){
