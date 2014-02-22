@@ -298,7 +298,7 @@ function ASS(){
 			}
 			nowFather = diaChild;
 			['y', 'x', 'z'].forEach(function(e){// TODO: 
-				if(!diaChild['fr' + e]) continue;
+				if(!diaChild['fr' + e]) return;
 				if(e == 'z') diaChild['frz'] *= -1;
 				var	tf = ' rotate' + e.toUpperCase() + '(' + diaChild['fr' + e] + 'deg)';
 				diaChild.style.webkitTransform += tf;
