@@ -1,124 +1,124 @@
+<!DOCTYPE html>
 <!-- ASS♂We♂Can -->
-<!DOCTYPE HTML>
 <html>
 <head>
-	<meta charset="UTF-8">
-	<title>ASS.js - A Parser For ASS File</title>
-	<meta name="keywords" content="ASS, subtitle, JavaScript">
-	<link rel="stylesheet" href="control.css">
-	<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>ASS.js - A Parser For ASS File</title>
+  <meta name="keywords" content="ASS, subtitle, JavaScript">
+  <link rel="stylesheet" href="control.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>ASS.js - A Parser For ASS File</header>
 <a id="github" href="https://github.com/weizhenye/ASS" class="icon-github"><span> View on GitHub</span></a>
 <div id="demo">
-	<div id="error"><span class="icon-notification"></span> File format error</div>
-	<div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
+  <div id="error"><span class="icon-notification"></span> File format error</div>
+  <div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
 </div>
 
 <script src="control.js"></script>
 <script src="ASS.js"></script>
 <script>
-var	$ = function(id){ return document.getElementById(id); }
-var	$c = function(tag){ return document.createElement(tag); }
-var	dropVideo = $('drop-video'),
-	dropASS = $('drop-ASS'),
-	ass = new ASS(),
-	_Timer;
-dropVideo.ondragleave = dropASS.ondragleave = function(){this.style.borderColor = '#CCC';}
-dropVideo.ondragover = dropASS.ondragover = function(e){
-	e.stopPropagation();
-	e.preventDefault();
-	e.dataTransfer.dropEffect = 'copy';
-	this.style.borderColor = '#888';
+var $ = function(id) { return document.getElementById(id); }
+var $c = function(tag) { return document.createElement(tag); }
+var dropVideo = $('drop-video'),
+    dropASS = $('drop-ASS'),
+    ass = new ASS(),
+    _Timer;
+dropVideo.ondragleave = dropASS.ondragleave = function() { this.style.borderColor = '#CCC'; }
+dropVideo.ondragover = dropASS.ondragover = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  this.style.borderColor = '#888';
 }
-dropVideo.ondrop = function(e){
-	e.stopPropagation();
-	e.preventDefault();
-	this.style.borderColor = '#CCC';
+dropVideo.ondrop = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  this.style.borderColor = '#CCC';
 
-	var	file = e.dataTransfer.files[0],
-		video = $c('video'),
-		src;
-	if(window.URL && window.URL.createObjectURL)
-		src = window.URL.createObjectURL(file);
-	else if(window.webkitURL && window.webkitURL.createObjectURL)
-		src = window.webkitURL.createObjectURL(file);
-	else if(window.createObjectURL)
-		src = window.createObjectURL(file);
-	else if(window.createBlobURL)
-		src = window.createBlobURL(file);
-	video.src = src;
-	video.id = 'video';
-	video.style.width = '640px';
-	video.style.height = '360px';
-	video.style.backgroundColor = '#000';
-	video.style.display = 'inline-block';
-	video.style.position = 'absolute';
-	$('demo').insertBefore(video, dropVideo);
-	dropVideo.style.display = 'none';
-	video.onerror = function(e){
-		console.log(e);
-		ass.video = undefined;
-		$('demo').removeChild($('ASS-container'));
-		dropVideo.style.display = 'inline-block';
-		fadeOut($('error'));
-	}
-	ass.init('', video);
-	control(ass);
+  var file = e.dataTransfer.files[0],
+      video = $c('video'),
+      src;
+  if (window.URL && window.URL.createObjectURL)
+    src = window.URL.createObjectURL(file);
+  else if (window.webkitURL && window.webkitURL.createObjectURL)
+    src = window.webkitURL.createObjectURL(file);
+  else if (window.createObjectURL)
+    src = window.createObjectURL(file);
+  else if (window.createBlobURL)
+    src = window.createBlobURL(file);
+  video.src = src;
+  video.id = 'video';
+  video.style.width = '640px';
+  video.style.height = '360px';
+  video.style.backgroundColor = '#000';
+  video.style.display = 'inline-block';
+  video.style.position = 'absolute';
+  $('demo').insertBefore(video, dropVideo);
+  dropVideo.style.display = 'none';
+  video.onerror = function(e) {
+    console.log(e);
+    ass.video = undefined;
+    $('demo').removeChild($('ASS-container'));
+    dropVideo.style.display = 'inline-block';
+    fadeOut($('error'));
+  }
+  ass.init('', video);
+  control(ass);
 }
-dropASS.ondrop = function(e){
-	e.stopPropagation();
-	e.preventDefault();
-	this.style.borderColor = '#CCC';
+dropASS.ondrop = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  this.style.borderColor = '#CCC';
 
-	var	file = e.dataTransfer.files[0];
-		reader = new FileReader(file);
-	if(!/\.ass$/i.test(file.name)){
-		fadeOut($('error'));
-		return;
-	}
-	reader.readAsText(file);
-	reader.onload = function(ev){
-		var	data = ev.target.result;
-		ass.init(ev.target.result, undefined);
-		if(!/^\[Script Info\]/i.test(data)){
-			ass.ASS = {ScriptInfo: {}, V4Styles: {Format: {}, Style: {}}, Events: {Format: {}, Dialogue: []}};
-			fadeOut($('error'));
-		}else{
-			var	info = $c('div');
-			info.id = 'info';
-			$('demo').insertBefore(info, dropASS);
-			dropASS.style.display = 'none';
-			var	dl = $c('dl'),
-				dt = $c('dt');
-			dt.innerHTML = 'File Infomation';
-			dl.appendChild(dt);
-			for(var	i in ass.ASS.ScriptInfo){
-				var	dd = $c('dd');
-				dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.ASS.ScriptInfo[i];
-				dl.appendChild(dd);
-			}
-			info.appendChild(dl);
-		}
-	}
+  var file = e.dataTransfer.files[0];
+      reader = new FileReader(file);
+  if (!/\.ass$/i.test(file.name)) {
+    fadeOut($('error'));
+    return;
+  }
+  reader.readAsText(file);
+  reader.onload = function(ev) {
+    var data = ev.target.result;
+    ass.init(ev.target.result, undefined);
+    if (!/^\[Script Info\]/i.test(data)) {
+      ass.ASS = {ScriptInfo: {}, V4Styles: { Format: {}, Style: {} },Events: {Format: {}, Dialogue: []}};
+      fadeOut($('error'));
+    } else {
+      var info = $c('div');
+      info.id = 'info';
+      $('demo').insertBefore(info, dropASS);
+      dropASS.style.display = 'none';
+      var dl = $c('dl'),
+      dt = $c('dt');
+      dt.innerHTML = 'File Infomation';
+      dl.appendChild(dt);
+      for(var i in ass.ASS.ScriptInfo) {
+        var dd = $c('dd');
+        dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.ASS.ScriptInfo[i];
+        dl.appendChild(dd);
+      }
+      info.appendChild(dl);
+    }
+  }
 }
-function fadeOut(d){
-	clearInterval(_Timer);
-	d.style.opacity = 1;
-	d.style.display = 'block';
-	var	op = 200;
-	_Timer = setInterval(function(){
-		op -= 2;
-		if(op < 0) op = 0;
-		d.style.opacity = Math.min(1, op / 100);
-		if(op == 0){
-			clearInterval(_Timer);
-			d.style.display = 'none';
-			op = 200;
-		}
-	},60);
+function fadeOut(d) {
+  clearInterval(_Timer);
+  d.style.opacity = 1;
+  d.style.display = 'block';
+  var op = 200;
+  _Timer = setInterval(function() {
+    op -= 2;
+    if (op < 0) op = 0;
+    d.style.opacity = Math.min(1, op / 100);
+    if (op == 0) {
+      clearInterval(_Timer);
+      d.style.display = 'none';
+      op = 200;
+    }
+  }, 60);
 }
 </script>
 

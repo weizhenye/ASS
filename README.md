@@ -1,6 +1,6 @@
 ASS.js is a parser for ASS file and displays subtitle on HTML5 video.
 
-[DEMO](https://weizhenye.github.com/ASS/)
+[DEMO](https://weizhenye.github.io/ASS/)
 
 [TODO list](https://github.com/weizhenye/ASS#todo)
 
@@ -10,16 +10,16 @@ ASS.js is a parser for ASS file and displays subtitle on HTML5 video.
 	<script src="control.js"></script>
 	<script src="ASS.js"></script>
 	<script>
-		var	x = new XMLHttpRequest();
-		x.open('GET', 'example.ass', 1);
-		x.onreadystatechange = function(){
-			if(x.readyState == 4 && x.status == 200){
-				var	ass = new ASS();
-				ass.init(x.responseText, document.getElementById('video'));
-				control(ass);
-			}
-		}
-		x.send(null);
+	  var x = new XMLHttpRequest();
+	  x.open('GET', 'example.ass', 1);
+	  x.onreadystatechange = function() {
+	    if (x.readyState == 4 && x.status == 200) {
+	      var ass = new ASS();
+	      ass.init(x.responseText, document.getElementById('video'));
+	      control(ass);
+	    }
+	  }
+	  x.send(null);
 	</script>
 You may write [control.js](https://github.com/weizhenye/ASS/blob/master/control.js) yourself.
 
@@ -67,12 +67,12 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * <del>Movie</del>
 * <del>Command</del>
 * __Dialogue__
-	+ __Effect__
-		- <del>Karaoke</del> as an effect type is obsolete.
-		- __Scroll up__
-		- __Scroll down__
-		- __Banner__
-	+ __Text__(Style override codes)
+  + __Effect__
+    - <del>__Karaoke__</del> as an effect type is obsolete.
+    - __Scroll up__
+    - __Scroll down__
+    - __Banner__
+  + __Text__(Style override codes)
 		- __\be__
 		- __\k__ Karaoke
 		- __\q__ WrapStyle
