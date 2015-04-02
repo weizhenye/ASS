@@ -3,21 +3,19 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>ASS.js - A Parser For ASS File</title>
+  <title>ASS.js - A Renderer For ASS File</title>
   <meta name="keywords" content="ASS, subtitle, JavaScript">
-  <link rel="stylesheet" href="control.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>ASS.js - A Parser For ASS File</header>
-<a id="github" href="https://github.com/weizhenye/ASS" class="icon-github"><span> View on GitHub</span></a>
+<header>ASS.js - A Renderer For ASS File</header>
+<nav><a id="github" href="https://github.com/weizhenye/ASS">View on GitHub</a></nav>
 <div id="demo">
   <div id="error"><span class="icon-notification"></span> File format error</div>
   <div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
 </div>
 
-<script src="control.js"></script>
 <script src="ASS.js"></script>
 <script>
 var $ = function(id) { return document.getElementById(id); }
@@ -51,6 +49,7 @@ dropVideo.ondrop = function(e) {
     src = window.createBlobURL(file);
   video.src = src;
   video.id = 'video';
+  video.controls = true;
   video.style.width = '640px';
   video.style.height = '360px';
   video.style.backgroundColor = '#000';
@@ -66,7 +65,6 @@ dropVideo.ondrop = function(e) {
     fadeOut($('error'));
   }
   ass.init('', video);
-  control(ass);
 }
 dropASS.ondrop = function(e) {
   e.stopPropagation();
@@ -95,9 +93,9 @@ dropASS.ondrop = function(e) {
       dt = $c('dt');
       dt.innerHTML = 'File Infomation';
       dl.appendChild(dt);
-      for(var i in ass.ASS.ScriptInfo) {
+      for(var i in ass.tree.ScriptInfo) {
         var dd = $c('dd');
-        dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.ASS.ScriptInfo[i];
+        dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.tree.ScriptInfo[i];
         dl.appendChild(dd);
       }
       info.appendChild(dl);
@@ -121,6 +119,14 @@ function fadeOut(d) {
   }, 60);
 }
 </script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
+  ga('create', 'UA-34447075-2', 'auto');
+  ga('send', 'pageview');
+</script>
 </body>
 </html>

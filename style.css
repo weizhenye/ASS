@@ -9,7 +9,7 @@ header {
   padding: 25px 0;
 }
 #github {
-  width: 182px;
+  width: 168px;
   color: #737373;
   font-size: 24px;
   text-decoration: none;
@@ -37,7 +37,7 @@ header {
   width: 620px;
   font-size: 28px;
   text-align: center;
-  height: 384px;
+  height: 340px;
   border: 10px dashed #CCC;
   display: inline-block;
 }
@@ -47,12 +47,12 @@ header {
 }
 #info {
   width: 318px;
-  height: 402px;
+  height: 358px;
   float: right;
   border: 1px solid #CCC;
 }
 #info dl {
-  height: 402px;
+  height: 358px;
   margin: 0;
   white-space: nowrap;
   overflow-y: scroll;
