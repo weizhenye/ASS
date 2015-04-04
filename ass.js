@@ -11,11 +11,43 @@ function ASS() {
       Dialogue: []
     }
   };
-  this.runline = [];
   this.position = 0;
+  this.runline = [];
   this.channel = [];
   this.scale = 1;
   this.stage = document.createElement('div');
+
+  var that = this;
+  document.addEventListener(fullscreenchange(), function() {
+    if (fullScreenElement() == that.video || !isFullScreen()) {
+      that.resize();
+    }
+  });
+  function isFullScreen() {
+    if ('webkitIsFullScreen' in document)
+      return document.webkitIsFullScreen;
+    else if ('mozFullScreen' in document)
+      return document.mozFullScreen;
+    else if ('msExitFullscreen' in document)
+      return msFullscreen;
+  }
+  function fullscreenchange() {
+    if ('webkitCancelFullScreen' in document)
+      return 'webkitfullscreenchange';
+    else if ('mozCancelFullScreen' in document)
+      return 'mozfullscreenchange';
+    else if ('msExitFullscreen' in document)
+      return 'MSFullscreenChange';
+  }
+  function fullScreenElement() {
+    if ('webkitFullscreenElement' in document)
+      return document.webkitFullscreenElement;
+    else if ('mozFullScreenElement' in document)
+      return document.mozFullScreenElement;
+    else if ('msFullscreenElement' in document)
+      return document.msFullscreenElement;
+    document.fullscreenElement
+  }
 }
 ASS.prototype.init = function(data, video) {
   var that = this;
@@ -29,10 +61,12 @@ ASS.prototype.init = function(data, video) {
     container.appendChild(this.video);
 
     this.stage.id = 'ASS-stage';
-    this.resize();
-    this.stage.style.position = 'relative';
+    this.stage.style.position = 'absolute';
     this.stage.style.overflow = 'hidden';
     this.stage.style.pointerEvents = 'none';
+    this.stage.style.zIndex = 2147483647;
+    this.stage.style.top = 0;
+    this.stage.style.left = 0;
     container.appendChild(this.stage);
 
     this.video.addEventListener('seeking', function() {
@@ -76,7 +110,8 @@ ASS.prototype.init = function(data, video) {
 
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var lines = data.split('\n'),
-      state = 0;
+      state = 0,
+      _index = 0;
   this.tree.ScriptInfo['Title'] = '&lt;untitled&gt;';
   this.tree.ScriptInfo['Original Script'] = '&lt;unknown&gt;';
   for (var i = 0; i < lines.length; ++i) {
@@ -132,15 +167,12 @@ ASS.prototype.init = function(data, video) {
         for (var j = 0; j < this.tree.Events.Format.length; ++j) {
           tmp2[this.tree.Events.Format[j]] = tmp1[j].match(/^\s*(.*)/)[1];
         }
-        function timeParser(time) {
-          var t = time.match(/(.*):(.*):(.*)/);
-          return t[1] * 3600 + t[2] * 60 + t[3] * 1;
-        }
-        tmp2.Start = timeParser(tmp2.Start);
-        tmp2.End = timeParser(tmp2.End);
+        tmp2.Start = this._timeParser(tmp2.Start);
+        tmp2.End = this._timeParser(tmp2.End);
         tmp2.MarginL *= 1;
         tmp2.MarginR *= 1;
         tmp2.MarginV *= 1;
+        tmp2._index = ++_index;
         this.tree.Events.Dialogue.push(tmp2);
       }
     }
@@ -149,8 +181,8 @@ ASS.prototype.init = function(data, video) {
     }
   }
   if (this.video && (!this.tree.ScriptInfo.PlayResX || !this.tree.ScriptInfo.PlayResY)) {
-    this.tree.ScriptInfo.PlayResX = this.video.offsetWidth;
-    this.tree.ScriptInfo.PlayResY = this.video.offsetHeight;
+    this.tree.ScriptInfo.PlayResX = this.video.clientWidth;
+    this.tree.ScriptInfo.PlayResY = this.video.clientHeight;
   }
   var CSSstr = '';
   for (var i in this.tree.V4Styles.Style) {
@@ -173,20 +205,32 @@ ASS.prototype.init = function(data, video) {
   }
   document.getElementsByTagName('head')[0].innerHTML += '<style>' + CSSstr + '</style>';
   this.tree.Events.Dialogue.sort(function(a, b) {
-    return a.Start - b.Start;
+    return (a.Start - b.Start) || (a._index - b._index);
   });
   this.resize();
-  // console.log(this.tree);
 };
 ASS.prototype.resize = function() {
+  for (var i = this.stage.childNodes.length - 1; i >= 0; --i) {
+    this.stage.removeChild(this.stage.childNodes[i]);
+  }
+  this.runline = [];
+  this.channel = [];
   if (this.video) {
-    this.stage.style.width = this.video.offsetWidth + 'px';
-    this.stage.style.height = this.video.offsetHeight + 'px';
+    var w = this.video.clientWidth,
+        h = this.video.clientHeight;
+    this.stage.style.width = w + 'px';
+    this.stage.style.height = h + 'px';
     if (this.tree.ScriptInfo.PlayResX) {
-      this.scale = Math.min(this.video.offsetWidth / this.tree.ScriptInfo.PlayResX,
-                            this.video.offsetHeight / this.tree.ScriptInfo.PlayResY);
+      this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX,
+                            h / this.tree.ScriptInfo.PlayResY);
     }
   }
+};
+ASS.prototype.show = function() {
+  this.stage.style.visibility = 'visible';
+};
+ASS.prototype.hide = function() {
+  this.stage.style.visibility = 'hidden';
 };
 ASS.prototype._launch = function(data) {
   var dia = document.createElement('div');
@@ -288,7 +332,7 @@ ASS.prototype._set = function(dia, data) {
       if (/^pos/.test(cmds[j])) dia.pos = dia.pos || cmds[j];
       if (/^org/.test(cmds[j])) {// TODO: transform-origin should be stage's property
         var tt = cmds[j].match(/^org\((\d+).*?(\d+)\)/),
-            to = parseInt(tt[1] / this.video.offsetWidth * 100) + '% ' + parseInt(tt[2] / this.video.offsetHeight * 100) + '%';
+            to = parseInt(tt[1] / this.video.clientWidth * 100) + '% ' + parseInt(tt[2] / this.video.clientHeight * 100) + '%';
         diaChild.style.webkitTransformOrigin = to;
         diaChild.style.mozTransformOrigin = to;
         diaChild.style.msTransformOrigin = to;
@@ -374,15 +418,15 @@ ASS.prototype._set = function(dia, data) {
       dia.style.textAlign = 'left';
     }
     if (dia.a % 3 == 2) {
-      dia.style.left = this.scale * xy[1] - dia.offsetWidth / 2 + 'px';
+      dia.style.left = this.scale * xy[1] - dia.clientWidth / 2 + 'px';
       dia.style.textAlign = 'center';
     }
     if (dia.a % 3 == 0) {
-      dia.style.left = this.scale * xy[1] - dia.offsetWidth + 'px';
+      dia.style.left = this.scale * xy[1] - dia.clientWidth + 'px';
       dia.style.textAlign = 'right';
     }
-    if (dia.a <= 3) dia.style.top = this.scale * xy[2] - dia.offsetHeight + 'px';
-    if (dia.a >= 4 && dia.a <= 6) dia.style.top = this.scale * xy[2] - dia.offsetHeight / 2 + 'px';
+    if (dia.a <= 3) dia.style.top = this.scale * xy[2] - dia.clientHeight + 'px';
+    if (dia.a >= 4 && dia.a <= 6) dia.style.top = this.scale * xy[2] - dia.clientHeight / 2 + 'px';
     if (dia.a >= 7) dia.style.top = this.scale * xy[2] + 'px';
   } else {
     if (dia.a % 3 == 1) {
@@ -391,7 +435,7 @@ ASS.prototype._set = function(dia, data) {
       dia.style.marginLeft = this.scale * dia.MarginL + 'px';
     }
     if (dia.a % 3 == 2) {
-      dia.style.left = (this.stage.offsetWidth - dia.offsetWidth) / 2 + 'px';
+      dia.style.left = (this.stage.clientWidth - dia.clientWidth) / 2 + 'px';
       dia.style.textAlign = 'center';
     }
     if (dia.a % 3 == 0) {
@@ -399,7 +443,7 @@ ASS.prototype._set = function(dia, data) {
       dia.style.textAlign = 'right';
       dia.style.marginRight = this.scale * dia.MarginR + 'px';
     }
-    if (dia.offsetWidth > this.stage.offsetWidth - this.scale * (dia.MarginL + dia.MarginR)) {
+    if (dia.clientWidth > this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) {
       dia.style.marginLeft = this.scale * dia.MarginL + 'px';
       dia.style.marginRight = this.scale * dia.MarginR + 'px';
     }
@@ -415,25 +459,30 @@ ASS.prototype._set = function(dia, data) {
 ASS.prototype._getChannel = function(dia) {
   var that = this,
       L = dia.Layer,
-      SW = this.stage.offsetWidth - dia.MarginL - dia.MarginR,
-      SH = this.stage.offsetHeight,
-      W = dia.offsetWidth,
-      H = dia.offsetHeight,
+      SW = this.stage.clientWidth - dia.MarginL - dia.MarginR,
+      SH = this.stage.clientHeight,
+      W = dia.clientWidth,
+      H = dia.clientHeight,
       V = dia.MarginV,
       count = 0;
   if (!this.channel[L]) {
-    this.channel[L] = [];
-    for (var i = 0; i <= SH; ++i) this.channel[L][i] = [0, 0, 0];
+    this.channel[L] = {
+      left: new Uint16Array(SH + 1),
+      middle: new Uint16Array(SH + 1),
+      right: new Uint16Array(SH + 1)
+    }
   }
-  function judge(i) {
-    var T = that.channel[L][i];
-    if ((dia.a % 3 == 1 && (T[0] || (T[1] && W + T[1] / 2 > SW / 2) || (W + T[2] > SW))) ||
-      (dia.a % 3 == 2 && ((2 * T[0] + W > SW) || T[1] || (2 * T[2] + W > SW))) ||
-      (dia.a % 3 == 0 && ((T[0] + W > SW) || (T[1] && W + T[1] / 2 > SW / 2) || T[2]))) {
+  function judge(x) {
+    var l = that.channel[L].left[x],
+        m = that.channel[L].middle[x],
+        r = that.channel[L].right[x];
+    if ((dia.a % 3 == 1 && (l || (m && W + m / 2 > SW / 2) || (W + r > SW))) ||
+        (dia.a % 3 == 2 && ((2 * l + W > SW) || m || (2 * r + W > SW))) ||
+        (dia.a % 3 == 0 && ((l + W > SW) || (m && W + m / 2 > SW / 2) || r))) {
       count = 0;
     } else ++count;
     if (count > H) {
-      dia.channel = i;
+      dia.channel = x;
       return 1;
     } else return 0;
   }
@@ -444,17 +493,37 @@ ASS.prototype._getChannel = function(dia) {
     for (var i = V; i <= SH - V; ++i)
       if (judge(i)) break;
   } else {
-    for (var i = (SH - H) / 2; i <= SH - V; ++i)
+    for (var i = Math.floor((SH - H) / 2); i <= SH - V; ++i) {
       if (judge(i)) break;
+    }
   }
   if (dia.a > 3) dia.channel -= H;
-  for (var i = dia.channel; i <= dia.channel + H; ++i)
-    this.channel[L][i][(dia.a - 1) % 3] = W;
+  for (var i = dia.channel; i <= dia.channel + H; ++i) {
+    if (dia.a % 3 == 1) {
+      this.channel[L].left[i] = W;
+    } else if (dia.a % 3 == 2) {
+      this.channel[L].middle[i] = W;
+    } else {
+      this.channel[L].right[i] = W;
+    }
+  }
   return dia.channel;
 };
 ASS.prototype._freeChannel = function(dia) {
-  for (var i = dia.channel; i <= dia.channel + dia.offsetHeight; ++i)
-    this.channel[dia.Layer][i][(dia.a - 1) % 3] = 0;
+  for (var i = dia.channel; i <= dia.channel + dia.clientHeight; ++i) {
+    if (dia.a % 3 == 1) {
+      this.channel[dia.Layer].left[i] = 0;
+    } else if (dia.a % 3 == 2) {
+      this.channel[dia.Layer].middle[i] = 0;
+    } else {
+      this.channel[dia.Layer].right[i] = 0;
+    }
+  }
+};
+ASS.prototype._timeParser = function(time) {
+  var t = time.match(/(.*):(.*):(.*)/),
+      timer = (this.tree.ScriptInfo['Timer']) ? (this.tree.ScriptInfo['Timer'] / 100) : 1;
+  return (t[1] * 3600 + t[2] * 60 + t[3] * 1) * timer;
 };
 ASS.prototype._toRGBA = function(c) {
   var t = c.match(/&H(\w\w)(\w\w)(\w\w)(\w\w)/),
@@ -491,5 +560,5 @@ ASS.prototype._getRealFontSize = function(fs) {
   var tmp = document.createElement('div');
   // tmp.style.fontFamily = 
   tmp.style.fontSize = fs + 'px';
-  return fs * fs / tmp.offsetHeight;
+  return fs * fs / tmp.clientHeight;
 };

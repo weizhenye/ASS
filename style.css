@@ -23,9 +23,13 @@ header {
 #github:hover {
   color: #010101;
 }
-#github span {
-  font-size: 20px;
-  font-family: serif, sans-serif;
+#buttons {
+  margin: auto;
+  text-align: center;
+  padding: 10px 0;
+}
+button {
+  margin: 0 10px;
 }
 #demo {
   width: 960px;
@@ -79,9 +83,4 @@ header {
   z-index: 9;
   left: 340px;
   display: none;
-}
-#error span {
-  color: #FFF;
-  font-size: 30px;
-  cursor: default;
 }

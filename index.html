@@ -11,8 +11,11 @@
 
 <header>ASS.js - A Renderer For ASS File</header>
 <nav><a id="github" href="https://github.com/weizhenye/ASS">View on GitHub</a></nav>
+<div id="buttons" style="visibility: hidden;">
+  <button id="w640">640*360</button><button id="w960">960*540</button>
+</div>
 <div id="demo">
-  <div id="error"><span class="icon-notification"></span> File format error</div>
+  <div id="error">File format error</div>
   <div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
 </div>
 
@@ -23,7 +26,11 @@ var $c = function(tag) { return document.createElement(tag); }
 var dropVideo = $('drop-video'),
     dropASS = $('drop-ASS'),
     ass = new ASS(),
-    _Timer;
+    _Timer,
+    videoReady = false,
+    ASSReady = false,
+    video,
+    content;
 dropVideo.ondragleave = dropASS.ondragleave = function() { this.style.borderColor = '#CCC'; }
 dropVideo.ondragover = dropASS.ondragover = function(e) {
   e.stopPropagation();
@@ -37,8 +44,8 @@ dropVideo.ondrop = function(e) {
   this.style.borderColor = '#CCC';
 
   var file = e.dataTransfer.files[0],
-      video = $c('video'),
       src;
+  video = $c('video')
   if (window.URL && window.URL.createObjectURL)
     src = window.URL.createObjectURL(file);
   else if (window.webkitURL && window.webkitURL.createObjectURL)
@@ -50,21 +57,21 @@ dropVideo.ondrop = function(e) {
   video.src = src;
   video.id = 'video';
   video.controls = true;
-  video.style.width = '640px';
-  video.style.height = '360px';
+  // video.style.width = '640px';
+  // video.style.height = '360px';
   video.style.backgroundColor = '#000';
   video.style.display = 'inline-block';
   video.style.position = 'absolute';
-  $('demo').insertBefore(video, dropVideo);
-  dropVideo.style.display = 'none';
+  video.onloadedmetadata = function() {
+    videoReady = true;
+    $('demo').insertBefore(video, dropVideo);
+    dropVideo.style.display = 'none';
+    if (videoReady && ASSReady) init();
+  };
   video.onerror = function(e) {
-    console.log(e);
-    ass.video = undefined;
-    $('demo').removeChild($('ASS-container'));
-    dropVideo.style.display = 'inline-block';
+    videoReady = false;
     fadeOut($('error'));
-  }
-  ass.init('', video);
+  };
 }
 dropASS.ondrop = function(e) {
   e.stopPropagation();
@@ -80,27 +87,35 @@ dropASS.ondrop = function(e) {
   reader.readAsText(file);
   reader.onload = function(ev) {
     var data = ev.target.result;
-    ass.init(ev.target.result, undefined);
     if (!/^\[Script Info\]/i.test(data)) {
-      ass.ASS = {ScriptInfo: {}, V4Styles: { Format: {}, Style: {} },Events: {Format: {}, Dialogue: []}};
       fadeOut($('error'));
+      ASSReady = false;
     } else {
-      var info = $c('div');
-      info.id = 'info';
-      $('demo').insertBefore(info, dropASS);
-      dropASS.style.display = 'none';
-      var dl = $c('dl'),
-      dt = $c('dt');
-      dt.innerHTML = 'File Infomation';
-      dl.appendChild(dt);
-      for(var i in ass.tree.ScriptInfo) {
-        var dd = $c('dd');
-        dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.tree.ScriptInfo[i];
-        dl.appendChild(dd);
-      }
-      info.appendChild(dl);
+      ASSReady = true;
+      content = data;
+      if (videoReady && ASSReady) init();
+      dropASS.innerHTML = '<br><br><br><br>ASS file dropped.';
+      dropASS.style.border = '10px solid #CCC';
     }
   }
+}
+function init() {
+  ass.init(content, video);
+  var info = $c('div');
+  info.id = 'info';
+  $('demo').insertBefore(info, dropASS);
+  dropASS.style.display = 'none';
+  var dl = $c('dl'),
+      dt = $c('dt');
+  dt.innerHTML = 'File Infomation';
+  dl.appendChild(dt);
+  for (var i in ass.tree.ScriptInfo) {
+    var dd = $c('dd');
+    dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.tree.ScriptInfo[i];
+    dl.appendChild(dd);
+  }
+  info.appendChild(dl);
+  $('buttons').style.visibility = 'visible';
 }
 function fadeOut(d) {
   clearInterval(_Timer);
@@ -116,17 +131,53 @@ function fadeOut(d) {
       d.style.display = 'none';
       op = 200;
     }
-  }, 60);
+  }, 50);
 }
+function fullscreenchange() {
+  if('webkitCancelFullScreen' in document)
+    return 'webkitfullscreenchange';
+  else if('mozCancelFullScreen' in document)
+    return 'mozfullscreenchange';
+  else if('msExitFullscreen' in document)
+    return 'MSFullscreenChange';
+}
+function isFullScreen() {
+  if('webkitIsFullScreen' in document)
+    return document.webkitIsFullScreen;
+  else if('mozFullScreen' in document)
+    return document.mozFullScreen;
+  else if('msExitFullscreen' in document)
+    return msFullscreen;
+}
+// document.addEventListener(fullscreenchange(), function() {
+//   if (isFullScreen()) {
+//     video.style.width = window.screen.width + 'px';
+//     video.style.height = window.screen.height + 'px';
+//   } else {
+//     video.style.width = '640px';
+//     video.style.height = '360px';
+//   }
+//   ass.resize();
+// });
+$('w640').onclick = function() {
+  video.style.width = '640px';
+  video.style.height = '360px';
+  ass.resize();
+};
+$('w960').onclick = function() {
+  video.style.width = '960px';
+  video.style.height = '540px';
+  ass.resize();
+};
 </script>
 <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  // (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  // (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  // m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  // })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-34447075-2', 'auto');
-  ga('send', 'pageview');
+  // ga('create', 'UA-34447075-2', 'auto');
+  // ga('send', 'pageview');
 </script>
 </body>
 </html>

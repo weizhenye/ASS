@@ -1,6 +1,6 @@
 ASS.js is a parser for ASS file and renders subtitle on HTML5 video.
 
-[DEMO](https://weizhenye.github.io/ASS/)
+[DEMO](http://ass.woozy.im/)
 
 [TODO list](https://github.com/weizhenye/ASS#todo)
 
@@ -25,14 +25,13 @@ ASS.js is a parser for ASS file and renders subtitle on HTML5 video.
 
 ### Initialization
 	ass.init(content, video);
-### Stage
-	ass.stage
-
-	// Example
-	ass.stage.style.visibility = 'hidden';
 ### Resize
 	// If you change video's width or height, you should do
 	ass.resize();
+### Show
+	ass.show();
+### Hide
+	ass.hide();
 
 
 # TODO
@@ -42,7 +41,9 @@ Items with <del>strikethrough</del> means they won't be supported.
 #### [Script Info]
 
 * <del>Synch Point</del>
-* __WrapStyle__
+* <del>PlayDepth</del>
+* __WrapStyle: 0, 3__
+* __Collisions: Reverse__
 
 
 #### [V4+ Styles]
@@ -69,11 +70,11 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __\q__ WrapStyle
 		- __\t__
 		- __\fr[x/y/z]__ bad performance in browsers
-		- __\org(x,y)__
-		- __\move(x1,y1,x2,y2[,time1,time2])__
+		- __\org(x, y)__
+		- __\move(x1, y1, x2, y2[, time1, time2])__
 		- __\fad(inTime,outTime)__
-		- __\fade(a1,a2,a3,time1,time2,time3,time4)__
-		- __\clip(x1,y1,x2,y2)__
+		- __\fade(a1, a2, a3, time1, time2, time3, time4)__
+		- __\clip(x1, y1, x2, y2)__
 		- __\p__
 
 #### <del>[Fonts]</del>
