@@ -97,7 +97,7 @@ ASS.prototype.init = function(data, video) {
         }
       }
       if (that.position < that.tree.Events.Dialogue.length) {
-        while (that.tree.Events.Dialogue[that.position].Start <= that.video.currentTime && that.video.currentTime <= that.tree.Events.Dialogue[that.position].End) {
+        while (that.tree.Events.Dialogue[that.position].Start <= that.video.currentTime && that.video.currentTime < that.tree.Events.Dialogue[that.position].End) {
           that._launch(that.tree.Events.Dialogue[that.position]);
           ++that.position;
           if (that.position >= that.tree.Events.Dialogue.length) break;
@@ -143,11 +143,7 @@ ASS.prototype.init = function(data, video) {
           tmp2[tmp3] = tmp1[j].match(/^\s*(.*)/)[1];
           if (!isNaN(tmp2[tmp3] * 1)) tmp2[tmp3] *= 1;
         }
-        tmp2.PrimaryColour = this._toRGBA(tmp2.PrimaryColour);
-        tmp2.SecondaryColour = this._toRGBA(tmp2.SecondaryColour);
-        tmp2.OutlineColour = this._toRGBA(tmp2.OutlineColour);
-        tmp2.BackColour = this._toRGBA(tmp2.BackColour);
-
+        tmp2.Fontsize = this._getRealFontSize(tmp2.Fontsize, tmp2.Fontname);
         this.tree.V4Styles.Style[tmp2.Name] = tmp2;
       }
     }
@@ -173,7 +169,7 @@ ASS.prototype.init = function(data, video) {
         tmp2.MarginR *= 1;
         tmp2.MarginV *= 1;
         tmp2._index = ++_index;
-        this.tree.Events.Dialogue.push(tmp2);
+        if (tmp2.Start < tmp2.End) this.tree.Events.Dialogue.push(tmp2);
       }
     }
     if (state == 4) {
@@ -189,7 +185,7 @@ ASS.prototype.init = function(data, video) {
     var s = this.tree.V4Styles.Style[i],
         str = '{';
     str += 'font-family: \'' + s.Fontname + '\', Arial;';
-    str += 'color: ' + s.PrimaryColour + ';';
+    str += 'color: ' + this._toRGBA(s.PrimaryColour) + ';';
     str += 'font-weight: ' + ((s.Bold == -1) ? '900' : 'normal') + ';';
     str += 'font-style: ' + ((s.Italic == -1) ? 'italic' : 'normal') + ';';
     str += 'text-decoration: ' + ((s.Underline == -1) ? ' underline' : '') + ((s.StrikeOut == -1) ? ' line-through' : '') + ';';
@@ -221,8 +217,7 @@ ASS.prototype.resize = function() {
     this.stage.style.width = w + 'px';
     this.stage.style.height = h + 'px';
     if (this.tree.ScriptInfo.PlayResX) {
-      this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX,
-                            h / this.tree.ScriptInfo.PlayResY);
+      this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
     }
   }
 };
@@ -234,34 +229,87 @@ ASS.prototype.hide = function() {
 };
 ASS.prototype._launch = function(data) {
   var dia = document.createElement('div');
-  this._set(dia, data);
+  this._setStyle(dia, data);
   this.runline.push(dia);
 };
-ASS.prototype._set = function(dia, data) {
-  var s = this.tree.V4Styles.Style[data.Style];
-  dia.className = 'ASS-style-' + (s ? data.Style : 'Default');
-  dia.style.position = 'absolute';
-  s = s || this.tree.V4Styles.Style.Default;
-
-  dia.style.fontSize = this.scale * s.Fontsize + 'px';
-  dia.style.letterSpacing = this.scale * s.Spacing + 'px';
-  if (s.BorderStyle == 1) dia.style.textShadow = this._createTextShadow(s.OutlineColour, s.Outline, s.BackColour, s.Shadow);
-  dia.SecondaryColour = s.SecondaryColour;
-  dia.OutlineColour = s.OutlineColour;
-  dia.Outline = s.Outline;
-  dia.BackColour = s.BackColour;
-  dia.Shadow = s.Shadow;
+ASS.prototype._setStyle = function(dia, data) {
+  var s = this.tree.V4Styles.Style[data.Style] || this.tree.V4Styles.Style['Default'];
+  for (var i in s) {
+    dia[i] = s[i];
+  }
   dia.Layer = data.Layer;
   dia.Start = data.Start;
   dia.End = data.End;
+  dia.MarginL = data.MarginL || dia.MarginL;
+  dia.MarginR = data.MarginR || dia.MarginR;
+  dia.MarginV = data.MarginV || dia.MarginV;
+  dia.Effect = data.Effect;
 
+  dia.className = 'ASS-style-' + dia.Name;
+  dia.style.position = 'absolute';
+  dia.style.fontSize = this.scale * dia.Fontsize + 'px';
+  dia.style.letterSpacing = this.scale * dia.Spacing + 'px';
+  if (dia.BorderStyle == 1) {
+    dia.style.textShadow = this._createShadow(dia.OutlineColour, dia.Outline, dia.BackColour, dia.Shadow);
+  }
+
+  this._parseCode(dia, data.Text);
   this.stage.appendChild(dia);
-  data.Text = data.Text.replace(/\\n/g, (this.tree.ScriptInfo.WrapStyle == 2) ? '<br>' : '&nbsp;');
-  data.Text = data.Text.replace(/\\N/g, '<br>');
-  data.Text = data.Text.replace(/\\h/g, '&nbsp;');
-  var t = data.Text.split('{'),
+
+  // Solve WrapStyle first
+  if (dia.pos) {
+    var xy = dia.pos.match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
+    if (dia.Alignment % 3 == 1) {
+      dia.style.left = this.scale * xy[1] + 'px';
+      dia.style.textAlign = 'left';
+    }
+    if (dia.Alignment % 3 == 2) {
+      dia.style.left = this.scale * xy[1] - dia.clientWidth / 2 + 'px';
+      dia.style.textAlign = 'center';
+    }
+    if (dia.Alignment % 3 == 0) {
+      dia.style.left = this.scale * xy[1] - dia.clientWidth + 'px';
+      dia.style.textAlign = 'right';
+    }
+    if (dia.Alignment <= 3) dia.style.top = this.scale * xy[2] - dia.clientHeight + 'px';
+    if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.style.top = this.scale * xy[2] - dia.clientHeight / 2 + 'px';
+    if (dia.Alignment >= 7) dia.style.top = this.scale * xy[2] + 'px';
+  } else {
+    if (dia.Alignment % 3 == 1) {
+      dia.style.left = '0';
+      dia.style.textAlign = 'left';
+      dia.style.marginLeft = this.scale * dia.MarginL + 'px';
+    }
+    if (dia.Alignment % 3 == 2) {
+      dia.style.left = (this.stage.clientWidth - dia.clientWidth) / 2 + 'px';
+      dia.style.textAlign = 'center';
+    }
+    if (dia.Alignment % 3 == 0) {
+      dia.style.right = '0';
+      dia.style.textAlign = 'right';
+      dia.style.marginRight = this.scale * dia.MarginR + 'px';
+    }
+    if (dia.clientWidth > this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) {
+      dia.style.marginLeft = this.scale * dia.MarginL + 'px';
+      dia.style.marginRight = this.scale * dia.MarginR + 'px';
+    }
+    dia.channel = 0;
+    dia.style.top = this._getChannel(dia) + 'px';
+  }
+
+  // TODO
+  // if (/^Karaoke/i.test(data.Effect)) {}
+  // if (/^Banner/i.test(data.Effect)) {}
+  // if (/^Scroll up/i.test(data.Effect)) {}
+  // if (/^Scroll down/i.test(data.Effect)) {}
+};
+ASS.prototype._parseCode = function(dia, text) {
+  text = text.replace(/\\n/g, (this.tree.ScriptInfo.WrapStyle == 2) ? '<br>' : '&nbsp;');
+  text = text.replace(/\\N/g, '<br>');
+  text = text.replace(/\\h/g, '&nbsp;');
+  var t = text.split('{'),
       nowFather = dia;
-  dia.r = 0;
+  dia.reset = false;
   dia.father = dia;
   for (var i = 0; i < t.length; ++i) {
     if (!/\}/.test(t[i])) {
@@ -272,10 +320,18 @@ ASS.prototype._set = function(dia, data) {
         cmds = kv[0].split('\\'),
         diaChild = document.createElement('div');
 
-    diaChild.alpha = [];
-    diaChild.r = 0;
     diaChild.father = nowFather;
     diaChild.father.appendChild(diaChild);
+
+    diaChild.Fontsize = diaChild.father.Fontsize;
+    diaChild.PrimaryColour = diaChild.father.PrimaryColour;
+    diaChild.SecondaryColour = diaChild.father.SecondaryColour;
+    diaChild.OutlineColour = diaChild.father.OutlineColour;
+    diaChild.BackColour = diaChild.father.BackColour;
+    diaChild.Outline = diaChild.father.Outline;
+    diaChild.Shadow = diaChild.father.Shadow;
+    diaChild.reset = false;
+
     diaChild.style.display = 'inline';
     diaChild.innerHTML = kv[1];
     for (var j = 0; j < cmds.length; ++j) {
@@ -291,9 +347,11 @@ ASS.prototype._set = function(dia, data) {
       if (/^bord/.test(cmds[j])) diaChild.Outline = cmds[j].match(/^bord(.*)/)[1];
       if (/^shad/.test(cmds[j])) diaChild.Shadow = cmds[j].match(/^shad(.*)/)[1];
       if (/^fn/.test(cmds[j])) diaChild.style.fontFamily = '\'' + cmds[j].match(/fn(.*)/)[1] + '\', Arial';
-      if (/^fs\d/.test(cmds[j])) diaChild.style.fontSize = this.scale * cmds[j].match(/^fs(.*)/)[1] + 'px';
-      if (/^fs-\d/.test(cmds[j])) {// TODO
-        console.log(cmds[j].match(/^fs-(.*)/)[1]);
+      if (/^fs\d/.test(cmds[j])) diaChild.Fontsize = cmds[j].match(/^fs(.*)/)[1];
+      if (/^fs-\d/.test(cmds[j])) {
+        var tt = cmds[j].match(/^fs-(.*)/)[1];
+        if (tt > 9) tt = 0;
+        diaChild.Fontsize *= (10 - tt) / 10;
       }
       if (/^fsc/.test(cmds[j])) {
         var tt = cmds[j].match(/^fsc(\w)(.*)/),
@@ -316,19 +374,36 @@ ASS.prototype._set = function(dia, data) {
       }
       if (/^\d?c&H/.test(cmds[j])) {
         var tt = cmds[j].match(/^(\d?)c&H(\w+)/);
-        while(tt[2].length < 6) tt[2] = '0' + tt[2];
-        if (tt[1] == '1' || tt[1] == '') diaChild.PrimaryColour = tt[2];
-        if (tt[1] == '2') diaChild.SecondaryColour = tt[2];
-        if (tt[1] == '3') diaChild.OutlineColour = tt[2];
-        if (tt[1] == '4') diaChild.BackColour = tt[2];
+        while (tt[2].length < 6) tt[2] = '0' + tt[2];
+        if (tt[1] == '1' || tt[1] == '') diaChild.PrimaryColour = diaChild.PrimaryColour.replace(/\w{6}$/, tt[2]);
+        if (tt[1] == '2') diaChild.SecondaryColour = diaChild.SecondaryColour.replace(/\w{6}$/, tt[2]);
+        if (tt[1] == '3') diaChild.OutlineColour = diaChild.OutlineColour.replace(/\w{6}$/, tt[2]);
+        if (tt[1] == '4') diaChild.BackColour = diaChild.BackColour.replace(/\w{6}$/, tt[2]);
       }
-      if (/^\da&H/.test(cmds[j])) {
-        var tt = cmds[j].match(/^(\d)a&H(\w+)/);
-        diaChild.alpha[tt[1] * 1] = tt[2];
+      if (/^\d?a&H/.test(cmds[j])) {
+        var tt = cmds[j].match(/^(\d?)a&H(\w\w)/);
+        if (tt[1] == '1' || tt[1] == '') diaChild.PrimaryColour = diaChild.PrimaryColour.replace(/&H\w\w/, '&H' + tt[2]);
+        if (tt[1] == '2') diaChild.SecondaryColour = diaChild.SecondaryColour.replace(/&H\w\w/, '&H' + tt[2]);
+        if (tt[1] == '3') diaChild.OutlineColour = diaChild.OutlineColour.replace(/&H\w\w/, '&H' + tt[2]);
+        if (tt[1] == '4') diaChild.BackColour = diaChild.BackColour.replace(/&H\w\w/, '&H' + tt[2]);
       }
-      if (/^alpha&H/.test(cmds[j])) diaChild.alpha[0] = cmds[j].match(/^alpha&H(\w+)/)[1];
-      if (/^a\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
-      if (/^an\d/.test(cmds[j])) dia.a = dia.a || cmds[j];
+      if (/^alpha&H/.test(cmds[j])) {
+        var tt = cmds[j].match(/^alpha&H(\w\w)/)[1];
+        diaChild.alpha[0] = cmds[j].match(/^alpha&H(\w\w)/)[1];
+        diaChild.PrimaryColour = diaChild.PrimaryColour.replace(/&H\w\w/, '&H' + tt);
+        diaChild.SecondaryColour = diaChild.SecondaryColour.replace(/&H\w\w/, '&H' + tt);
+        diaChild.OutlineColour = diaChild.OutlineColour.replace(/&H\w\w/, '&H' + tt);
+        diaChild.BackColour = diaChild.BackColour.replace(/&H\w\w/, '&H' + tt);
+      }
+      if (/^a\d/.test(cmds[j])) {
+        var tt = cmds[j].match(/^a(\d)/)[1] * 1;
+        if (tt < 4) {
+          dia.Alignment = tt;
+        } else if (tt > 8) {
+          dia.Alignment = tt - 5;
+        } else dia.Alignment = tt + 2;
+      }
+      if (/^an\d/.test(cmds[j])) dia.Alignment = cmds[j].match(/^an(\d)/)[1] * 1;
       if (/^pos/.test(cmds[j])) dia.pos = dia.pos || cmds[j];
       if (/^org/.test(cmds[j])) {// TODO: transform-origin should be stage's property
         var tt = cmds[j].match(/^org\((\d+).*?(\d+)\)/),
@@ -356,25 +431,37 @@ ASS.prototype._set = function(dia, data) {
         }
       }
       if (/^r/.test(cmds[j])) {
-        diaChild.r = 1;
+        diaChild.reset = true;
         var tt = cmds[j].match(/^r(.*)/)[1],
-            ss = this.tree.V4Styles.Style[tt];
-        if (tt) diaChild.className = 'ASS-style-' + (ss ? tt : 'Default');
-        ss = ss || this.tree.V4Styles.Style.Default;
-        diaChild.style.fontSize = this.scale * ss.Fontsize + 'px';
-        diaChild.style.letterSpacing = this.scale * ss.Spacing + 'px';
-        diaChild.SecondaryColour = ss.SecondaryColour;
-        if (ss.BorderStyle == 1) diaChild.style.textShadow = this._createTextShadow(ss.OutlineColour, ss.Outline, ss.BackColour, ss.Shadow);
+            ss = this.tree.V4Styles.Style[tt] || this.tree.V4Styles.Style['Default'];
+        if (tt == '') ss = this.tree.V4Styles.Style[dia.Name];
+        if (tt) {
+          diaChild.Fontsize = ss.Fontsize;
+          diaChild.PrimaryColour = ss.PrimaryColour;
+          diaChild.SecondaryColour = ss.SecondaryColour;
+          diaChild.OutlineColour = ss.OutlineColour;
+          diaChild.BackColour = ss.BackColour;
+          diaChild.Outline = ss.Outline;
+          diaChild.Shadow = ss.Shadow;
+          diaChild.className = 'ASS-style-' + ss.Name;
+          diaChild.style.fontSize = this.scale * ss.Fontsize + 'px';
+          diaChild.style.letterSpacing = this.scale * ss.Spacing + 'px';
+          if (ss.BorderStyle == 1) diaChild.style.textShadow = this._createShadow(ss.OutlineColour, ss.Outline, ss.BackColour, ss.Shadow);
+        }
       }
       if (/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])) {
         cmds[j] += '\\' + cmds[j + 1];
         cmds[j + 1] = '';
       }
     }
-    if (diaChild.r) {
+    if (diaChild.reset) {
       diaChild.father.removeChild(diaChild);
-      diaChild.father = nowFather.father;
-      diaChild.father.appendChild(diaChild);
+      diaChild.father = dia;
+      dia.appendChild(diaChild);
+    } else {
+      diaChild.style.fontSize = this.scale * diaChild.Fontsize + 'px';
+      diaChild.style.color = this._toRGBA(diaChild.PrimaryColour);
+      diaChild.style.textShadow = this._createShadow(diaChild.OutlineColour, diaChild.Outline, diaChild.BackColour, diaChild.Shadow);
     }
     nowFather = diaChild;
     ['y', 'x', 'z'].forEach(function(e) {// TODO
@@ -386,75 +473,7 @@ ASS.prototype._set = function(dia, data) {
       diaChild.style.msTransform += tf;
       diaChild.style.transform += tf;
     });
-    if (diaChild.PrimaryColour) diaChild.style.color = this._toRGBA('&H' + (diaChild.alpha[1] || '00') + diaChild.PrimaryColour);
-    else if (diaChild.alpha[0]) diaChild.style.opacity = 1 - parseInt(diaChild.alpha[0], 16) / 255;
-    if (diaChild.OutlineColour) diaChild.OutlineColour = this._toRGBA('&H' + (diaChild.alpha[3] || '00') + diaChild.OutlineColour);
-    if (diaChild.BackColour) diaChild.BackColour = this._toRGBA('&H' + (diaChild.alpha[4] || '00') + diaChild.BackColour);
-    if (diaChild.OutlineColour || diaChild.Outline != undefined || diaChild.BackColour || diaChild.Shadow != undefined) {
-      for (var tmpf = diaChild.father; diaChild.OutlineColour == undefined; tmpf = tmpf.father) diaChild.OutlineColour = tmpf.OutlineColour;
-      for (var tmpf = diaChild.father; diaChild.BackColour == undefined; tmpf = tmpf.father) diaChild.BackColour = tmpf.BackColour;
-      for (var tmpf = diaChild.father; diaChild.Outline == undefined; tmpf = tmpf.father) diaChild.Outline = tmpf.Outline;
-      for (var tmpf = diaChild.father; diaChild.Shadow == undefined; tmpf = tmpf.father) diaChild.Shadow = tmpf.Shadow;
-      diaChild.style.textShadow = this._createTextShadow(diaChild.OutlineColour, diaChild.Outline, diaChild.BackColour, diaChild.Shadow);
-    }
   }
-  dia.MarginL = data.MarginL || s.MarginL;
-  dia.MarginR = data.MarginR || s.MarginR;
-  dia.MarginV = data.MarginV || s.MarginV;
-  if (dia.a) {
-    if (/a\d/.test(dia.a)) {
-      var ali = dia.a.match(/a(\d+)/)[1];
-      if (ali < 4) dia.a = ali;
-      else if (ali < 8) dia.a = ali + 2;
-      else dia.a = ali - 5;
-    } else dia.a = dia.a.match(/an(\d+)/)[1];
-  } else dia.a = s.Alignment;
-  dia.a *= 1;
-  // Solve WrapStyle first
-  if (dia.pos) {
-    var xy = dia.pos.match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
-    if (dia.a % 3 == 1) {
-      dia.style.left = this.scale * xy[1] + 'px';
-      dia.style.textAlign = 'left';
-    }
-    if (dia.a % 3 == 2) {
-      dia.style.left = this.scale * xy[1] - dia.clientWidth / 2 + 'px';
-      dia.style.textAlign = 'center';
-    }
-    if (dia.a % 3 == 0) {
-      dia.style.left = this.scale * xy[1] - dia.clientWidth + 'px';
-      dia.style.textAlign = 'right';
-    }
-    if (dia.a <= 3) dia.style.top = this.scale * xy[2] - dia.clientHeight + 'px';
-    if (dia.a >= 4 && dia.a <= 6) dia.style.top = this.scale * xy[2] - dia.clientHeight / 2 + 'px';
-    if (dia.a >= 7) dia.style.top = this.scale * xy[2] + 'px';
-  } else {
-    if (dia.a % 3 == 1) {
-      dia.style.left = '0';
-      dia.style.textAlign = 'left';
-      dia.style.marginLeft = this.scale * dia.MarginL + 'px';
-    }
-    if (dia.a % 3 == 2) {
-      dia.style.left = (this.stage.clientWidth - dia.clientWidth) / 2 + 'px';
-      dia.style.textAlign = 'center';
-    }
-    if (dia.a % 3 == 0) {
-      dia.style.right = '0';
-      dia.style.textAlign = 'right';
-      dia.style.marginRight = this.scale * dia.MarginR + 'px';
-    }
-    if (dia.clientWidth > this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) {
-      dia.style.marginLeft = this.scale * dia.MarginL + 'px';
-      dia.style.marginRight = this.scale * dia.MarginR + 'px';
-    }
-    dia.style.top = this._getChannel(dia) + 'px';
-  }
-
-  // TODO
-  // if (/^Karaoke/i.test(data.Effect)) {}
-  // if (/^Banner/i.test(data.Effect)) {}
-  // if (/^Scroll up/i.test(data.Effect)) {}
-  // if (/^Scroll down/i.test(data.Effect)) {}
 };
 ASS.prototype._getChannel = function(dia) {
   var that = this,
@@ -476,20 +495,22 @@ ASS.prototype._getChannel = function(dia) {
     var l = that.channel[L].left[x],
         m = that.channel[L].middle[x],
         r = that.channel[L].right[x];
-    if ((dia.a % 3 == 1 && (l || (m && W + m / 2 > SW / 2) || (W + r > SW))) ||
-        (dia.a % 3 == 2 && ((2 * l + W > SW) || m || (2 * r + W > SW))) ||
-        (dia.a % 3 == 0 && ((l + W > SW) || (m && W + m / 2 > SW / 2) || r))) {
+    if ((l + m + r > 0) &&
+        ( (dia.Alignment % 3 == 1 && (l || (m && W + m / 2 > SW / 2) || (W + r > SW))) ||
+          (dia.Alignment % 3 == 2 && ((2 * l + W > SW) || m || (2 * r + W > SW))) ||
+          (dia.Alignment % 3 == 0 && ((l + W > SW) || (m && W + m / 2 > SW / 2) || r))
+        )) {
       count = 0;
     } else ++count;
-    if (count > H) {
+    if (count >= H) {
       dia.channel = x;
       return 1;
     } else return 0;
   }
-  if (dia.a <= 3) {
+  if (dia.Alignment <= 3) {
     for (var i = SH - V; i >= V; --i)
       if (judge(i)) break;
-  } else if (dia.a >= 7) {
+  } else if (dia.Alignment >= 7) {
     for (var i = V; i <= SH - V; ++i)
       if (judge(i)) break;
   } else {
@@ -497,11 +518,11 @@ ASS.prototype._getChannel = function(dia) {
       if (judge(i)) break;
     }
   }
-  if (dia.a > 3) dia.channel -= H;
+  if (dia.Alignment > 3) dia.channel -= H;
   for (var i = dia.channel; i <= dia.channel + H; ++i) {
-    if (dia.a % 3 == 1) {
+    if (dia.Alignment % 3 == 1) {
       this.channel[L].left[i] = W;
-    } else if (dia.a % 3 == 2) {
+    } else if (dia.Alignment % 3 == 2) {
       this.channel[L].middle[i] = W;
     } else {
       this.channel[L].right[i] = W;
@@ -511,9 +532,9 @@ ASS.prototype._getChannel = function(dia) {
 };
 ASS.prototype._freeChannel = function(dia) {
   for (var i = dia.channel; i <= dia.channel + dia.clientHeight; ++i) {
-    if (dia.a % 3 == 1) {
+    if (dia.Alignment % 3 == 1) {
       this.channel[dia.Layer].left[i] = 0;
-    } else if (dia.a % 3 == 2) {
+    } else if (dia.Alignment % 3 == 2) {
       this.channel[dia.Layer].middle[i] = 0;
     } else {
       this.channel[dia.Layer].right[i] = 0;
@@ -533,7 +554,9 @@ ASS.prototype._toRGBA = function(c) {
       r = parseInt(t[4], 16);
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a.toFixed(1) + ')';
 };
-ASS.prototype._createTextShadow = function(oc, ow, sc, sw) {
+ASS.prototype._createShadow = function(oc, ow, sc, sw) {
+  oc = this._toRGBA(oc);
+  sc = this._toRGBA(sc);
   var ts = '';
   ow = parseFloat(ow);
   sw = parseFloat(sw);
@@ -556,9 +579,16 @@ ASS.prototype._createTextShadow = function(oc, ow, sc, sw) {
   } else ts = ts.substr(0, ts.length - 2);
   return ts;
 };
-ASS.prototype._getRealFontSize = function(fs) {
-  var tmp = document.createElement('div');
-  // tmp.style.fontFamily = 
-  tmp.style.fontSize = fs + 'px';
-  return fs * fs / tmp.clientHeight;
+ASS.prototype._getRealFontSize = function(fs, fn) {
+  var rfs,
+      fse = document.createElement('div'),
+      container = document.getElementById('ASS-container');
+  fse.innerHTML = 'ASS.js';
+  fse.style.fontFamily = fn;
+  fse.style.fontSize = fs + 'px';
+  fse.style.visibility = 'hidden';
+  container.appendChild(fse);
+  rfs = fs * fs / fse.clientHeight;
+  container.removeChild(fse);
+  return rfs;
 };
