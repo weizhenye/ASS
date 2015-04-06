@@ -57,8 +57,8 @@ dropVideo.ondrop = function(e) {
   video.src = src;
   video.id = 'video';
   video.controls = true;
-  // video.style.width = '640px';
-  // video.style.height = '360px';
+  video.style.width = '640px';
+  video.style.height = '360px';
   video.style.backgroundColor = '#000';
   video.style.display = 'inline-block';
   video.style.position = 'absolute';
@@ -149,16 +149,6 @@ function isFullScreen() {
   else if('msExitFullscreen' in document)
     return msFullscreen;
 }
-// document.addEventListener(fullscreenchange(), function() {
-//   if (isFullScreen()) {
-//     video.style.width = window.screen.width + 'px';
-//     video.style.height = window.screen.height + 'px';
-//   } else {
-//     video.style.width = '640px';
-//     video.style.height = '360px';
-//   }
-//   ass.resize();
-// });
 $('w640').onclick = function() {
   video.style.width = '640px';
   video.style.height = '360px';
