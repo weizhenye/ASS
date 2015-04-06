@@ -324,6 +324,7 @@ ASS.prototype._parseCode = function(dia, text) {
     diaChild.father.appendChild(diaChild);
 
     diaChild.Fontsize = diaChild.father.Fontsize;
+    diaChild.Fontname = diaChild.father.Fontname;
     diaChild.PrimaryColour = diaChild.father.PrimaryColour;
     diaChild.SecondaryColour = diaChild.father.SecondaryColour;
     diaChild.OutlineColour = diaChild.father.OutlineColour;
@@ -346,8 +347,8 @@ ASS.prototype._parseCode = function(dia, text) {
       if (cmds[j] == 's1') diaChild.style.textDecoration += ' line-through';
       if (/^bord/.test(cmds[j])) diaChild.Outline = cmds[j].match(/^bord(.*)/)[1];
       if (/^shad/.test(cmds[j])) diaChild.Shadow = cmds[j].match(/^shad(.*)/)[1];
-      if (/^fn/.test(cmds[j])) diaChild.style.fontFamily = '\'' + cmds[j].match(/fn(.*)/)[1] + '\', Arial';
-      if (/^fs\d/.test(cmds[j])) diaChild.Fontsize = cmds[j].match(/^fs(.*)/)[1];
+      if (/^fn/.test(cmds[j])) diaChild.Fontname = cmds[j].match(/fn(.*)/)[1];
+      if (/^fs\d/.test(cmds[j])) diaChild.Fontsize = this._getRealFontSize(cmds[j].match(/^fs(.*)/)[1], diaChild.Fontname);
       if (/^fs-\d/.test(cmds[j])) {
         var tt = cmds[j].match(/^fs-(.*)/)[1];
         if (tt > 9) tt = 0;
@@ -437,6 +438,7 @@ ASS.prototype._parseCode = function(dia, text) {
         if (tt == '') ss = this.tree.V4Styles.Style[dia.Name];
         if (tt) {
           diaChild.Fontsize = ss.Fontsize;
+          diaChild.Fontname = ss.Fontname;
           diaChild.PrimaryColour = ss.PrimaryColour;
           diaChild.SecondaryColour = ss.SecondaryColour;
           diaChild.OutlineColour = ss.OutlineColour;
@@ -449,7 +451,7 @@ ASS.prototype._parseCode = function(dia, text) {
           if (ss.BorderStyle == 1) diaChild.style.textShadow = this._createShadow(ss.OutlineColour, ss.Outline, ss.BackColour, ss.Shadow);
         }
       }
-      if (/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])) {
+      if (/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])) { // TODO
         cmds[j] += '\\' + cmds[j + 1];
         cmds[j + 1] = '';
       }
@@ -459,6 +461,7 @@ ASS.prototype._parseCode = function(dia, text) {
       diaChild.father = dia;
       dia.appendChild(diaChild);
     } else {
+      diaChild.style.fontFamily = '\'' + diaChild.Fontname + '\', Arial';
       diaChild.style.fontSize = this.scale * diaChild.Fontsize + 'px';
       diaChild.style.color = this._toRGBA(diaChild.PrimaryColour);
       diaChild.style.textShadow = this._createShadow(diaChild.OutlineColour, diaChild.Outline, diaChild.BackColour, diaChild.Shadow);
