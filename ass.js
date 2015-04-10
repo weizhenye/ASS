@@ -11,6 +11,7 @@ function ASS() {
       Dialogue: []
     }
   };
+  this.runTimer = 0;
   this.position = 0;
   this.runline = [];
   this.channel = [];
@@ -70,39 +71,13 @@ ASS.prototype.init = function(data, video) {
     container.appendChild(this.stage);
 
     this.video.addEventListener('seeking', function() {
-      for (var i = that.stage.childNodes.length - 1; i >= 0; --i) {
-        that.stage.removeChild(that.stage.childNodes[i]);
-      }
-      that.runline = [];
-      that.channel = [];
-      that.position = (function() {
-        var m,
-            l = 0,
-            r = that.tree.Events.Dialogue.length - 1;
-        while (l <= r) {
-          m = Math.floor((l + r) / 2);
-          if (that.video.currentTime <= that.tree.Events.Dialogue[m].End) r = m - 1;
-          else l = m + 1;
-        }
-        l = Math.min(l, that.tree.Events.Dialogue.length - 1);
-        return Math.max(l, 0);
-      })();
+      that._seek();
     });
-    this.video.addEventListener('timeupdate', function() {
-      for (var i = 0; i < that.runline.length; ++i) {
-        if (that.runline[i].End < that.video.currentTime) {
-          that._freeChannel(that.runline[i]);
-          that.stage.removeChild(that.runline[i]);
-          that.runline.splice(i, 1);
-        }
-      }
-      if (that.position < that.tree.Events.Dialogue.length) {
-        while (that.tree.Events.Dialogue[that.position].Start <= that.video.currentTime && that.video.currentTime < that.tree.Events.Dialogue[that.position].End) {
-          that._launch(that.tree.Events.Dialogue[that.position]);
-          ++that.position;
-          if (that.position >= that.tree.Events.Dialogue.length) break;
-        }
-      }
+    this.video.addEventListener('play', function() {
+      that._play();
+    });
+    this.video.addEventListener('pause', function() {
+      that._pause();
     });
   }
 
@@ -163,6 +138,7 @@ ASS.prototype.init = function(data, video) {
         for (var j = 0; j < this.tree.Events.Format.length; ++j) {
           tmp2[this.tree.Events.Format[j]] = tmp1[j].match(/^\s*(.*)/)[1];
         }
+        tmp2.Layer *= 1;
         tmp2.Start = this._timeParser(tmp2.Start);
         tmp2.End = this._timeParser(tmp2.End);
         tmp2.MarginL *= 1;
@@ -227,6 +203,59 @@ ASS.prototype.show = function() {
 ASS.prototype.hide = function() {
   this.stage.style.visibility = 'hidden';
 };
+ASS.prototype._play = function() {
+  var that = this;
+  function scan() {
+    var ct = that.video.currentTime;
+    for (var i = 0; i < that.runline.length; ++i) {
+      if (that.runline[i].End < ct) {
+        if (!that.runline[i].pos) that._freeChannel(that.runline[i]);
+        that.stage.removeChild(that.runline[i]);
+        that.runline.splice(i, 1);
+      }
+    }
+    while (ct >= that.tree.Events.Dialogue[that.position].End) {
+      ++that.position;
+      if (that.position >= that.tree.Events.Dialogue.length) break;
+    }
+    if (that.position < that.tree.Events.Dialogue.length) {
+      while (that.tree.Events.Dialogue[that.position].Start <= ct &&
+             ct < that.tree.Events.Dialogue[that.position].End) {
+        that._launch(that.tree.Events.Dialogue[that.position]);
+        ++that.position;
+        if (that.position >= that.tree.Events.Dialogue.length) break;
+      }
+    }
+    that.runTimer = requestAnimationFrame(scan);
+  }
+  this.runTimer = requestAnimationFrame(scan);
+};
+ASS.prototype._pause = function() {
+  cancelAnimationFrame(this.runTimer);
+  this.runTimer = 0;
+};
+ASS.prototype._seek = function() {
+  var that = this;
+    var ct = that.video.currentTime;
+  for (var i = this.stage.childNodes.length - 1; i >= 0; --i) {
+    this.stage.removeChild(this.stage.childNodes[i]);
+  }
+  this.runline = [];
+  this.channel = [];
+  this.position = (function() {
+    var m,
+        l = 0,
+        r = that.tree.Events.Dialogue.length - 1,
+        ct = that.video.currentTime;
+    while (l <= r) {
+      m = (l + r) >> 1;
+      if (ct < that.tree.Events.Dialogue[m].End) r = m - 1;
+      else l = m + 1;
+    }
+    l = Math.min(l, that.tree.Events.Dialogue.length - 1);
+    return Math.max(l, 0);
+  })();
+};
 ASS.prototype._launch = function(data) {
   var dia = document.createElement('div');
   this._setStyle(dia, data);
@@ -245,6 +274,9 @@ ASS.prototype._setStyle = function(dia, data) {
   dia.MarginV = data.MarginV || dia.MarginV;
   dia.Effect = data.Effect;
 
+  dia.channel = 0;
+  dia.animation = {};
+
   dia.className = 'ASS-style-' + dia.Name;
   dia.style.position = 'absolute';
   dia.style.fontSize = this.scale * dia.Fontsize + 'px';
@@ -252,48 +284,37 @@ ASS.prototype._setStyle = function(dia, data) {
   if (dia.BorderStyle == 1) {
     dia.style.textShadow = this._createShadow(dia.OutlineColour, dia.Outline, dia.BackColour, dia.Shadow);
   }
-
-  this._parseCode(dia, data.Text);
   this.stage.appendChild(dia);
+  this._parseCode(dia, data.Text);
+  if (dia.Alignment % 3 == 1) dia.style.textAlign = 'left';
+  if (dia.Alignment % 3 == 2) dia.style.textAlign = 'center';
+  if (dia.Alignment % 3 == 0) dia.style.textAlign = 'right';
 
   // Solve WrapStyle first
   if (dia.pos) {
     var xy = dia.pos.match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
-    if (dia.Alignment % 3 == 1) {
-      dia.style.left = this.scale * xy[1] + 'px';
-      dia.style.textAlign = 'left';
-    }
-    if (dia.Alignment % 3 == 2) {
-      dia.style.left = this.scale * xy[1] - dia.clientWidth / 2 + 'px';
-      dia.style.textAlign = 'center';
-    }
-    if (dia.Alignment % 3 == 0) {
-      dia.style.left = this.scale * xy[1] - dia.clientWidth + 'px';
-      dia.style.textAlign = 'right';
-    }
+    if (dia.Alignment % 3 == 1) dia.style.left = this.scale * xy[1] + 'px';
+    if (dia.Alignment % 3 == 2) dia.style.left = this.scale * xy[1] - dia.clientWidth / 2 + 'px';
+    if (dia.Alignment % 3 == 0) dia.style.left = this.scale * xy[1] - dia.clientWidth + 'px';
     if (dia.Alignment <= 3) dia.style.top = this.scale * xy[2] - dia.clientHeight + 'px';
     if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.style.top = this.scale * xy[2] - dia.clientHeight / 2 + 'px';
     if (dia.Alignment >= 7) dia.style.top = this.scale * xy[2] + 'px';
   } else {
     if (dia.Alignment % 3 == 1) {
       dia.style.left = '0';
-      dia.style.textAlign = 'left';
       dia.style.marginLeft = this.scale * dia.MarginL + 'px';
     }
     if (dia.Alignment % 3 == 2) {
       dia.style.left = (this.stage.clientWidth - dia.clientWidth) / 2 + 'px';
-      dia.style.textAlign = 'center';
     }
     if (dia.Alignment % 3 == 0) {
       dia.style.right = '0';
-      dia.style.textAlign = 'right';
       dia.style.marginRight = this.scale * dia.MarginR + 'px';
     }
     if (dia.clientWidth > this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) {
       dia.style.marginLeft = this.scale * dia.MarginL + 'px';
       dia.style.marginRight = this.scale * dia.MarginR + 'px';
     }
-    dia.channel = 0;
     dia.style.top = this._getChannel(dia) + 'px';
   }
 
@@ -353,6 +374,10 @@ ASS.prototype._parseCode = function(dia, text) {
         var tt = cmds[j].match(/^fs-(.*)/)[1];
         if (tt > 9) tt = 0;
         diaChild.Fontsize *= (10 - tt) / 10;
+      }
+      if (/^fs\+\d/.test(cmds[j])) {
+        var tt = cmds[j].match(/^fs\+(.*)/)[1];
+        diaChild.Fontsize *= (10 + tt) / 10;
       }
       if (/^fsc/.test(cmds[j])) {
         var tt = cmds[j].match(/^fsc(\w)(.*)/),
@@ -415,19 +440,19 @@ ASS.prototype._parseCode = function(dia, text) {
         diaChild.style.transformOrigin = to;
       }
       if (/^q\d/.test(cmds[j])) {
-        var tt = cmds[j].match(/^q(.*)/)[1];
-        if (tt == '0') {
+        var tt = cmds[j].match(/^q(.*)/)[1] * 1;
+        if (tt == 0) {
           // TODO
         }
-        if (tt == '1') {
+        if (tt == 1) {
           diaChild.style.whiteSpace = 'normal';
           diaChild.style.wordBreak = 'break-all';
         }
-        if (tt == '2') {
+        if (tt == 2) {
           diaChild.style.wordBreak = 'normal';
           diaChild.style.whiteSpace = 'nowrap';
         }
-        if (tt == '3') {
+        if (tt == 3) {
           // TODO
         }
       }
@@ -453,7 +478,25 @@ ASS.prototype._parseCode = function(dia, text) {
       }
       if (/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])) { // TODO
         cmds[j] += '\\' + cmds[j + 1];
-        cmds[j + 1] = '';
+        cmds.splice(j + 1, 1);
+
+      }
+      if (/^move/.test(cmds[j])) {
+        // var tt = cmds[j].replace(/\s/g,'').match(/^move\((.*)\)/)[1],
+        //     arg = tt.split(',');
+        // if (arg.length == 4) {
+        //   arg.push(0);
+        //   arg.push(dia.End - dia.Start);
+        // }
+        // dia.animation.move = arg;
+      }
+      if (/^fad/.test(cmds[j])) {
+        // var tt = cmds[j].replace(/\s/g,'').match(/^fad\((.*)\)/)[1];
+        // dia.animation.fad = tt.split(',');
+      }
+      if (/^fade/.test(cmds[j])) {
+        // var tt = cmds[j].replace(/\s/g,'').match(/^fade\((.*)\)/)[1];
+        // dia.animation.fade = tt.split(',');
       }
     }
     if (diaChild.reset) {
@@ -517,7 +560,7 @@ ASS.prototype._getChannel = function(dia) {
     for (var i = V; i <= SH - V; ++i)
       if (judge(i)) break;
   } else {
-    for (var i = Math.floor((SH - H) / 2); i <= SH - V; ++i) {
+    for (var i = (SH - H) >> 1; i <= SH - V; ++i) {
       if (judge(i)) break;
     }
   }
@@ -551,11 +594,11 @@ ASS.prototype._timeParser = function(time) {
 };
 ASS.prototype._toRGBA = function(c) {
   var t = c.match(/&H(\w\w)(\w\w)(\w\w)(\w\w)/),
-      a = 1 - parseInt(t[1], 16) / 255,
+      a = (1 - parseInt(t[1], 16) / 255).toFixed(1),
       b = parseInt(t[2], 16),
       g = parseInt(t[3], 16),
       r = parseInt(t[4], 16);
-  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a.toFixed(1) + ')';
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
 };
 ASS.prototype._createShadow = function(oc, ow, sc, sw) {
   oc = this._toRGBA(oc);
