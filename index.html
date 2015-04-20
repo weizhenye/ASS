@@ -133,22 +133,6 @@ function fadeOut(d) {
     }
   }, 50);
 }
-function fullscreenchange() {
-  if('webkitCancelFullScreen' in document)
-    return 'webkitfullscreenchange';
-  else if('mozCancelFullScreen' in document)
-    return 'mozfullscreenchange';
-  else if('msExitFullscreen' in document)
-    return 'MSFullscreenChange';
-}
-function isFullScreen() {
-  if('webkitIsFullScreen' in document)
-    return document.webkitIsFullScreen;
-  else if('mozFullScreen' in document)
-    return document.mozFullScreen;
-  else if('msExitFullscreen' in document)
-    return msFullscreen;
-}
 $('w640').onclick = function() {
   video.style.width = '640px';
   video.style.height = '360px';
