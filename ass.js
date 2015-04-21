@@ -123,24 +123,7 @@ ASS.prototype.hide = function() {
 ASS.prototype._play = function() {
   var that = this;
   function scan() {
-    var ct = that.video.currentTime;
-    for (var i = 0; i < that.runline.length; ++i) {
-      if (that.runline[i].End < ct) {
-        if (!that.runline[i].pos) that._freeChannel(that.runline[i]);
-        that.stage.removeChild(that.runline[i].node);
-        that.runline.splice(i, 1);
-      }
-    }
-    while (that.position < that.tree.Events.Dialogue.length &&
-           ct >= that.tree.Events.Dialogue[that.position].End) {
-      ++that.position;
-    }
-    while (that.position < that.tree.Events.Dialogue.length &&
-           that.tree.Events.Dialogue[that.position].Start <= ct &&
-           ct < that.tree.Events.Dialogue[that.position].End) {
-      that._launch(that.tree.Events.Dialogue[that.position]);
-      ++that.position;
-    }
+    that._launch();
     that.requestID = requestAnimationFrame(scan);
   }
   this.requestID = requestAnimationFrame(scan);
@@ -150,17 +133,15 @@ ASS.prototype._pause = function() {
   this.requestID = 0;
 };
 ASS.prototype._seek = function() {
-  var that = this;
-  for (var i = this.stage.childNodes.length - 1; i >= 0; --i) {
-    this.stage.removeChild(this.stage.childNodes[i]);
-  }
+  var that = this,
+      ct = this.video.currentTime;
+  this.stage.innerHTML = '';
   this.runline = [];
   this.channel = [];
   this.position = (function() {
     var m,
         l = 0,
-        r = that.tree.Events.Dialogue.length - 1,
-        ct = that.video.currentTime;
+        r = that.tree.Events.Dialogue.length - 1;
     while (l <= r) {
       m = (l + r) >> 1;
       if (ct < that.tree.Events.Dialogue[m].End) r = m - 1;
@@ -169,10 +150,29 @@ ASS.prototype._seek = function() {
     l = Math.min(l, that.tree.Events.Dialogue.length - 1);
     return Math.max(l, 0);
   })();
+  this._launch();
 };
-ASS.prototype._launch = function(data) {
-  var dia = this._setStyle(data);
-  this.runline.push(dia);
+ASS.prototype._launch = function() {
+  var ct =this.video.currentTime,
+      dia;
+  for (var i = 0; i < this.runline.length; ++i) {
+    if (this.runline[i].End < ct) {
+      if (!this.runline[i].pos) this._freeChannel(this.runline[i]);
+      this.stage.removeChild(this.runline[i].node);
+      this.runline.splice(i, 1);
+    }
+  }
+  while (this.position < this.tree.Events.Dialogue.length &&
+         ct >= this.tree.Events.Dialogue[this.position].End) {
+    ++this.position;
+  }
+  while (this.position < this.tree.Events.Dialogue.length &&
+         this.tree.Events.Dialogue[this.position].Start <= ct &&
+         ct < this.tree.Events.Dialogue[this.position].End) {
+    dia = this._setStyle(this.tree.Events.Dialogue[this.position]);
+    this.runline.push(dia);
+    ++this.position;
+  }
 };
 ASS.prototype._parse = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -357,7 +357,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         ct.tags.t.push(tct);
       }
       if (/^p\d/.test(cmd[j])) ct.tags.p = cmd[j].match(/^p(\d+)/)[1] * 1;
-      if (/^pbo\d/.test(cmd[j])) ct.tags.pbo = cmd[j].match(/^pbo(\d+)/)[1] * 1;
+      if (/^pbo/.test(cmd[j])) ct.tags.pbo = cmd[j].match(/^pbo(.*)/)[1] * 1;
     }
     rs.content.push(ct);
   }
@@ -458,7 +458,16 @@ ASS.prototype._setStyle = function(data) {
           oy: sn.Outline,
           sx: sn.Shadow,
           sy: sn.Shadow,
-          blur: 0
+          blur: 0,
+          fscx: 100,
+          fscy: 100,
+          frx: 0,
+          fry: 0,
+          frz: 0,
+          fax: 0,
+          fay: 0,
+          p: 0,
+          pbo: 0
         };
     rsNode.className = 'ASS-style-' + pt.resets[i].style;
     for (var j = 0; j < ct.length; j++) {
@@ -466,16 +475,19 @@ ASS.prototype._setStyle = function(data) {
           textNode = document.createElement('span');
       textNode.innerHTML = ct[j].text;
       ctNode.appendChild(textNode);
+      while (/<br>$/.test(textNode.innerHTML)) {
+        textNode.innerHTML = textNode.innerHTML.replace(/<br>$/, '');
+        ctNode.appendChild(document.createElement('br'));
+      }
       prevNode.appendChild(ctNode);
       prevNode = ctNode;
-      this._setTagsStyle(ctNode, ct[j].tags, currStyle);
+      this._setTagsStyle(ctNode, textNode, ct[j].tags, currStyle);
     }
     dia.node.appendChild(rsNode);
   }
   this.stage.appendChild(dia.node);
 
   dia.node.className = 'ASS-dialogue';
-  dia.node.style.fontSize = this.scale * dia.Fontsize + 'px';
   dia.node.style.letterSpacing = this.scale * dia.Spacing + 'px';
   if (dia.BorderStyle == 1) dia.node.style.textShadow = this._createShadow(dia.OutlineColour, dia.Outline, dia.Outline, dia.BackColour, dia.Shadow, dia.Shadow, 0);
   if (dia.Alignment % 3 == 1) dia.node.style.textAlign = 'left';
@@ -508,37 +520,30 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(node, t, cs) {
+ASS.prototype._setTagsStyle = function(cn, tn, t, cs) {
   for (var i in t) {
     if (i == 'b') {
-      if (t.b == 0) node.style.fontWeight = 'normal';
-      else if (t.b == 1) node.style.fontWeight = 'bold';
-      else node.style.fontWeight = t.b;
+      if (t.b == 0) cn.style.fontWeight = 'normal';
+      else if (t.b == 1) cn.style.fontWeight = 'bold';
+      else cn.style.fontWeight = t.b;
     }
-    if (i == 'i') node.style.fontStyle = (t.i ? 'italic' : 'normal');
-    if (i == 'u') node.style.textDecoration += (t.u ? ' underline' : '');
-    if (i == 's') node.style.textDecoration += (t.s ? ' line-through' : '');
+    if (i == 'i') cn.style.fontStyle = (t.i ? 'italic' : 'normal');
+    if (i == 'u') cn.style.textDecoration += (t.u ? ' underline' : '');
+    if (i == 's') cn.style.textDecoration += (t.s ? ' line-through' : '');
     if (i == 'xbord') cs.ox = t.xbord;
     if (i == 'ybord') cs.oy = t.ybord;
     if (i == 'xshad') cs.sx = t.xshad;
     if (i == 'yshad') cs.sy = t.yshad;
     if (i == 'fn') {
       cs.fn = t.fn;
-      node.style.fontFamily = '\'' + t.fn + '\', Arial';
+      cn.style.fontFamily = '\'' + t.fn + '\', Arial';
     }
     if (i == 'fs') {
       if (/^\d/.test(t.fs)) cs.fs = t.fs * 1;
       if (/^\+|-/.test(t.fs)) cs.fs *= (t.fs * 1 > -10 ? (10 + t.fs * 1) / 10 : 1);
     }
-    if (i == 'fsp') node.style.letterSpacing = this.scale * t.fsp + 'px';
-    if (i == 'fscx') {}
-    if (i == 'fscy') {}
-    if (i == 'frx') {}
-    if (i == 'fry') {}
-    if (i == 'frz') {}
-    if (i == 'fax') {}
-    if (i == 'fay') {}
-    if (i == 'blur') cs.blur = t.blur;
+    if (i == 'fsp') cn.style.letterSpacing = this.scale * t.fsp + 'px';
+    if (/fscx|fscy|frx|fry|frz|fax|fay|blur/.test(i)) cs[i] = t[i];
     if (/c\d/.test(i)) cs[i] = cs[i].replace(/\w{6}$/, t[i]);
     if (/a\d/.test(i)) cs['c' + i[1]] = cs['c' + i[1]].replace(/&H\w\w/, '&H' + t[i]);
     if (i == 'k') {}
@@ -548,21 +553,37 @@ ASS.prototype._setTagsStyle = function(node, t, cs) {
     if (i == 'q') {
       if (t.q == 0) {} // TODO
       if (t.q == 1) {
-        node.style.wordBreak = 'break-all';
-        node.style.whiteSpace = 'normal';
+        cn.style.wordBreak = 'break-all';
+        cn.style.whiteSpace = 'normal';
       }
       if (t.q == 2) {
-        node.style.wordBreak = 'normal';
-        node.style.whiteSpace = 'nowrap';
+        cn.style.wordBreak = 'normal';
+        cn.style.whiteSpace = 'nowrap';
       }
       if (t.q == 3) {} // TODO
     }
+    if (i == 'p' || i == 'pbo') cs[i] = t[i];
     if (i == 'clip') {}
     if (i == 'iclip') {}
   }
-  node.style.fontSize = this.scale * this._getRealFontSize(cs.fs, cs.fn) + 'px';
-  node.style.color = this._toRGBA(cs.c1);
-  node.style.textShadow = this._createShadow(cs.c3, cs.ox, cs.oy, cs.c4, cs.sx, cs.sy, cs.blur);
+  if (cs.p) {
+    var data = tn.innerText;
+    tn.innerHTML = this._createSVG(cs.p, cs.pbo, this._toRGBA(cs.c1), data);
+  }
+  cn.style.fontSize = this.scale * this._getRealFontSize(cs.fs, cs.fn) + 'px';
+  cn.style.color = this._toRGBA(cs.c1);
+  cn.style.textShadow = this._createShadow(cs.c3, cs.ox, cs.oy, cs.c4, cs.sx, cs.sy, cs.blur);
+  if (cs.fax || cs.fay || cs.frx || cs.fry || cs.frz || cs.fscx != 100 || cs.fscy != 100) {
+    tn.style.transform = 'perspective(400px)';
+    tn.style.display = 'inline-block';
+    tn.style.wordBreak = 'normal';
+    tn.style.whiteSpace = 'nowrap';
+  }
+  if (cs.fax || cs.fay) tn.style.transform += ' skew(' + Math.atan(cs.fax) + ', ' + Math.atan(cs.fay) + ')';
+  if (cs.fscx != 100 || cs.fscy != 100) tn.style.transform += ' scale(' + cs.fscx / 100 + ', ' + cs.fscy / 100 + ')';
+  if (cs.fry) tn.style.transform += ' rotateY(' + cs.fry + 'deg)';
+  if (cs.frx) tn.style.transform += ' rotateX(' + cs.frx + 'deg)';
+  if (cs.frz) tn.style.transform += ' rotateZ(' + (-cs.frz) + 'deg)';
 };
 ASS.prototype._getChannel = function(dia) {
   var that = this,
@@ -685,4 +706,69 @@ ASS.prototype._getRealFontSize = function(fs, fn) {
   rfs = fs * fs / fse.clientHeight;
   container.removeChild(fse);
   return rfs;
+};
+ASS.prototype._createSVG = function(p, pbo, color, data) {
+  var tmp = this._parseDrawingCommands(pbo, data),
+      s = this.scale / Math.pow(2, p - 1),
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s + '" height="' + tmp.h * s + '">\n<g transform="scale(' + s + ' ' + s + ')">\n<path d="' + tmp.d + '" fill="' + color + '">\n</path>\n</g>\n</svg>'
+  return svg;
+};
+ASS.prototype._parseDrawingCommands = function(pbo, data) {
+  data = data.replace(/^\s*|\s*$/g, '').replace(/\s+/g, ' ').toLowerCase();
+  var ele = data.split(' '),
+      cmd = [],
+      cmds = [],
+      minX = 2147483647,
+      minY = 2147483647,
+      maxX = 0,
+      maxY = 0,
+      str = '';
+  for (var i = 0; i < ele.length; ++i) {
+    if (/[mnlbspc]/.test(ele[i])) {
+      if (cmd.length) cmds.push(cmd);
+      cmd = [];
+    }
+    cmd.push(ele[i]);
+  }
+  cmds.push(cmd);
+  cmd = [];
+  for (var i = cmds.length - 1; i >= 0; i--) {
+    if (cmds[i][0] == 'p') {
+      cmd.push(cmds[i][2]);
+      cmd.push(cmds[i][1]);
+      cmds.splice(i, 1);
+    } else if (cmds[i][0] == 's') {
+      cmds[i] = cmds[i].concat(cmd.reverse());
+    } else {
+      cmd = [];
+    }
+  }
+  for (var i = 0; i < cmds.length; i++) {
+    if (/m/.test(cmds[i][0])) cmds[i][0] = 'M';
+    if (/n|l/.test(cmds[i][0])) cmds[i][0] = 'L';
+    if (/b|s/.test(cmds[i][0])) cmds[i][0] = 'C';
+    for (var j = 1; j < cmds[i].length + (cmds[i].length & 1) - 1; j += 2) {
+      cmds[i][j] *= 1;
+      cmds[i][j + 1] *= 1;
+      if (cmds[i][j] < minX) minX = cmds[i][j];
+      if (cmds[i][j + 1] < minY) minY = cmds[i][j + 1];
+      if (cmds[i][j] > maxX) maxX = cmds[i][j];
+      if (cmds[i][j + 1] > maxY) maxY = cmds[i][j + 1];
+    }
+  }
+  for (var i = 0; i < cmds.length; i++) {
+    for (var j = 1; j < cmds[i].length + (cmds[i].length & 1) - 1; j += 2) {
+      cmds[i][j] -= minX;
+      cmds[i][j + 1] -= minY;
+    }
+  }
+  for (var i = 0; i < cmds.length; i++)
+    for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; j++)
+      str += cmds[i][j] + ' ';
+  str += 'Z';
+  return {
+    d: str,
+    w: maxX - minX,
+    h: maxY -minY
+  };
 };
