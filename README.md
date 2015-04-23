@@ -24,6 +24,7 @@ ASS.js is a parser for ASS file and renders subtitle on HTML5 video.
 # API
 
 ### Initialization
+	var ass = new ASS();
 	ass.init(content, video);
 ### Resize
 	// If you change video's width or height, you should do
@@ -64,16 +65,19 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __Banner__
 	+ __Text__ (override codes)
 		- __\p__ use SVG
-		- __\t__
-		- __\move(x1, y1, x2, y2[, t1, t2])__
-		- __\fad(t1, t2)__
-		- __\fade(a1, a2, a3, t1, t2, t3, t4)__
 		- __\fsc[x/y], \fa[x/y], \fr[x/y/z]__ use matrix3d() in CSS
-		- __\org(x, y)__
 		- __\k, \kf, \ko, \kt, \K__ Karaoke
 		- __\q__ WrapStyle: 0, 3
-		- __\clip(x1, y1, x2, y2)__
-		- __\iclip(x1, y1, x2, y2)__
+		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__
+		- __\org(&lt;X&gt;, &lt;Y&gt;)__
+		- __\clip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
+		- __\clip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
+		- __\iclip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
+		- __\iclip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
 
 #### <del>[Fonts]</del>
 #### <del>[Graphics]</del>
+
+# Known issues
+
+* \N in libass has less height than &lt;br&gt; in browsers, ASS makers should avoid to use multiple \N to position a dialogue, use \pos instead.
