@@ -73,7 +73,7 @@ ASS.prototype.init = function(data, video) {
   if (this.tree.ScriptInfo.WrapStyle == 1) this.stage.style.wordBreak = 'break-all';
   if (this.tree.ScriptInfo.WrapStyle == 2) this.stage.style.whiteSpace = 'nowrap';
 
-  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-dialogue div { display: inline; }';
+  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-dialogue div { display: inline; } .ASS-animation-paused * { animation-play-state: paused !important; }';
   for (var i in this.tree.V4Styles.Style) {
     var s = this.tree.V4Styles.Style[i],
         str = ' { ';
@@ -95,15 +95,14 @@ ASS.prototype.init = function(data, video) {
   styleNode.type = 'text/css';
   styleNode.appendChild(document.createTextNode(CSSstr));
   document.head.appendChild(styleNode);
+  styleNode = document.createElement('style');
+  styleNode.type = 'text/css';
+  styleNode.id = 'ASS-animation';
+  document.head.appendChild(styleNode);
 
   this.resize();
 };
 ASS.prototype.resize = function() {
-  for (var i = this.stage.childNodes.length - 1; i >= 0; --i) {
-    this.stage.removeChild(this.stage.childNodes[i]);
-  }
-  this.runline = [];
-  this.channel = [];
   if (this.video) {
     var w = this.video.clientWidth,
         h = this.video.clientHeight;
@@ -113,6 +112,8 @@ ASS.prototype.resize = function() {
       this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
     }
   }
+  this._seek();
+  this._createAnimation();
 };
 ASS.prototype.show = function() {
   this.stage.style.visibility = 'visible';
@@ -127,10 +128,12 @@ ASS.prototype._play = function() {
     that.requestID = requestAnimationFrame(scan);
   }
   this.requestID = requestAnimationFrame(scan);
+  this.stage.className = '';
 };
 ASS.prototype._pause = function() {
   cancelAnimationFrame(this.requestID);
   this.requestID = 0;
+  this.stage.className = 'ASS-animation-paused';
 };
 ASS.prototype._seek = function() {
   var that = this,
@@ -315,7 +318,10 @@ ASS.prototype._parseTags = function(dialogue, tree) {
       if (/^move/.test(cmd[j]) && !dia.move) {
         tmp = cmd[j].match(/^move\((.*)\)/)[1].split(/\s*,\s*/);
         for (var k = 0; k < tmp.length; k++) tmp[k] *= 1;
-        while (tmp.length < 6) tmp.push(0);
+        if (tmp.length == 4) {
+          tmp.push(0);
+          tmp.push((dialogue.End - dialogue.Start) * 1000);
+        }
         dia.move = tmp;
       }
       if (/^fad\(/.test(cmd[j]) && !dia.fad) {
@@ -337,7 +343,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
       }
       if (/^t\(/.test(cmd[j])) {
         if (!ct.tags.t) ct.tags.t = [];
-        tmp = cmd[j].match(/^t\((.*)\)/)[1].split(/\s*,\s*/);
+        tmp = cmd[j].replace(/\s/g, '').match(/^t\((.*)\)/)[1].split(',');
         if (!tmp[0]) continue;
         var tcmd = tmp[tmp.length - 1].split('\\'),
             tct = {t1: dialogue.Start, t2: dialogue.End, accel: 1, tags: {}, _reuse: reuse};
@@ -489,6 +495,13 @@ ASS.prototype._setStyle = function(data) {
 
   dia.node.className = 'ASS-dialogue';
   dia.node.style.letterSpacing = this.scale * dia.Spacing + 'px';
+  if (dia.move || dia.fad || dia.fade) {
+    dia.node.style.animationName = 'ASS-animation-' + data._index;
+    dia.node.style.animationDuration = (data.End - data.Start) + 's';
+    dia.node.style.animationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
+    dia.node.style.animationTimingFunction = 'linear';
+    dia.node.style.animationIterationCount = 1;
+  }
   if (dia.BorderStyle == 1) dia.node.style.textShadow = this._createShadow(dia.OutlineColour, dia.Outline, dia.Outline, dia.BackColour, dia.Shadow, dia.Shadow, 0);
   if (dia.Alignment % 3 == 1) dia.node.style.textAlign = 'left';
   if (dia.Alignment % 3 == 2) dia.node.style.textAlign = 'center';
@@ -566,21 +579,22 @@ ASS.prototype._setTagsStyle = function(cn, tn, t, cs) {
     if (i == 'clip') {}
     if (i == 'iclip') {}
   }
-  if (cs.p) {
-    var data = tn.innerText;
-    tn.innerHTML = this._createSVG(cs.p, cs.pbo, this._toRGBA(cs.c1), data);
-  }
-  cn.style.fontSize = this.scale * this._getRealFontSize(cs.fs, cs.fn) + 'px';
-  cn.style.color = this._toRGBA(cs.c1);
-  cn.style.textShadow = this._createShadow(cs.c3, cs.ox, cs.oy, cs.c4, cs.sx, cs.sy, cs.blur);
   if (cs.fax || cs.fay || cs.frx || cs.fry || cs.frz || cs.fscx != 100 || cs.fscy != 100) {
     tn.style.transform = 'perspective(400px)';
     tn.style.display = 'inline-block';
     tn.style.wordBreak = 'normal';
     tn.style.whiteSpace = 'nowrap';
   }
-  if (cs.fax || cs.fay) tn.style.transform += ' skew(' + Math.atan(cs.fax) + ', ' + Math.atan(cs.fay) + ')';
-  if (cs.fscx != 100 || cs.fscy != 100) tn.style.transform += ' scale(' + cs.fscx / 100 + ', ' + cs.fscy / 100 + ')';
+  if (cs.p) {
+    var data = tn.innerText;
+    tn.innerHTML = this._createSVG(cs, data);
+  } else {
+    cn.style.fontSize = this.scale * this._getRealFontSize(cs.fs, cs.fn) + 'px';
+    cn.style.color = this._toRGBA(cs.c1);
+    cn.style.textShadow = this._createShadow(cs.c3, cs.ox, cs.oy, cs.c4, cs.sx, cs.sy, cs.blur);
+    if (cs.fax || cs.fay) tn.style.transform += ' skew(' + Math.atan(cs.fax) + ', ' + Math.atan(cs.fay) + ')';
+    if (cs.fscx != 100 || cs.fscy != 100) tn.style.transform += ' scale(' + cs.fscx / 100 + ', ' + cs.fscy / 100 + ')';
+  }
   if (cs.fry) tn.style.transform += ' rotateY(' + cs.fry + 'deg)';
   if (cs.frx) tn.style.transform += ' rotateX(' + cs.frx + 'deg)';
   if (cs.frz) tn.style.transform += ' rotateZ(' + (-cs.frz) + 'deg)';
@@ -707,10 +721,13 @@ ASS.prototype._getRealFontSize = function(fs, fn) {
   container.removeChild(fse);
   return rfs;
 };
-ASS.prototype._createSVG = function(p, pbo, color, data) {
-  var tmp = this._parseDrawingCommands(pbo, data),
-      s = this.scale / Math.pow(2, p - 1),
-      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s + '" height="' + tmp.h * s + '">\n<g transform="scale(' + s + ' ' + s + ')">\n<path d="' + tmp.d + '" fill="' + color + '">\n</path>\n</g>\n</svg>'
+ASS.prototype._createSVG = function(cs, data) {
+  var sx = cs.fscx ? cs.fscx / 100 : 1,
+      sy = cs.fscy ? cs.fscy / 100 : 1,
+      c1 = this._toRGBA(cs.c1),
+      s = this.scale / Math.pow(2, cs.p - 1),
+      tmp = this._parseDrawingCommands(cs.pbo, data),
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c1 + '">\n</path>\n</g>\n</svg>'
   return svg;
 };
 ASS.prototype._parseDrawingCommands = function(pbo, data) {
@@ -771,4 +788,61 @@ ASS.prototype._parseDrawingCommands = function(pbo, data) {
     w: maxX - minX,
     h: maxY -minY
   };
+};
+ASS.prototype._createAnimation = function() {
+  var dia = this.tree.Events.Dialogue;
+  var kfStr = '';
+  for (var i = 0; i < dia.length; i++) {
+    var pt = dia[i].parsedText;
+    var kf = {};
+    var dur = (dia[i].End - dia[i].Start) * 1000,
+        t = [];
+    if (!pt.fad && pt.fade && pt.fade.length == 2) pt.fad = pt.fade;
+    if (pt.fad && pt.fad.length == 2) {
+      t[0] = '0.000%';
+      t[1] = (Math.min(dur, pt.fad[0]) / dur * 100).toFixed(3) + '%';
+      t[2] = (Math.max(0, dur - pt.fad[1]) / dur * 100).toFixed(3) + '%';
+      t[3] = '100.000%'
+      for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = [];
+      kf[t[0]].push('opacity: 0;');
+      kf[t[1]].push('opacity: 1;');
+      kf[t[2]].push('opacity: 1;');
+      kf[t[3]].push('opacity: 0;');
+    }
+    if (pt.fade && pt.fade.length == 7) {
+      t[0] = '0.000%';
+      for (var j = 1; j <= 4; j++) t[j] = (Math.min(dur, pt.fade[j + 2]) / dur * 100).toFixed(3) + '%';
+      t[5] = '100.000%'
+      for (var j = 0; j <= 5; j++) if (!kf[t[j]]) kf[t[j]] = [];
+      kf[t[0]].push('opacity: ' + (1 - pt.fade[0] / 255) + ';');
+      kf[t[1]].push('opacity: ' + (1 - pt.fade[0] / 255) + ';');
+      kf[t[2]].push('opacity: ' + (1 - pt.fade[1] / 255) + ';');
+      kf[t[3]].push('opacity: ' + (1 - pt.fade[1] / 255) + ';');
+      kf[t[4]].push('opacity: ' + (1 - pt.fade[2] / 255) + ';');
+      kf[t[5]].push('opacity: ' + (1 - pt.fade[2] / 255) + ';');
+    }
+    if (pt.move && pt.move.length == 6) {
+      if (!pt.pos) pt.pos = {x: 0, y: 0};
+      if (pt.move.length == 6) {
+        t[0] = '0.000%';
+        t[1] = (Math.min(dur, pt.move[4]) / dur * 100).toFixed(3) + '%';
+        t[2] = (Math.min(dur, pt.move[5]) / dur * 100).toFixed(3) + '%';
+        t[3] = '100.000%';
+        for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = [];
+        // TODO: translate() will overwrite it's own transform, add matrix3d()
+        kf[t[0]].push('transform: translate(' + this.scale * (pt.move[0] - pt.pos.x) + 'px, ' + this.scale * (pt.move[1] - pt.pos.y) + 'px);');
+        kf[t[1]].push('transform: translate(' + this.scale * (pt.move[0] - pt.pos.x) + 'px, ' + this.scale * (pt.move[1] - pt.pos.y) + 'px);');
+        kf[t[2]].push('transform: translate(' + this.scale * (pt.move[2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[3] - pt.pos.y) + 'px);');
+        kf[t[3]].push('transform: translate(' + this.scale * (pt.move[2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[3] - pt.pos.y) + 'px);');
+      }
+    }
+    if (JSON.stringify(kf) != '{}') {
+      kfStr += '@keyframes ASS-animation-' + dia[i]._index + ' { ';
+      for (var j in kf) {
+        kfStr += j + ' {' + kf[j].join(' ') + '} ';
+      }
+      kfStr += '}\n';
+    }
+  }
+  document.getElementById('ASS-animation').innerHTML = kfStr;
 };
