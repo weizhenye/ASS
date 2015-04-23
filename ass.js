@@ -8,6 +8,7 @@ function ASS() {
   this.scale = 1;
   this.stage = document.createElement('div');
   this.stage.id = 'ASS-stage';
+  this.stage.className = 'ASS-animation-paused';
 
   var that = this;
   document.addEventListener(fullscreenchange(), function() {
@@ -142,22 +143,19 @@ ASS.prototype._seek = function() {
   this.runline = [];
   this.channel = [];
   this.position = (function() {
-    var m,
-        l = 0,
-        r = that.tree.Events.Dialogue.length - 1;
-    while (l <= r) {
-      m = (l + r) >> 1;
-      if (ct < that.tree.Events.Dialogue[m].End) r = m - 1;
-      else l = m + 1;
+    var from = 0,
+        to = that.tree.Events.Dialogue.length;
+    while (from < to && ct > that.tree.Events.Dialogue[(to + from) >> 1].End) from = (to + from) >> 1;
+    for (var i = from; i < to; i++) {
+      if (that.tree.Events.Dialogue[i].End > ct && ct >= that.tree.Events.Dialogue[i].Start)
+        return i;
     }
-    l = Math.min(l, that.tree.Events.Dialogue.length - 1);
-    return Math.max(l, 0);
+    return that.tree.Events.Dialogue.length - 1;
   })();
   this._launch();
 };
 ASS.prototype._launch = function() {
-  var ct =this.video.currentTime,
-      dia;
+  var ct = this.video.currentTime;
   for (var i = 0; i < this.runline.length; ++i) {
     if (this.runline[i].End < ct) {
       if (!this.runline[i].pos) this._freeChannel(this.runline[i]);
@@ -170,10 +168,11 @@ ASS.prototype._launch = function() {
     ++this.position;
   }
   while (this.position < this.tree.Events.Dialogue.length &&
-         this.tree.Events.Dialogue[this.position].Start <= ct &&
-         ct < this.tree.Events.Dialogue[this.position].End) {
-    dia = this._setStyle(this.tree.Events.Dialogue[this.position]);
-    this.runline.push(dia);
+         ct >= this.tree.Events.Dialogue[this.position].Start) {
+    if (ct < this.tree.Events.Dialogue[this.position].End) {
+      var dia = this._setStyle(this.tree.Events.Dialogue[this.position]);
+      this.runline.push(dia);
+    }
     ++this.position;
   }
 };
@@ -254,7 +253,7 @@ ASS.prototype._parse = function(data) {
     }
   }
   tree.Events.Dialogue.sort(function(a, b) {
-    return (a.Start - b.Start) || (a._index - b._index);
+    return (a.Start - b.Start) || (a.End - b.End) || (a._index - b._index);
   });
   return tree;
 };
@@ -495,6 +494,7 @@ ASS.prototype._setStyle = function(data) {
 
   dia.node.className = 'ASS-dialogue';
   dia.node.style.letterSpacing = this.scale * dia.Spacing + 'px';
+  if (dia.Layer) dia.node.style.zIndex = dia.Layer;
   if (dia.move || dia.fad || dia.fade) {
     dia.node.style.animationName = 'ASS-animation-' + data._index;
     dia.node.style.animationDuration = (data.End - data.Start) + 's';
