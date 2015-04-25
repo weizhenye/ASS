@@ -74,26 +74,10 @@ ASS.prototype.init = function(data, video) {
   if (this.tree.ScriptInfo.WrapStyle == 1) this.stage.style.wordBreak = 'break-all';
   if (this.tree.ScriptInfo.WrapStyle == 2) this.stage.style.whiteSpace = 'nowrap';
 
-  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-dialogue div { display: inline; } .ASS-animation-paused * { animation-play-state: paused !important; }';
-  for (var i in this.tree.V4Styles.Style) {
-    var s = this.tree.V4Styles.Style[i],
-        str = ' { ';
-    str += 'font-family: \'' + s.Fontname + '\', Arial; ';
-    str += 'color: ' + this._toRGBA(s.PrimaryColour) + '; ';
-    str += 'font-weight: ' + ((s.Bold == -1) ? '900' : 'normal') + '; ';
-    str += 'font-style: ' + ((s.Italic == -1) ? 'italic' : 'normal') + '; ';
-    str += 'transform: scaleX(' + s.ScaleX / 100 + ') scaleY(' + s.ScaleY / 100 + ') rotateZ(' + (-s.Angle) + 'deg); ';
-    str += 'background-color: ' + ((s.BorderStyle == 3) ? this._toRGBA(s.OutlineColour) : 'rgba(0, 0, 0, 0)') + '; ';
-    if (s.Underline == -1 && s.StrikeOut == -1) str += 'text-decoration: underline line-through; ';
-    else if (s.Underline == -1) str += 'text-decoration: underline; ';
-    else if (s.StrikeOut == -1) str += 'text-decoration: line-through; ';
-    else str += 'text-decoration: none; ';
-    str += '}';
-    CSSstr += ' .ASS-style-' + i + str;
-  }
-  // TODO: add CSS3 animation style
+  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; }';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
+  styleNode.id = 'ASS-style';
   styleNode.appendChild(document.createTextNode(CSSstr));
   document.head.appendChild(styleNode);
   styleNode = document.createElement('style');
@@ -144,19 +128,19 @@ ASS.prototype._seek = function() {
   this.channel = [];
   this.position = (function() {
     var from = 0,
-        to = that.tree.Events.Dialogue.length;
-    while (from < to && ct > that.tree.Events.Dialogue[(to + from) >> 1].End) from = (to + from) >> 1;
-    for (var i = from; i < to; i++) {
+        to = that.tree.Events.Dialogue.length - 1;
+    while (from + 1 < to && ct > that.tree.Events.Dialogue[(to + from) >> 1].End) from = (to + from) >> 1;
+    for (var i = from; i < to; ++i) {
       if (that.tree.Events.Dialogue[i].End > ct && ct >= that.tree.Events.Dialogue[i].Start)
         return i;
     }
-    return that.tree.Events.Dialogue.length - 1;
+    return to;
   })();
   this._launch();
 };
 ASS.prototype._launch = function() {
   var ct = this.video.currentTime;
-  for (var i = 0; i < this.runline.length; ++i) {
+  for (var i = this.runline.length - 1; i >= 0; --i) {
     if (this.runline[i].End < ct) {
       if (!this.runline[i].pos) this._freeChannel(this.runline[i]);
       this.stage.removeChild(this.runline[i].node);
@@ -212,12 +196,11 @@ ASS.prototype._parse = function(data) {
       if (/^Style:/.test(lines[i])) {
         var tmp1 = lines[i].match(/Style:(.*)/)[1].split(','),
             tmp2 = {};
-        for (var j = 0; j < tmp1.length; ++j) {
+        for (var j = tmp1.length - 1; j >= 0; --j) {
           var tmp3 = tree.V4Styles.Format[j];
           tmp2[tmp3] = tmp1[j].match(/^\s*(.*)/)[1];
           if (!isNaN(tmp2[tmp3] * 1)) tmp2[tmp3] *= 1;
         }
-        // tmp2.Fontsize = this._getRealFontSize(tmp2.Fontsize, tmp2.Fontname);
         tree.V4Styles.Style[tmp2.Name] = tmp2;
       }
     }
@@ -234,7 +217,7 @@ ASS.prototype._parse = function(data) {
           tmp1 = tmp1.slice(0, tree.Events.Format.length - 1);
           tmp1.push(tmp3);
         }
-        for (var j = 0; j < tree.Events.Format.length; ++j) {
+        for (var j = tree.Events.Format.length - 1; j >= 0; --j) {
           tmp2[tree.Events.Format[j]] = tmp1[j].match(/^\s*(.*)/)[1];
         }
         tmp2.Layer *= 1;
@@ -243,8 +226,9 @@ ASS.prototype._parse = function(data) {
         tmp2.MarginL *= 1;
         tmp2.MarginR *= 1;
         tmp2.MarginV *= 1;
-        tmp2.parsedText = this._parseTags(tmp2, tree);
+        tmp2.Style = tree.V4Styles.Style[tmp2.Style] ? tmp2.Style : 'Default';
         tmp2._index = ++_index;
+        tmp2.parsedText = this._parseTags(tmp2, tree);
         if (tmp2.Start < tmp2.End) tree.Events.Dialogue.push(tmp2);
       }
     }
@@ -257,17 +241,43 @@ ASS.prototype._parse = function(data) {
   });
   return tree;
 };
+ASS.prototype._createBaseTags = function(style, tree) {
+  var s = tree.V4Styles.Style[style];
+  return {
+    fn: s.Fontname,
+    fs: s.Fontsize,
+    c1: s.PrimaryColour.match(/&H\w\w(\w{6})/)[1],
+    a1: s.PrimaryColour.match(/&H(\w\w)\w{6}/)[1],
+    c2: s.SecondaryColour.match(/&H\w\w(\w{6})/)[1],
+    a2: s.SecondaryColour.match(/&H(\w\w)\w{6}/)[1],
+    c3: s.OutlineColour.match(/&H\w\w(\w{6})/)[1],
+    a3: s.OutlineColour.match(/&H(\w\w)\w{6}/)[1],
+    c4: s.BackColour.match(/&H\w\w(\w{6})/)[1],
+    a4: s.BackColour.match(/&H(\w\w)\w{6}/)[1],
+    b: Math.abs(s.Bold),
+    i: Math.abs(s.Italic),
+    u: Math.abs(s.Underline),
+    s: Math.abs(s.StrikeOut),
+    fscx: s.ScaleX,
+    fscy: s.ScaleY,
+    fsp: s.Spacing,
+    frz: s.Angle,
+    xbord: s.Outline,
+    ybord: s.Outline,
+    xshad: s.Shadow,
+    yshad: s.Shadow
+  };
+};
 ASS.prototype._parseTags = function(dialogue, tree) {
-  var text = dialogue.Text.replace(/\\n/g, (tree.ScriptInfo.wrapStyle == 2) ? '<br>' : '&nbsp;').replace(/\\N/g, '<br>').replace(/\\h/g, '&nbsp;'),
-      style = tree.V4Styles.Style[dialogue.Style] ? dialogue.Style : 'Default',
-      dia = {resets: []},
-      rs = {style: style, content: []},
-      kv = text.split(/{([^{}]*?)}/);
-  if (kv[0].length) rs.content.push({text: kv[0], tags: {}});
+  var text = dialogue.Text.replace(/\\n/g, (tree.ScriptInfo.WrapStyle == 2) ? '<br>' : '&nbsp;').replace(/\\N/g, '<br>').replace(/\\h/g, '&nbsp;'),
+      kv = text.split(/{([^{}]*?)}/),
+      prevTags = this._createBaseTags(dialogue.Style, tree),
+      dia = {content: []};
+  if (kv[0].length) dia.content.push({text: kv[0], tags: prevTags});
   for (var i = 1; i < kv.length; i += 2) {
     var ct = {text: kv[i + 1], tags: {}, _reuse: reuse},
         cmd = kv[i].split('\\'); // split(/(?<!\(.*?)\\(?!.*?\))/)
-    for (var j = 0; j < cmd.length; j++) {
+    for (var j = 0; j < cmd.length; ++j) {
       if (/^t\(/.test(cmd[j])) {
         while (!/\)$/.test(cmd[j + 1])) {
           cmd[j] += '\\' + cmd[j + 1];
@@ -277,7 +287,8 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         cmd.splice(j + 1, 1);
       }
     }
-    for (var j = 0; j < cmd.length; j++) {
+    for (var j in prevTags) ct.tags[j] = prevTags[j];
+    for (var j = cmd.length - 1; j >= 0; --j) {
       var tmp;
       ct._reuse(cmd[j]);
       if (/^b\d/.test(cmd[j])) ct.tags.b = cmd[j].match(/^b(\d+)/)[1] * 1;
@@ -328,17 +339,14 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         for (var k = 0; k < tmp.length; k++) tmp[k] *= 1;
         dia.fad = tmp;
       }
-      if (/^fade/.test(cmd[j]) && !dia.fade) { // TODO
+      if (/^fade/.test(cmd[j]) && !dia.fade) {
         tmp = cmd[j].match(/^fade\((.*)\)/)[1].split(/\s*,\s*/);
-        // if (tmp.length == 2) {};
         for (var k = 0; k < tmp.length; k++) tmp[k] *= 1;
         dia.fade = tmp;
       }
       if (/^r/.test(cmd[j])) {
         tmp = cmd[j].match(/^r(.*)/)[1];
-        ct.tags = {};
-        dia.resets.push(rs);
-        rs = {style: (tree.V4Styles.Style[tmp] ? tmp : style), content: []};
+        ct.tags = this._createBaseTags((tree.V4Styles.Style[tmp] ? tmp : dialogue.Style), tree);
       }
       if (/^t\(/.test(cmd[j])) {
         if (!ct.tags.t) ct.tags.t = [];
@@ -346,7 +354,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         if (!tmp[0]) continue;
         var tcmd = tmp[tmp.length - 1].split('\\'),
             tct = {t1: dialogue.Start, t2: dialogue.End, accel: 1, tags: {}, _reuse: reuse};
-        for (var k = 0; k < tcmd.length; k++) tct._reuse(tcmd[k]);
+        for (var k = tcmd.length - 1; k >= 0; --k) tct._reuse(tcmd[k]);
         if (tmp.length == 2) {
           tct.accel = tmp[0] * 1;
         }
@@ -364,12 +372,16 @@ ASS.prototype._parseTags = function(dialogue, tree) {
       if (/^p\d/.test(cmd[j])) ct.tags.p = cmd[j].match(/^p(\d+)/)[1] * 1;
       if (/^pbo/.test(cmd[j])) ct.tags.pbo = cmd[j].match(/^pbo(.*)/)[1] * 1;
     }
-    rs.content.push(ct);
+    prevTags = ct.tags;
+    dia.content.push(ct);
   }
-  dia.resets.push(rs);
   function reuse(cmd) {
     var tmp;
-    if (/^fs[\d\+\-]/.test(cmd)) this.tags.fs = cmd.match(/^fs(.*)/)[1];
+    if (/^fs[\d\+\-]/.test(cmd)) {
+      tmp = cmd.match(/^fs(.*)/)[1];
+      if (/^\d/.test(tmp)) this.tags.fs = this.tags.fs * 1;
+      if (/^\+|-/.test(tmp)) this.tags.fs *= (tmp * 1 > -10 ? (10 + tmp * 1) / 10 : 1);
+    }
     if (/^fsp/.test(cmd)) this.tags.fsp = cmd.match(/^fsp(.*)/)[1] * 1;
     if (/^fscx/.test(cmd)) this.tags.fscx = cmd.match(/^fscx(.*)/)[1] * 1;
     if (/^fscy/.test(cmd)) this.tags.fscy = cmd.match(/^fscy(.*)/)[1] * 1;
@@ -425,9 +437,8 @@ ASS.prototype._parseTags = function(dialogue, tree) {
 };
 ASS.prototype._setStyle = function(data) {
   var pt = data.parsedText,
-      s = this.tree.V4Styles.Style[pt.resets[0].style],
+      s = this.tree.V4Styles.Style[data.Style],
       dia = {};
-  
   dia.node = document.createElement('div');
   for (var i in s) dia[i] = s[i];
   dia.Layer = data.Layer;
@@ -445,55 +456,20 @@ ASS.prototype._setStyle = function(data) {
   if (pt.fad) dia.fad = pt.fad;
   if (pt.fade) dia.fade = pt.fade;
 
-
-
-  for (var i = 0; i < pt.resets.length; i++) {
-    var ct = pt.resets[i].content,
-        rsNode = document.createElement('div'),
-        prevNode = rsNode,
-        sn = this.tree.V4Styles.Style[pt.resets[i].style],
-        currStyle = {
-          fn: sn.Fontname,
-          fs: sn.Fontsize,
-          c1: sn.PrimaryColour,
-          c2: sn.SecondaryColour,
-          c3: sn.OutlineColour,
-          c4: sn.BackColour,
-          ox: sn.Outline,
-          oy: sn.Outline,
-          sx: sn.Shadow,
-          sy: sn.Shadow,
-          blur: 0,
-          fscx: 100,
-          fscy: 100,
-          frx: 0,
-          fry: 0,
-          frz: 0,
-          fax: 0,
-          fay: 0,
-          p: 0,
-          pbo: 0
-        };
-    rsNode.className = 'ASS-style-' + pt.resets[i].style;
-    for (var j = 0; j < ct.length; j++) {
-      var ctNode = document.createElement('div'),
-          textNode = document.createElement('span');
-      textNode.innerHTML = ct[j].text;
-      ctNode.appendChild(textNode);
-      while (/<br>$/.test(textNode.innerHTML)) {
-        textNode.innerHTML = textNode.innerHTML.replace(/<br>$/, '');
-        ctNode.appendChild(document.createElement('br'));
-      }
-      prevNode.appendChild(ctNode);
-      prevNode = ctNode;
-      this._setTagsStyle(ctNode, textNode, ct[j].tags, currStyle);
+  for (var i = 0; i < pt.content.length; ++i) {
+    if (!pt.content[i].text) continue;
+    var ctNode = document.createElement('span');
+    ctNode.innerHTML = pt.content[i].text;
+    dia.node.appendChild(ctNode);
+    while (/<br>$/.test(ctNode.innerHTML)) {
+      ctNode.innerHTML = ctNode.innerHTML.replace(/<br>$/, '');
+      dia.node.appendChild(document.createElement('br'));
     }
-    dia.node.appendChild(rsNode);
+    this._setTagsStyle(ctNode, pt.content[i].tags);
   }
   this.stage.appendChild(dia.node);
 
   dia.node.className = 'ASS-dialogue';
-  dia.node.style.letterSpacing = this.scale * dia.Spacing + 'px';
   if (dia.Layer) dia.node.style.zIndex = dia.Layer;
   if (dia.move || dia.fad || dia.fade) {
     dia.node.style.animationName = 'ASS-animation-' + data._index;
@@ -502,7 +478,6 @@ ASS.prototype._setStyle = function(data) {
     dia.node.style.animationTimingFunction = 'linear';
     dia.node.style.animationIterationCount = 1;
   }
-  if (dia.BorderStyle == 1) dia.node.style.textShadow = this._createShadow(dia.OutlineColour, dia.Outline, dia.Outline, dia.BackColour, dia.Shadow, dia.Shadow, 0);
   if (dia.Alignment % 3 == 1) dia.node.style.textAlign = 'left';
   if (dia.Alignment % 3 == 2) dia.node.style.textAlign = 'center';
   if (dia.Alignment % 3 == 0) dia.node.style.textAlign = 'right';
@@ -533,71 +508,47 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(cn, tn, t, cs) {
-  for (var i in t) {
-    if (i == 'b') {
-      if (t.b == 0) cn.style.fontWeight = 'normal';
-      else if (t.b == 1) cn.style.fontWeight = 'bold';
-      else cn.style.fontWeight = t.b;
-    }
-    if (i == 'i') cn.style.fontStyle = (t.i ? 'italic' : 'normal');
-    if (i == 'u') cn.style.textDecoration += (t.u ? ' underline' : '');
-    if (i == 's') cn.style.textDecoration += (t.s ? ' line-through' : '');
-    if (i == 'xbord') cs.ox = t.xbord;
-    if (i == 'ybord') cs.oy = t.ybord;
-    if (i == 'xshad') cs.sx = t.xshad;
-    if (i == 'yshad') cs.sy = t.yshad;
-    if (i == 'fn') {
-      cs.fn = t.fn;
-      cn.style.fontFamily = '\'' + t.fn + '\', Arial';
-    }
-    if (i == 'fs') {
-      if (/^\d/.test(t.fs)) cs.fs = t.fs * 1;
-      if (/^\+|-/.test(t.fs)) cs.fs *= (t.fs * 1 > -10 ? (10 + t.fs * 1) / 10 : 1);
-    }
-    if (i == 'fsp') cn.style.letterSpacing = this.scale * t.fsp + 'px';
-    if (/fscx|fscy|frx|fry|frz|fax|fay|blur/.test(i)) cs[i] = t[i];
-    if (/c\d/.test(i)) cs[i] = cs[i].replace(/\w{6}$/, t[i]);
-    if (/a\d/.test(i)) cs['c' + i[1]] = cs['c' + i[1]].replace(/&H\w\w/, '&H' + t[i]);
-    if (i == 'k') {}
-    if (i == 'kf') {}
-    if (i == 'ko') {}
-    if (i == 'kt') {}
-    if (i == 'q') {
-      if (t.q == 0) {} // TODO
-      if (t.q == 1) {
-        cn.style.wordBreak = 'break-all';
-        cn.style.whiteSpace = 'normal';
-      }
-      if (t.q == 2) {
-        cn.style.wordBreak = 'normal';
-        cn.style.whiteSpace = 'nowrap';
-      }
-      if (t.q == 3) {} // TODO
-    }
-    if (i == 'p' || i == 'pbo') cs[i] = t[i];
-    if (i == 'clip') {}
-    if (i == 'iclip') {}
+ASS.prototype._setTagsStyle = function(cn, t) {
+  cn.style.fontFamily = '\'' + t.fn + '\', Arial';
+  cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
+  if (t.b == 0) cn.style.fontWeight = 'normal';
+  else if (t.b == 1) cn.style.fontWeight = 'bold';
+  else cn.style.fontWeight = t.b;
+  cn.style.fontStyle = (t.i ? 'italic' : 'normal');
+  if (t.u && t.i) cn.style.textDecoration = 'underline line-through';
+  else if (t.u) cn.style.textDecoration = 'underline';
+  else if (t.s) cn.style.textDecoration = 'line-through';
+  cn.style.letterSpacing = this.scale * t.fsp + 'px';
+  if (t.q == 0) {} // TODO
+  if (t.q == 1) {
+    cn.style.wordBreak = 'break-all';
+    cn.style.whiteSpace = 'normal';
   }
-  if (cs.fax || cs.fay || cs.frx || cs.fry || cs.frz || cs.fscx != 100 || cs.fscy != 100) {
-    tn.style.transform = 'perspective(400px)';
-    tn.style.display = 'inline-block';
-    tn.style.wordBreak = 'normal';
-    tn.style.whiteSpace = 'nowrap';
+  if (t.q == 2) {
+    cn.style.wordBreak = 'normal';
+    cn.style.whiteSpace = 'nowrap';
   }
-  if (cs.p) {
-    var data = tn.innerText;
-    tn.innerHTML = this._createSVG(cs, data);
+  if (t.q == 3) {} // TODO
+
+  if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx != 100 || t.fscy != 100) {
+    cn.style.transform = 'perspective(400px)';
+    cn.style.display = 'inline-block';
+    cn.style.wordBreak = 'normal';
+    cn.style.whiteSpace = 'nowrap';
+  }
+  if (t.p) {
+    var data = cn.innerText;
+    cn.innerHTML = this._createSVG(t, data);
   } else {
-    cn.style.fontSize = this.scale * this._getRealFontSize(cs.fs, cs.fn) + 'px';
-    cn.style.color = this._toRGBA(cs.c1);
-    cn.style.textShadow = this._createShadow(cs.c3, cs.ox, cs.oy, cs.c4, cs.sx, cs.sy, cs.blur);
-    if (cs.fax || cs.fay) tn.style.transform += ' skew(' + Math.atan(cs.fax) + ', ' + Math.atan(cs.fay) + ')';
-    if (cs.fscx != 100 || cs.fscy != 100) tn.style.transform += ' scale(' + cs.fscx / 100 + ', ' + cs.fscy / 100 + ')';
+    cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
+    cn.style.color = this._toRGBA(t.a1 + t.c1);
+    cn.style.textShadow = this._createShadow(t.a3 + t.c3, t.xbord, t.ybord, t.a4 + t.c4, t.xshad, t.yshad, t.blur);
+    if (t.fscx != 100 || t.fscy != 100) cn.style.transform += ' scale(' + t.fscx / 100 + ', ' + t.fscy / 100 + ')';
   }
-  if (cs.fry) tn.style.transform += ' rotateY(' + cs.fry + 'deg)';
-  if (cs.frx) tn.style.transform += ' rotateX(' + cs.frx + 'deg)';
-  if (cs.frz) tn.style.transform += ' rotateZ(' + (-cs.frz) + 'deg)';
+  if (t.fax || t.fay) cn.style.transform += ' skew(' + Math.atan(t.fax) + ', ' + Math.atan(t.fay) + ')';
+  if (t.fry) cn.style.transform += ' rotateY(' + t.fry + 'deg)';
+  if (t.frx) cn.style.transform += ' rotateX(' + t.frx + 'deg)';
+  if (t.frz) cn.style.transform += ' rotateZ(' + (-t.frz) + 'deg)';
 };
 ASS.prototype._getChannel = function(dia) {
   var that = this,
@@ -671,7 +622,7 @@ ASS.prototype._timeParser = function(time, timer) {
   return (t[1] * 3600 + t[2] * 60 + t[3] * 1) * tr;
 };
 ASS.prototype._toRGBA = function(c) {
-  var t = c.match(/&H(\w\w)(\w\w)(\w\w)(\w\w)/),
+  var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/),
       a = (1 - parseInt(t[1], 16) / 255).toFixed(1),
       b = parseInt(t[2], 16),
       g = parseInt(t[3], 16),
@@ -721,13 +672,13 @@ ASS.prototype._getRealFontSize = function(fs, fn) {
   container.removeChild(fse);
   return rfs;
 };
-ASS.prototype._createSVG = function(cs, data) {
-  var sx = cs.fscx ? cs.fscx / 100 : 1,
-      sy = cs.fscy ? cs.fscy / 100 : 1,
-      c1 = this._toRGBA(cs.c1),
-      s = this.scale / Math.pow(2, cs.p - 1),
-      tmp = this._parseDrawingCommands(cs.pbo, data),
-      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c1 + '">\n</path>\n</g>\n</svg>'
+ASS.prototype._createSVG = function(t, data) {
+  var sx = t.fscx ? t.fscx / 100 : 1,
+      sy = t.fscy ? t.fscy / 100 : 1,
+      c = this._toRGBA(t.a1 + t.c1),
+      s = this.scale / Math.pow(2, t.p - 1),
+      tmp = this._parseDrawingCommands(t.pbo, data),
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>'
   return svg;
 };
 ASS.prototype._parseDrawingCommands = function(pbo, data) {
@@ -749,7 +700,7 @@ ASS.prototype._parseDrawingCommands = function(pbo, data) {
   }
   cmds.push(cmd);
   cmd = [];
-  for (var i = cmds.length - 1; i >= 0; i--) {
+  for (var i = cmds.length - 1; i >= 0; --i) {
     if (cmds[i][0] == 'p') {
       cmd.push(cmds[i][2]);
       cmd.push(cmds[i][1]);
@@ -760,7 +711,7 @@ ASS.prototype._parseDrawingCommands = function(pbo, data) {
       cmd = [];
     }
   }
-  for (var i = 0; i < cmds.length; i++) {
+  for (var i = cmds.length - 1; i >= 0; --i) {
     if (/m/.test(cmds[i][0])) cmds[i][0] = 'M';
     if (/n|l/.test(cmds[i][0])) cmds[i][0] = 'L';
     if (/b|s/.test(cmds[i][0])) cmds[i][0] = 'C';
@@ -773,36 +724,37 @@ ASS.prototype._parseDrawingCommands = function(pbo, data) {
       if (cmds[i][j + 1] > maxY) maxY = cmds[i][j + 1];
     }
   }
-  for (var i = 0; i < cmds.length; i++) {
+  for (var i = cmds.length - 1; i >= 0; --i) {
     for (var j = 1; j < cmds[i].length + (cmds[i].length & 1) - 1; j += 2) {
       cmds[i][j] -= minX;
       cmds[i][j + 1] -= minY;
     }
   }
-  for (var i = 0; i < cmds.length; i++)
-    for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; j++)
+  for (var i = 0; i < cmds.length; ++i)
+    for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; ++j)
       str += cmds[i][j] + ' ';
   str += 'Z';
   return {
     d: str,
     w: maxX - minX,
-    h: maxY -minY
+    h: maxY - minY
   };
 };
 ASS.prototype._createAnimation = function() {
-  var dia = this.tree.Events.Dialogue;
-  var kfStr = '';
-  for (var i = 0; i < dia.length; i++) {
-    var pt = dia[i].parsedText;
-    var kf = {};
-    var dur = (dia[i].End - dia[i].Start) * 1000,
+  var dia = this.tree.Events.Dialogue,
+      kfStr = '',
+      that = this;
+  for (var i = dia.length - 1; i >= 0; --i) {
+    var pt = dia[i].parsedText,
+        dur = (dia[i].End - dia[i].Start) * 1000,
+        kf = {},
         t = [];
     if (!pt.fad && pt.fade && pt.fade.length == 2) pt.fad = pt.fade;
     if (pt.fad && pt.fad.length == 2) {
       t[0] = '0.000%';
       t[1] = (Math.min(dur, pt.fad[0]) / dur * 100).toFixed(3) + '%';
       t[2] = (Math.max(0, dur - pt.fad[1]) / dur * 100).toFixed(3) + '%';
-      t[3] = '100.000%'
+      t[3] = '100.000%';
       for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = [];
       kf[t[0]].push('opacity: 0;');
       kf[t[1]].push('opacity: 1;');
@@ -811,15 +763,12 @@ ASS.prototype._createAnimation = function() {
     }
     if (pt.fade && pt.fade.length == 7) {
       t[0] = '0.000%';
-      for (var j = 1; j <= 4; j++) t[j] = (Math.min(dur, pt.fade[j + 2]) / dur * 100).toFixed(3) + '%';
-      t[5] = '100.000%'
-      for (var j = 0; j <= 5; j++) if (!kf[t[j]]) kf[t[j]] = [];
-      kf[t[0]].push('opacity: ' + (1 - pt.fade[0] / 255) + ';');
-      kf[t[1]].push('opacity: ' + (1 - pt.fade[0] / 255) + ';');
-      kf[t[2]].push('opacity: ' + (1 - pt.fade[1] / 255) + ';');
-      kf[t[3]].push('opacity: ' + (1 - pt.fade[1] / 255) + ';');
-      kf[t[4]].push('opacity: ' + (1 - pt.fade[2] / 255) + ';');
-      kf[t[5]].push('opacity: ' + (1 - pt.fade[2] / 255) + ';');
+      for (var j = 1; j <= 4; ++j) t[j] = (Math.min(dur, pt.fade[j + 2]) / dur * 100).toFixed(3) + '%';
+      t[5] = '100.000%';
+      for (var j = 0; j <= 5; ++j) {
+        if (!kf[t[j]]) kf[t[j]] = [];
+        kf[t[j]].push('opacity: ' + (1 - pt.fade[j >> 1] / 255) + ';');
+      }
     }
     if (pt.move && pt.move.length == 6) {
       if (!pt.pos) pt.pos = {x: 0, y: 0};
@@ -828,12 +777,8 @@ ASS.prototype._createAnimation = function() {
         t[1] = (Math.min(dur, pt.move[4]) / dur * 100).toFixed(3) + '%';
         t[2] = (Math.min(dur, pt.move[5]) / dur * 100).toFixed(3) + '%';
         t[3] = '100.000%';
-        for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = [];
-        // TODO: translate() will overwrite it's own transform, add matrix3d()
-        kf[t[0]].push('transform: translate(' + this.scale * (pt.move[0] - pt.pos.x) + 'px, ' + this.scale * (pt.move[1] - pt.pos.y) + 'px);');
-        kf[t[1]].push('transform: translate(' + this.scale * (pt.move[0] - pt.pos.x) + 'px, ' + this.scale * (pt.move[1] - pt.pos.y) + 'px);');
-        kf[t[2]].push('transform: translate(' + this.scale * (pt.move[2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[3] - pt.pos.y) + 'px);');
-        kf[t[3]].push('transform: translate(' + this.scale * (pt.move[2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[3] - pt.pos.y) + 'px);');
+        for (var j = 0; j <= 3; ++j) if (!kf[t[j]]) kf[t[j]] = [];
+        for (var j = 0; j <= 3; ++j) kf[t[j]].push('transform: translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px);');
       }
     }
     if (JSON.stringify(kf) != '{}') {
@@ -843,6 +788,29 @@ ASS.prototype._createAnimation = function() {
       }
       kfStr += '}\n';
     }
+
+    // kf = {};
+    // for (var j = 0; j < pt.resets.length; j++) {
+    //   for (var k = 0; k < pt.resets[j].content.length; k++) {
+    //     var tags = pt.resets[j].content[k].tags;
+    //     if (tags.t) {
+    //       tags.t.forEach(function(e, index) {
+    //         if (e.tags.fs) {
+    //           var fn = e.tags.fn || that.tree.V4Styles[pt.resets[j].style].Fontname,
+    //               fs = that._getRealFontSize(e.tags.fs, fn);
+    //           that._getRealFontSize(fs, fn);
+    //         }
+    //       })
+    //     }
+    //   }
+    // }
   }
   document.getElementById('ASS-animation').innerHTML = kfStr;
 };
+// ASS.prototype._createSimulationPoints = function(a, num) {
+//   if (a <= 0 || a == 1) return [0.000, 100.000];
+//   a = a < 1 ? 1 / a : a;
+//   var arr = [];
+//   for (var i = 0; i <= num; i++) arr.push(Math.log(a * i / num) / Math.log(a - 1));
+//   return arr;
+// };
