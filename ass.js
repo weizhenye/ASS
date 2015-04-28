@@ -604,18 +604,18 @@ ASS.prototype._getChannel = function(dia) {
     } else return false;
   }
   if (dia.Alignment <= 3) {
-    for (var i = SH - V; i >= V; --i)
+    for (var i = SH - V - 1; i > V; --i)
       if (judge(i)) break;
   } else if (dia.Alignment >= 7) {
-    for (var i = V; i <= SH - V; ++i)
+    for (var i = V + 1; i < SH - V; ++i)
       if (judge(i)) break;
   } else {
-    for (var i = (SH - H) >> 1; i <= SH - V; ++i) {
+    for (var i = (SH - H) >> 1; i < SH - V; ++i) {
       if (judge(i)) break;
     }
   }
-  if (dia.Alignment > 3) dia.channel -= H;
-  for (var i = dia.channel; i <= dia.channel + H; ++i) {
+  if (dia.Alignment > 3) dia.channel -= H - 1;
+  for (var i = dia.channel; i < dia.channel + H; ++i) {
     if (dia.Alignment % 3 == 1) {
       this.channel[L].left[i] = W;
     } else if (dia.Alignment % 3 == 2) {
