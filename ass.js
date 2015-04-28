@@ -287,8 +287,11 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         cmd.splice(j + 1, 1);
       }
     }
-    for (var j in prevTags) ct.tags[j] = prevTags[j];
-    for (var j = cmd.length - 1; j >= 0; --j) {
+    for (var j in prevTags) {
+      if (j != 't') ct.tags[j] = prevTags[j];
+      else ct.tags[j] = JSON.parse(JSON.stringify(prevTags[j]));
+    }
+    for (var j = 0; j < cmd.length; ++j) {
       var tmp;
       ct._reuse(cmd[j]);
       if (/^b\d/.test(cmd[j])) ct.tags.b = cmd[j].match(/^b(\d+)/)[1] * 1;
@@ -353,7 +356,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         tmp = cmd[j].replace(/\s/g, '').match(/^t\((.*)\)/)[1].split(',');
         if (!tmp[0]) continue;
         var tcmd = tmp[tmp.length - 1].split('\\'),
-            tct = {t1: dialogue.Start, t2: dialogue.End, accel: 1, tags: {}, _reuse: reuse};
+            tct = {t1: 0, t2: (dialogue.End - dialogue.Start) * 1000, accel: 1, tags: {}, _reuse: reuse};
         for (var k = tcmd.length - 1; k >= 0; --k) tct._reuse(tcmd[k]);
         if (tmp.length == 2) {
           tct.accel = tmp[0] * 1;
@@ -372,6 +375,16 @@ ASS.prototype._parseTags = function(dialogue, tree) {
       if (/^p\d/.test(cmd[j])) ct.tags.p = cmd[j].match(/^p(\d+)/)[1] * 1;
       if (/^pbo/.test(cmd[j])) ct.tags.pbo = cmd[j].match(/^pbo(.*)/)[1] * 1;
     }
+    if (ct.tags.t) {
+      for (var j = 0; j < ct.tags.t.length - 1; ++j) {
+        for (var k = j + 1; k < ct.tags.t.length; ++k) {
+          if (ct.tags.t[j].t1 == ct.tags.t[k].t1 && ct.tags.t[j].t2 == ct.tags.t[k].t2) {
+            for (var l in ct.tags.t[k].tags) ct.tags.t[j].tags[l] = ct.tags.t[k].tags[l];
+            ct.tags.t.splice(k, 1);
+          }
+        }
+      }
+    }
     prevTags = ct.tags;
     dia.content.push(ct);
   }
@@ -379,7 +392,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
     var tmp;
     if (/^fs[\d\+\-]/.test(cmd)) {
       tmp = cmd.match(/^fs(.*)/)[1];
-      if (/^\d/.test(tmp)) this.tags.fs = this.tags.fs * 1;
+      if (/^\d/.test(tmp)) this.tags.fs = tmp * 1;
       if (/^\+|-/.test(tmp)) this.tags.fs *= (tmp * 1 > -10 ? (10 + tmp * 1) / 10 : 1);
     }
     if (/^fsp/.test(cmd)) this.tags.fsp = cmd.match(/^fsp(.*)/)[1] * 1;
@@ -456,6 +469,7 @@ ASS.prototype._setStyle = function(data) {
   if (pt.fad) dia.fad = pt.fad;
   if (pt.fade) dia.fade = pt.fade;
 
+  this.stage.appendChild(dia.node);
   for (var i = 0; i < pt.content.length; ++i) {
     if (!pt.content[i].text) continue;
     var ctNode = document.createElement('span');
@@ -465,9 +479,8 @@ ASS.prototype._setStyle = function(data) {
       ctNode.innerHTML = ctNode.innerHTML.replace(/<br>$/, '');
       dia.node.appendChild(document.createElement('br'));
     }
-    this._setTagsStyle(ctNode, pt.content[i].tags);
+    this._setTagsStyle(ctNode, pt.content[i].tags, data, i);
   }
-  this.stage.appendChild(dia.node);
 
   dia.node.className = 'ASS-dialogue';
   if (dia.Layer) dia.node.style.zIndex = dia.Layer;
@@ -508,7 +521,7 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(cn, t) {
+ASS.prototype._setTagsStyle = function(cn, t, data, index) {
   cn.style.fontFamily = '\'' + t.fn + '\', Arial';
   cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
   if (t.b == 0) cn.style.fontWeight = 'normal';
@@ -537,8 +550,9 @@ ASS.prototype._setTagsStyle = function(cn, t) {
     cn.style.whiteSpace = 'nowrap';
   }
   if (t.p) {
-    var data = cn.innerText;
-    cn.innerHTML = this._createSVG(t, data);
+    var tmp = cn.innerText;
+    cn.innerHTML = this._createSVG(t, tmp);
+    if (t.pbo) cn.style.transform += ' translateY(' + this.scale * t.pbo + 'px)';
   } else {
     cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
     cn.style.color = this._toRGBA(t.a1 + t.c1);
@@ -549,6 +563,13 @@ ASS.prototype._setTagsStyle = function(cn, t) {
   if (t.fry) cn.style.transform += ' rotateY(' + t.fry + 'deg)';
   if (t.frx) cn.style.transform += ' rotateX(' + t.frx + 'deg)';
   if (t.frz) cn.style.transform += ' rotateZ(' + (-t.frz) + 'deg)';
+  if (t.t) {
+    cn.style.animationName = 'ASS-animation-' + data._index + '-' + index;
+    cn.style.animationDuration = (data.End - data.Start) + 's';
+    cn.style.animationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
+    cn.style.animationTimingFunction = 'linear';
+    cn.style.animationIterationCount = 1;
+  }
 };
 ASS.prototype._getChannel = function(dia) {
   var that = this,
@@ -633,7 +654,7 @@ ASS.prototype._createShadow = function(oc, ox, oy, sc, sx, sy, blur) {
   oc = this._toRGBA(oc);
   sc = this._toRGBA(sc);
   var ts = '';
-  if (blur == undefined) blur = 0;
+  blur = blur || 0;
   if (!(ox + oy + sx + sy)) return 'none';
   if (!/No/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow'])) {
     ox *= this.scale;
@@ -677,11 +698,11 @@ ASS.prototype._createSVG = function(t, data) {
       sy = t.fscy ? t.fscy / 100 : 1,
       c = this._toRGBA(t.a1 + t.c1),
       s = this.scale / Math.pow(2, t.p - 1),
-      tmp = this._parseDrawingCommands(t.pbo, data),
-      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>'
+      tmp = this._parseDrawingCommands(t, data),
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
   return svg;
 };
-ASS.prototype._parseDrawingCommands = function(pbo, data) {
+ASS.prototype._parseDrawingCommands = function(t, data) {
   data = data.replace(/^\s*|\s*$/g, '').replace(/\s+/g, ' ').toLowerCase();
   var ele = data.split(' '),
       cmd = [],
@@ -734,6 +755,7 @@ ASS.prototype._parseDrawingCommands = function(pbo, data) {
     for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; ++j)
       str += cmds[i][j] + ' ';
   str += 'Z';
+  if (t.pbo) t.pbo = Math.max(t.pbo - maxY + minY, 0);
   return {
     d: str,
     w: maxX - minX,
@@ -755,20 +777,18 @@ ASS.prototype._createAnimation = function() {
       t[1] = (Math.min(dur, pt.fad[0]) / dur * 100).toFixed(3) + '%';
       t[2] = (Math.max(0, dur - pt.fad[1]) / dur * 100).toFixed(3) + '%';
       t[3] = '100.000%';
-      for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = [];
-      kf[t[0]].push('opacity: 0;');
-      kf[t[1]].push('opacity: 1;');
-      kf[t[2]].push('opacity: 1;');
-      kf[t[3]].push('opacity: 0;');
+      for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = {};
+      kf[t[0]]['opacity'] = 0;
+      kf[t[1]]['opacity'] = 1;
+      kf[t[2]]['opacity'] = 1;
+      kf[t[3]]['opacity'] = 0;
     }
     if (pt.fade && pt.fade.length == 7) {
       t[0] = '0.000%';
       for (var j = 1; j <= 4; ++j) t[j] = (Math.min(dur, pt.fade[j + 2]) / dur * 100).toFixed(3) + '%';
       t[5] = '100.000%';
-      for (var j = 0; j <= 5; ++j) {
-        if (!kf[t[j]]) kf[t[j]] = [];
-        kf[t[j]].push('opacity: ' + (1 - pt.fade[j >> 1] / 255) + ';');
-      }
+      for (var j = 0; j <= 5; ++j) if (!kf[t[j]]) kf[t[j]] = {};
+      for (var j = 0; j <= 5; ++j) kf[t[j]]['opacity'] = 1 - pt.fade[j >> 1] / 255;
     }
     if (pt.move && pt.move.length == 6) {
       if (!pt.pos) pt.pos = {x: 0, y: 0};
@@ -777,35 +797,128 @@ ASS.prototype._createAnimation = function() {
         t[1] = (Math.min(dur, pt.move[4]) / dur * 100).toFixed(3) + '%';
         t[2] = (Math.min(dur, pt.move[5]) / dur * 100).toFixed(3) + '%';
         t[3] = '100.000%';
-        for (var j = 0; j <= 3; ++j) if (!kf[t[j]]) kf[t[j]] = [];
-        for (var j = 0; j <= 3; ++j) kf[t[j]].push('transform: translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px);');
+        for (var j = 0; j <= 3; ++j) if (!kf[t[j]]) kf[t[j]] = {};
+        for (var j = 0; j <= 3; ++j) kf[t[j]]['transform'] = 'translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px)';
       }
     }
     if (JSON.stringify(kf) != '{}') {
       kfStr += '@keyframes ASS-animation-' + dia[i]._index + ' { ';
       for (var j in kf) {
-        kfStr += j + ' {' + kf[j].join(' ') + '} ';
+        kfStr += j + '{';
+        for (var k in kf[j]) {
+          kfStr += k + ': ' + kf[j][k] + ';';
+        }
+        kfStr += '} '
       }
       kfStr += '}\n';
     }
 
-    // kf = {};
-    // for (var j = 0; j < pt.resets.length; j++) {
-    //   for (var k = 0; k < pt.resets[j].content.length; k++) {
-    //     var tags = pt.resets[j].content[k].tags;
-    //     if (tags.t) {
-    //       tags.t.forEach(function(e, index) {
-    //         if (e.tags.fs) {
-    //           var fn = e.tags.fn || that.tree.V4Styles[pt.resets[j].style].Fontname,
-    //               fs = that._getRealFontSize(e.tags.fs, fn);
-    //           that._getRealFontSize(fs, fn);
-    //         }
-    //       })
-    //     }
-    //   }
-    // }
+    for (var j = pt.content.length - 1; j >= 0; --j) {
+      kf = {};
+      var tags = pt.content[j].tags;
+      if (tags.t) {
+        for (var k = tags.t.length - 1; k >= 0; --k) {
+          var ttags = tags.t[k].tags;
+          t[0] = '0.000%';
+          t[1] = (Math.min(dur, tags.t[k].t1 + .1) / dur * 100).toFixed(3) + '%';
+          t[2] = (Math.min(dur, tags.t[k].t2) / dur * 100).toFixed(3) + '%';
+          t[3] = '100.000%';
+          for (var l = 0; l <= 3; ++l) if (!kf[t[l]]) kf[t[l]] = [];
+          if (ttags.fs) {
+            kf[t[0]]['font-size'] = this.scale * this._getRealFontSize(tags.fs, tags.fn) + 'px';
+            kf[t[1]]['font-size'] = this.scale * this._getRealFontSize(tags.fs, tags.fn) + 'px';
+            kf[t[2]]['font-size'] = this.scale * this._getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf[t[3]]['font-size'] = this.scale * this._getRealFontSize(ttags.fs, tags.fn) + 'px';
+          }
+          if (ttags.fsp) {
+            kf[t[0]]['letter-spacing'] = this.scale * tags.fsp + 'px';
+            kf[t[1]]['letter-spacing'] = this.scale * tags.fsp + 'px';
+            kf[t[2]]['letter-spacing'] = this.scale * ttags.fsp + 'px';
+            kf[t[3]]['letter-spacing'] = this.scale * ttags.fsp + 'px';
+          }
+          if (ttags.c1 || ttags.a1) {
+            if (!ttags.c1) ttags.c1 = tags.c1;
+            if (!ttags.a1) ttags.a1 = tags.a1;
+            kf[t[0]]['color'] = this._toRGBA(tags.a1 + tags.c1);
+            kf[t[1]]['color'] = this._toRGBA(tags.a1 + tags.c1);
+            kf[t[2]]['color'] = this._toRGBA(ttags.a1 + ttags.c1);
+            kf[t[3]]['color'] = this._toRGBA(ttags.a1 + ttags.c1);
+          }
+          if (ttags.a1 && ttags.a2 && ttags.a3 && ttags.a4 &&
+              ttags.a1 == ttags.a2 && ttags.a2 == ttags.a3 && ttags.a3 == ttags.a4) {
+            kf[t[0]]['opacity'] = 1 - parseInt(tags.a1, 16) / 255;
+            kf[t[1]]['opacity'] = 1 - parseInt(tags.a1, 16) / 255;
+            kf[t[2]]['opacity'] = 1 - parseInt(ttags.a1, 16) / 255;
+            kf[t[3]]['opacity'] = 1 - parseInt(ttags.a1, 16) / 255;
+          }
+          // if (ttags.c3 || ttags.a3 || ttags.c3 || ttags.a4 || ttags.xbord || ttags.ybord || ttags.xshad || ttags.yshad || ttags.blur) {
+          //   ['c3', 'a3', 'c4', 'a4'].forEach(function(e) {
+          //     if (!ttags[e]) ttags[e] = tags[e];
+          //   });
+          //   kf[t[0]]['text-shadow'] = this._createShadow(tags.a3 + tags.c3, tags.xbord, tags.ybord, tags.a4 + tags.c4, tags.xshad, tags.yshad, tags.blur);
+          //   kf[t[1]]['text-shadow'] = this._createShadow(tags.a3 + tags.c3, tags.xbord, tags.ybord, tags.a4 + tags.c4, tags.xshad, tags.yshad, tags.blur);
+          //   kf[t[2]]['text-shadow'] = this._createShadow(ttags.a3 + ttags.c3, ttags.xbord, ttags.ybord, ttags.a4 + ttags.c4, ttags.xshad, ttags.yshad, ttags.blur);
+          //   kf[t[3]]['text-shadow'] = this._createShadow(ttags.a3 + ttags.c3, ttags.xbord, ttags.ybord, ttags.a4 + ttags.c4, ttags.xshad, ttags.yshad, ttags.blur);
+          // }
+          /* use matrix3d() */
+          if (ttags.fscx != 100 || ttags.fscy != 100 || ttags.frx || ttags.fry || ttags.frz || ttags.fax || ttags.fay) {
+            ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'].forEach(function(e) {
+              if (!ttags[e]) ttags[e] = tags[e];
+            });
+            kf[t[0]]['transform'] = this._createTransform(tags);
+            kf[t[1]]['transform'] = this._createTransform(tags);
+            kf[t[2]]['transform'] = this._createTransform(ttags);
+            kf[t[3]]['transform'] = this._createTransform(ttags);
+          }
+        }
+      }
+      if (JSON.stringify(kf) != '{}') {
+        kfStr += '@keyframes ASS-animation-' + dia[i]._index + '-' + j + ' { ';
+        for (var k in kf) {
+          kfStr += k + '{';
+          for (var l in kf[k]) {
+            kfStr += l + ': ' + kf[k][l] + ';';
+          }
+          kfStr += '} '
+        }
+        kfStr += '}\n';
+      }
+    }
   }
   document.getElementById('ASS-animation').innerHTML = kfStr;
+};
+ASS.prototype._createMatrix3d = function(t) {
+  // too slow
+  var te = document.createElement('div'),
+      container = document.getElementById('ASS-container'),
+      str = 'perspective(400px)',
+      matrix3d;
+  if (t.fscx != 100 || t.fscy != 100) str += ' scale(' + t.fscx / 100 + ', ' + t.fscy / 100 + ')'
+  if (t.fax || t.fay) str += ' skew(' + Math.atan(t.fax) + ', ' + Math.atan(t.fay) + ')';
+  if (t.fry) str += ' rotateY(' + t.fry + 'deg)';
+  if (t.frx) str += ' rotateX(' + t.frx + 'deg)';
+  if (t.frz) str += ' rotateZ(' + (-t.frz) + 'deg)';
+  te.innerHTML = 'ASS.js';
+  te.style.visibility = 'hidden';
+  te.style.transform = str;
+  container.appendChild(te);
+  matrix3d = window.getComputedStyle(te, null).getPropertyValue('transform');
+  container.removeChild(te);
+  return matrix3d;
+};
+ASS.prototype._createTransform = function(t) {
+  var str = 'perspective(400px)';
+  t.fax = t.fax || 0;
+  t.fay = t.fay || 0;
+  t.frx = t.frx || 0;
+  t.fry = t.fry || 0;
+  t.frz = t.frz || 0;
+  str += ' scale(' + (t.p ? 1 : t.fscx / 100) + ', ' + (t.p ? 1 : t.fscy / 100) + ')';
+  str += ' skew(' + Math.atan(t.fax) + ', ' + Math.atan(t.fay) + ')';
+  str += ' rotateY(' + t.fry + 'deg)';
+  str += ' rotateX(' + t.frx + 'deg)';
+  str += ' rotateZ(' + (-t.frz) + 'deg)';
+  return str;
 };
 // ASS.prototype._createSimulationPoints = function(a, num) {
 //   if (a <= 0 || a == 1) return [0.000, 100.000];
