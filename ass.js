@@ -142,7 +142,7 @@ ASS.prototype._launch = function() {
   var ct = this.video.currentTime;
   for (var i = this.runline.length - 1; i >= 0; --i) {
     if (this.runline[i].End < ct) {
-      if (!this.runline[i].pos) this._freeChannel(this.runline[i]);
+      if (!this.runline[i].pos && !this.runline[i].Effect) this._freeChannel(this.runline[i]);
       this.stage.removeChild(this.runline[i].node);
       this.runline.splice(i, 1);
     }
@@ -223,10 +223,34 @@ ASS.prototype._parse = function(data) {
         tmp2.Layer *= 1;
         tmp2.Start = this._timeParser(tmp2.Start, tree.ScriptInfo['Timer']);
         tmp2.End = this._timeParser(tmp2.End, tree.ScriptInfo['Timer']);
+        tmp2.Style = tree.V4Styles.Style[tmp2.Style] ? tmp2.Style : 'Default';
         tmp2.MarginL *= 1;
         tmp2.MarginR *= 1;
         tmp2.MarginV *= 1;
-        tmp2.Style = tree.V4Styles.Style[tmp2.Style] ? tmp2.Style : 'Default';
+        tmp2.Effect = (function(str) {
+          if (!str) return str;
+          var tmp = str.split(';'),
+              eff = {};
+          if (tmp[0] == 'Banner') {
+            eff.name = tmp[0];
+            eff.delay = tmp[1] * 1 || 1;
+            eff.lefttoright = tmp[2] * 1 || 0;
+            eff.fadeawaywidth = tmp[3] * 1 || 0;
+          }
+          if (/^Scroll\s/.test(tmp[0])) {
+            eff.name = tmp[0];
+            if (tmp[1] < tmp[2]) {
+              eff.y1 = tmp[1] * 1;
+              eff.y2 = tmp[2] * 1;
+            } else {
+              eff.y1 = tmp[2] * 1;
+              eff.y2 = tmp[1] * 1;
+            }
+            eff.delay = tmp[3] * 1 || 1;
+            eff.fadeawayheight = tmp[4] * 1 || 0;
+          }
+          return eff;
+        })(tmp2.Effect);
         tmp2._index = ++_index;
         tmp2.parsedText = this._parseTags(tmp2, tree);
         if (tmp2.Start < tmp2.End) tree.Events.Dialogue.push(tmp2);
@@ -468,6 +492,7 @@ ASS.prototype._setStyle = function(data) {
   if (pt.move) dia.move = pt.move;
   if (pt.fad) dia.fad = pt.fad;
   if (pt.fade) dia.fade = pt.fade;
+  if (dia.move && !dia.pos) dia.pos = {x:0, y:0};
 
   this.stage.appendChild(dia.node);
   for (var i = 0; i < pt.content.length; ++i) {
@@ -484,7 +509,7 @@ ASS.prototype._setStyle = function(data) {
 
   dia.node.className = 'ASS-dialogue';
   if (dia.Layer) dia.node.style.zIndex = dia.Layer;
-  if (dia.move || dia.fad || dia.fade) {
+  if (dia.move || dia.fad || dia.fade || dia.Effect) {
     dia.node.style.animationName = 'ASS-animation-' + data._index;
     dia.node.style.animationDuration = (data.End - data.Start) + 's';
     dia.node.style.animationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
@@ -501,6 +526,22 @@ ASS.prototype._setStyle = function(data) {
     if (dia.Alignment <= 3) dia.node.style.top = this.scale * dia.pos.y - dia.node.clientHeight + 'px';
     if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = this.scale * dia.pos.y - dia.node.clientHeight / 2 + 'px';
     if (dia.Alignment >= 7) dia.node.style.top = this.scale * dia.pos.y + 'px';
+  } else if (dia.Effect) {
+    if (dia.Effect.name == 'Banner') {
+      dia.node.style.wordBreak = 'normal';
+      dia.node.style.whiteSpace = 'nowrap';
+      if (dia.Alignment <= 3) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight - dia.MarginV) + 'px';
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight) / 2 + 'px';
+      if (dia.Alignment >= 7) dia.node.style.top = dia.MarginV + 'px';
+      if (dia.Effect.lefttoright) dia.node.style.left = -dia.node.clientWidth + 'px';
+      else dia.node.style.left = this.stage.clientWidth + 'px';
+    }
+    if (/^Scroll/.test(dia.Effect.name)) {
+      dia.node.style.top = (/up/.test(dia.Effect.name) ? this.stage.clientHeight : -dia.node.clientHeight) + 'px';
+      if (dia.Alignment % 3 == 1) dia.node.style.left = '0';
+      if (dia.Alignment % 3 == 2) dia.node.style.left = (this.stage.clientWidth - dia.node.clientWidth) / 2 + 'px';
+      if (dia.Alignment % 3 == 0) dia.node.style.left = this.stage.clientWidth - dia.node.clientWidth + 'px';
+    }
   } else {
     if (dia.Alignment % 3 == 1) {
       dia.node.style.left = '0';
@@ -771,6 +812,33 @@ ASS.prototype._createAnimation = function() {
         dur = (dia[i].End - dia[i].Start) * 1000,
         kf = {},
         t = [];
+    if (dia[i].Effect && !pt.move) {
+      if (!kf['0.000%']) kf['0.000%'] = {};
+      if (!kf['100.000%']) kf['100.000%'] = {};
+      var eff = dia[i].Effect;
+      if (eff.name == 'Banner') {
+        kf['0.000%']['transform'] = 'translateX(0px)';
+        kf['100.000%']['transform'] = 'translateX(' + (eff.lefttoright ? 1 : -1) * this.scale * dur / eff.delay + 'px)';
+      }
+      if (/^Scroll/.test(eff.name)) {
+        var y1 = eff.y1,
+            y2 = eff.y2 || this.stage.clientHeight / this.scale,
+            factor = (y2 - y1) / (dur / eff.delay),
+            updown = /up/.test(eff.name) ? -1 : 1;
+        if (factor < 1) {
+          t[1] = (factor * 100).toFixed(3) + '%';
+          t[2] = Math.min(factor * 100 + .001, 100).toFixed(3) + '%';
+          for (var j = 1; j <= 2; j++) if (!kf[t[j]]) kf[t[j]] = {};
+          kf[t[1]]['transform'] = 'translateY(' + this.scale * y2 * updown + 'px)';
+          kf[t[1]]['opacity'] = 1;
+          kf[t[2]]['opacity'] = 0;
+          kf['100.000%']['opacity'] = 0;
+        } else {
+          kf['100.000%']['transform'] = 'translateY(' + this.scale * dur / eff.delay * updown + 'px)';
+        }
+        kf['0.000%']['transform'] = 'translateY(' + this.scale * y1 * updown + 'px)';
+      }
+    }
     if (!pt.fad && pt.fade && pt.fade.length == 2) pt.fad = pt.fade;
     if (pt.fad && pt.fad.length == 2) {
       t[0] = '0.000%';
@@ -860,7 +928,7 @@ ASS.prototype._createAnimation = function() {
           //   kf[t[2]]['text-shadow'] = this._createShadow(ttags.a3 + ttags.c3, ttags.xbord, ttags.ybord, ttags.a4 + ttags.c4, ttags.xshad, ttags.yshad, ttags.blur);
           //   kf[t[3]]['text-shadow'] = this._createShadow(ttags.a3 + ttags.c3, ttags.xbord, ttags.ybord, ttags.a4 + ttags.c4, ttags.xshad, ttags.yshad, ttags.blur);
           // }
-          /* use matrix3d() */
+          /* TODO: use matrix3d() */
           if (ttags.fscx != 100 || ttags.fscy != 100 || ttags.frx || ttags.fry || ttags.frz || ttags.fax || ttags.fay) {
             ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'].forEach(function(e) {
               if (!ttags[e]) ttags[e] = tags[e];
