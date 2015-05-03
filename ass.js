@@ -6,6 +6,8 @@ function ASS() {
   this.runline = [];
   this.channel = [];
   this.scale = 1;
+  this.container = document.createElement('div');
+  this.container.id = 'ASS-container';
   this.stage = document.createElement('div');
   this.stage.id = 'ASS-stage';
   this.stage.className = 'ASS-animation-paused';
@@ -14,7 +16,9 @@ function ASS() {
   document.addEventListener(fullscreenchange(), function() {
     if (fullScreenElement() == that.video || !isFullScreen()) {
       that.resize();
+      that.container.className = 'ASS-fullscreen';
     }
+    if (!isFullScreen()) that.container.className = '';
   });
   function isFullScreen() {
     if ('webkitIsFullScreen' in document)
@@ -45,13 +49,11 @@ ASS.prototype.init = function(data, video) {
   var that = this;
   if (video && !this.video) {
     this.video = video;
-    var container = document.createElement('div');
-    container.id = 'ASS-container';
-    container.style.position = this.video.style.position;
+    this.container.style.position = this.video.style.position;
     this.video.style.position = 'absolute';
-    this.video.parentNode.insertBefore(container, this.video);
-    container.appendChild(this.video);
-    container.appendChild(this.stage);
+    this.video.parentNode.insertBefore(this.container, this.video);
+    this.container.appendChild(this.video);
+    this.container.appendChild(this.stage);
 
     this.video.addEventListener('seeking', function() {
       that._seek();
@@ -74,7 +76,7 @@ ASS.prototype.init = function(data, video) {
   if (this.tree.ScriptInfo.WrapStyle == 1) this.stage.style.wordBreak = 'break-all';
   if (this.tree.ScriptInfo.WrapStyle == 2) this.stage.style.whiteSpace = 'nowrap';
 
-  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; }';
+  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; } .ASS-fullscreen { position: fixed !important; left: 0 !important; top: 0 !important;}';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -122,16 +124,18 @@ ASS.prototype._pause = function() {
 };
 ASS.prototype._seek = function() {
   var that = this,
-      ct = this.video.currentTime;
+      ct = this.video.currentTime,
+      dias = this.tree.Events.Dialogue;
   this.stage.innerHTML = '';
   this.runline = [];
   this.channel = [];
   this.position = (function() {
     var from = 0,
-        to = that.tree.Events.Dialogue.length - 1;
-    while (from + 1 < to && ct > that.tree.Events.Dialogue[(to + from) >> 1].End) from = (to + from) >> 1;
+        to = dias.length - 1;
+    while (from + 1 < to && ct > dias[(to + from) >> 1].End) from = (to + from) >> 1;
     for (var i = from; i < to; ++i) {
-      if (that.tree.Events.Dialogue[i].End > ct && ct >= that.tree.Events.Dialogue[i].Start)
+      if (dias[i].End > ct && ct >= dias[i].Start ||
+          i && dias[i - 1].End < ct && ct < dias[i].Start)
         return i;
     }
     return to;
@@ -139,7 +143,8 @@ ASS.prototype._seek = function() {
   this._launch();
 };
 ASS.prototype._launch = function() {
-  var ct = this.video.currentTime;
+  var ct = this.video.currentTime,
+      dias = this.tree.Events.Dialogue;
   for (var i = this.runline.length - 1; i >= 0; --i) {
     if (this.runline[i].End < ct) {
       if (!this.runline[i].pos && !this.runline[i].Effect) this._freeChannel(this.runline[i]);
@@ -147,14 +152,10 @@ ASS.prototype._launch = function() {
       this.runline.splice(i, 1);
     }
   }
-  while (this.position < this.tree.Events.Dialogue.length &&
-         ct >= this.tree.Events.Dialogue[this.position].End) {
-    ++this.position;
-  }
-  while (this.position < this.tree.Events.Dialogue.length &&
-         ct >= this.tree.Events.Dialogue[this.position].Start) {
-    if (ct < this.tree.Events.Dialogue[this.position].End) {
-      var dia = this._setStyle(this.tree.Events.Dialogue[this.position]);
+  while (this.position < dias.length && ct >= dias[this.position].End) ++this.position;
+  while (this.position < dias.length && ct >= dias[this.position].Start) {
+    if (ct < dias[this.position].End) {
+      var dia = this._setStyle(dias[this.position]);
       this.runline.push(dia);
     }
     ++this.position;
@@ -447,9 +448,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
       this.tags['a' + tmp[1]] = tmp[2];
     }
     if (/^alpha&H/.test(cmd)) {
-      for (var k = 1; k <= 4; k++) {
-        this.tags['a' + k] = cmd.match(/^alpha&H(\w\w)/)[1];
-      }
+      for (var k = 1; k <= 4; k++) this.tags['a' + k] = cmd.match(/^alpha&H(\w\w)/)[1];
     }
     if (/^clip/.test(cmd)) { // TODO
       tmp = cmd.match(/^clip\((.*)\)/)[1].split(/\s*,\s*/);
@@ -504,7 +503,7 @@ ASS.prototype._setStyle = function(data) {
       ctNode.innerHTML = ctNode.innerHTML.replace(/<br>$/, '');
       dia.node.appendChild(document.createElement('br'));
     }
-    this._setTagsStyle(ctNode, pt.content[i].tags, data, i);
+    this._setTagsStyle(ctNode, pt.content[i], data, i);
   }
 
   dia.node.className = 'ASS-dialogue';
@@ -562,7 +561,8 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(cn, t, data, index) {
+ASS.prototype._setTagsStyle = function(cn, ct, data, index) {
+  var t = ct.tags;
   cn.style.fontFamily = '\'' + t.fn + '\', Arial';
   cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
   if (t.b == 0) cn.style.fontWeight = 'normal';
@@ -591,8 +591,7 @@ ASS.prototype._setTagsStyle = function(cn, t, data, index) {
     cn.style.whiteSpace = 'nowrap';
   }
   if (t.p) {
-    var tmp = cn.innerText;
-    cn.innerHTML = this._createSVG(t, tmp);
+    cn.innerHTML = this._createSVG(t, ct.text);
     if (t.pbo) cn.style.transform += ' translateY(' + this.scale * t.pbo + 'px)';
   } else {
     cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
@@ -723,22 +722,21 @@ ASS.prototype._createShadow = function(oc, ox, oy, sc, sx, sy, blur) {
 };
 ASS.prototype._getRealFontSize = function(fs, fn) {
   var rfs,
-      fse = document.createElement('div'),
-      container = document.getElementById('ASS-container');
+      fse = document.createElement('div');
   fse.innerHTML = 'ASS.js';
   fse.style.fontFamily = '\'' + fn + '\', Arial';
   fse.style.fontSize = fs + 'px';
   fse.style.visibility = 'hidden';
-  container.appendChild(fse);
+  this.container.appendChild(fse);
   rfs = fs * fs / fse.clientHeight;
-  container.removeChild(fse);
+  this.container.removeChild(fse);
   return rfs;
 };
 ASS.prototype._createSVG = function(t, data) {
   var sx = t.fscx ? t.fscx / 100 : 1,
       sy = t.fscy ? t.fscy / 100 : 1,
       c = this._toRGBA(t.a1 + t.c1),
-      s = this.scale / Math.pow(2, t.p - 1),
+      s = this.scale / (1 << (t.p - 1)),
       tmp = this._parseDrawingCommands(t, data),
       svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
   return svg;
