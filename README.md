@@ -80,9 +80,10 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 
 # Known issues
 
-* \N in libass has less height than &lt;br&gt; in browsers, subbers should avoid to use multiple \N to position a dialogue, use \pos instead.
+* \N in Aegisub has less height than &lt;br&gt; in browsers, subbers should avoid to use multiple \N to position a dialogue, use \pos instead.
 * A dialogue with multiple \t is not rendered correctly, for transforms in browsers are order-sensitive.
-* A dialogue with multiple rotations (\fr[x/y/z]) is not rotated perfectly same as that in libass.
+* A dialogue with multiple rotations (\fr[x/y/z]) is not rotated perfectly same as that in Aegisub.
 * \org is not equal to transform-origin, it's nearly impossible to be set by CSS.
 * text-shadow with different quantity of values can't be animated by CSS, it seems I can't animate border or shadow by CSS as I use text-shadow to create the border of text.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and \move at the same time, only \move works.
+* When \pos is set to drawings, \pos(x, y) will be placed at \pos(x + xMin, y + yMin). I think it's Aegisub's bug. [For detail](http://forum.aegisub.org/viewtopic.php?f=10&t=69847)
