@@ -1,10 +1,12 @@
-ASS.js is a parser for ASS file and renders subtitle on HTML5 video.
+# ASS.js
 
-[DEMO](http://ass.woozy.im/)
+ASS.js parses ASS subtitle file format, then renders subtitles on HTML5 video.
+
+[Demo](http://ass.woozy.im/)
 
 [TODO list](https://github.com/weizhenye/ASS#todo)
 
-# Usage
+## Usage
 	<video id="video" src="example.mp4"></video>
 
 	<script src="ass.js"></script>
@@ -21,21 +23,21 @@ ASS.js is a parser for ASS file and renders subtitle on HTML5 video.
 	</script>
 
 
-# API
+## API
 
-### Initialization
+#### Initialization
 	var ass = new ASS();
 	ass.init(content, video);
-### Resize
+#### Resize
 	// If you change video's width or height, you should do
 	ass.resize();
-### Show
+#### Show
 	ass.show();
-### Hide
+#### Hide
 	ass.hide();
 
 
-# TODO
+## TODO
 
 Items with <del>strikethrough</del> means they won't be supported.
 
@@ -78,7 +80,7 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 #### <del>[Fonts]</del>
 #### <del>[Graphics]</del>
 
-# Known issues
+## Known issues
 
 * \N in Aegisub has less height than &lt;br&gt; in browsers, subbers should avoid to use multiple \N to position a dialogue, use \pos instead.
 * A dialogue with multiple \t is not rendered correctly, for transforms in browsers are order-sensitive.
@@ -86,4 +88,3 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * \org is not equal to transform-origin, it's nearly impossible to be set by CSS.
 * text-shadow with different quantity of values can't be animated by CSS, it seems I can't animate border or shadow by CSS as I use text-shadow to create the border of text.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and \move at the same time, only \move works.
-* When \pos is set to drawings, \pos(x, y) will be placed at \pos(x + xMin, y + yMin). I think it's Aegisub's bug. [For detail](http://forum.aegisub.org/viewtopic.php?f=10&t=69847)

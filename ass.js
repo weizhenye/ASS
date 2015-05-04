@@ -99,8 +99,8 @@ ASS.prototype.resize = function() {
       this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
     }
   }
-  this._seek();
   this._createAnimation();
+  this._seek();
 };
 ASS.prototype.show = function() {
   this.stage.style.visibility = 'visible';
@@ -133,6 +133,7 @@ ASS.prototype._seek = function() {
     var from = 0,
         to = dias.length - 1;
     while (from + 1 < to && ct > dias[(to + from) >> 1].End) from = (to + from) >> 1;
+    if (!from) return 0;
     for (var i = from; i < to; ++i) {
       if (dias[i].End > ct && ct >= dias[i].Start ||
           i && dias[i - 1].End < ct && ct < dias[i].Start)
@@ -230,15 +231,15 @@ ASS.prototype._parse = function(data) {
         tmp2.MarginV *= 1;
         tmp2.Effect = (function(str) {
           if (!str) return str;
-          var tmp = str.split(';'),
+          var tmp = str.toLowerCase().split(';'),
               eff = {};
-          if (tmp[0] == 'Banner') {
+          if (tmp[0] == 'banner') {
             eff.name = tmp[0];
             eff.delay = tmp[1] * 1 || 1;
             eff.lefttoright = tmp[2] * 1 || 0;
             eff.fadeawaywidth = tmp[3] * 1 || 0;
           }
-          if (/^Scroll\s/.test(tmp[0])) {
+          if (/^scroll\s/.test(tmp[0])) {
             eff.name = tmp[0];
             if (tmp[1] < tmp[2]) {
               eff.y1 = tmp[1] * 1;
@@ -503,7 +504,7 @@ ASS.prototype._setStyle = function(data) {
       ctNode.innerHTML = ctNode.innerHTML.replace(/<br>$/, '');
       dia.node.appendChild(document.createElement('br'));
     }
-    this._setTagsStyle(ctNode, pt.content[i], data, i);
+    this._setTagsStyle(ctNode, pt.content[i], dia, data, i);
   }
 
   dia.node.className = 'ASS-dialogue';
@@ -526,7 +527,7 @@ ASS.prototype._setStyle = function(data) {
     if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = this.scale * dia.pos.y - dia.node.clientHeight / 2 + 'px';
     if (dia.Alignment >= 7) dia.node.style.top = this.scale * dia.pos.y + 'px';
   } else if (dia.Effect) {
-    if (dia.Effect.name == 'Banner') {
+    if (dia.Effect.name == 'banner') {
       dia.node.style.wordBreak = 'normal';
       dia.node.style.whiteSpace = 'nowrap';
       if (dia.Alignment <= 3) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight - dia.MarginV) + 'px';
@@ -535,7 +536,7 @@ ASS.prototype._setStyle = function(data) {
       if (dia.Effect.lefttoright) dia.node.style.left = -dia.node.clientWidth + 'px';
       else dia.node.style.left = this.stage.clientWidth + 'px';
     }
-    if (/^Scroll/.test(dia.Effect.name)) {
+    if (/^scroll/.test(dia.Effect.name)) {
       dia.node.style.top = (/up/.test(dia.Effect.name) ? this.stage.clientHeight : -dia.node.clientHeight) + 'px';
       if (dia.Alignment % 3 == 1) dia.node.style.left = '0';
       if (dia.Alignment % 3 == 2) dia.node.style.left = (this.stage.clientWidth - dia.node.clientWidth) / 2 + 'px';
@@ -561,7 +562,7 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(cn, ct, data, index) {
+ASS.prototype._setTagsStyle = function(cn, ct, data, dia, index) {
   var t = ct.tags;
   cn.style.fontFamily = '\'' + t.fn + '\', Arial';
   cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
@@ -591,8 +592,7 @@ ASS.prototype._setTagsStyle = function(cn, ct, data, index) {
     cn.style.whiteSpace = 'nowrap';
   }
   if (t.p) {
-    cn.innerHTML = this._createSVG(t, ct.text);
-    if (t.pbo) cn.style.transform += ' translateY(' + this.scale * t.pbo + 'px)';
+    this._createSVG(cn, t, ct.text);
   } else {
     cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
     cn.style.color = this._toRGBA(t.a1 + t.c1);
@@ -614,11 +614,11 @@ ASS.prototype._setTagsStyle = function(cn, ct, data, index) {
 ASS.prototype._getChannel = function(dia) {
   var that = this,
       L = dia.Layer,
-      SW = this.stage.clientWidth - dia.MarginL - dia.MarginR,
+      SW = this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR),
       SH = this.stage.clientHeight,
       W = dia.node.clientWidth,
       H = dia.node.clientHeight,
-      V = dia.MarginV,
+      V = this.scale * dia.MarginV,
       count = 0;
   if (!this.channel[L]) {
     this.channel[L] = {
@@ -732,14 +732,18 @@ ASS.prototype._getRealFontSize = function(fs, fn) {
   this.container.removeChild(fse);
   return rfs;
 };
-ASS.prototype._createSVG = function(t, data) {
+ASS.prototype._createSVG = function(cn, t, data) {
   var sx = t.fscx ? t.fscx / 100 : 1,
       sy = t.fscy ? t.fscy / 100 : 1,
       c = this._toRGBA(t.a1 + t.c1),
       s = this.scale / (1 << (t.p - 1)),
       tmp = this._parseDrawingCommands(t, data),
+      ox = sx * s * tmp.minX,
+      oy = sy * s * (tmp.minY + tmp.pbo),
       svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
-  return svg;
+  cn.innerHTML = svg;
+  // TODO: offsets set to transform will effect its animation.
+  cn.style.transform += ' translate(' + ox + 'px, ' + oy + 'px)';
 };
 ASS.prototype._parseDrawingCommands = function(t, data) {
   data = data.replace(/^\s*|\s*$/g, '').replace(/\s+/g, ' ').toLowerCase();
@@ -794,11 +798,13 @@ ASS.prototype._parseDrawingCommands = function(t, data) {
     for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; ++j)
       str += cmds[i][j] + ' ';
   str += 'Z';
-  if (t.pbo) t.pbo = Math.max(t.pbo - maxY + minY, 0);
   return {
     d: str,
+    pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,
     w: maxX - minX,
-    h: maxY - minY
+    h: maxY - minY,
+    minX: minX,
+    minY: minY
   };
 };
 ASS.prototype._createAnimation = function() {
@@ -814,11 +820,11 @@ ASS.prototype._createAnimation = function() {
       if (!kf['0.000%']) kf['0.000%'] = {};
       if (!kf['100.000%']) kf['100.000%'] = {};
       var eff = dia[i].Effect;
-      if (eff.name == 'Banner') {
+      if (eff.name == 'banner') {
         kf['0.000%']['transform'] = 'translateX(0px)';
         kf['100.000%']['transform'] = 'translateX(' + (eff.lefttoright ? 1 : -1) * this.scale * dur / eff.delay + 'px)';
       }
-      if (/^Scroll/.test(eff.name)) {
+      if (/^scroll/.test(eff.name)) {
         var y1 = eff.y1,
             y2 = eff.y2 || this.stage.clientHeight / this.scale,
             factor = (y2 - y1) / (dur / eff.delay),
