@@ -562,7 +562,7 @@ ASS.prototype._setStyle = function(data) {
   }
   return dia;
 };
-ASS.prototype._setTagsStyle = function(cn, ct, data, dia, index) {
+ASS.prototype._setTagsStyle = function(cn, ct, dia, data, index) {
   var t = ct.tags;
   cn.style.fontFamily = '\'' + t.fn + '\', Arial';
   cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
