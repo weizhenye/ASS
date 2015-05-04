@@ -76,7 +76,7 @@ ASS.prototype.init = function(data, video) {
   if (this.tree.ScriptInfo.WrapStyle == 1) this.stage.style.wordBreak = 'break-all';
   if (this.tree.ScriptInfo.WrapStyle == 2) this.stage.style.whiteSpace = 'nowrap';
 
-  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; } .ASS-fullscreen { position: fixed !important; left: 0 !important; top: 0 !important;}';
+  var CSSstr = '#ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; top: 0; left: 0; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; -webkit-animation-play-state: paused !important;} .ASS-fullscreen { position: fixed !important; left: 0 !important; top: 0 !important;}';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -510,6 +510,11 @@ ASS.prototype._setStyle = function(data) {
   dia.node.className = 'ASS-dialogue';
   if (dia.Layer) dia.node.style.zIndex = dia.Layer;
   if (dia.move || dia.fad || dia.fade || dia.Effect) {
+    dia.node.style.webkitAnimationName = 'ASS-animation-' + data._index;
+    dia.node.style.webkitAnimationDuration = (data.End - data.Start) + 's';
+    dia.node.style.webkitAnimationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
+    dia.node.style.webkitAnimationTimingFunction = 'linear';
+    dia.node.style.webkitAnimationIterationCount = 1;
     dia.node.style.animationName = 'ASS-animation-' + data._index;
     dia.node.style.animationDuration = (data.End - data.Start) + 's';
     dia.node.style.animationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
@@ -604,6 +609,11 @@ ASS.prototype._setTagsStyle = function(cn, ct, dia, data, index) {
   if (t.frx) cn.style.transform += ' rotateX(' + t.frx + 'deg)';
   if (t.frz) cn.style.transform += ' rotateZ(' + (-t.frz) + 'deg)';
   if (t.t) {
+    cn.style.webkitAnimationName = 'ASS-animation-' + data._index + '-' + index;
+    cn.style.webkitAnimationDuration = (data.End - data.Start) + 's';
+    cn.style.webkitAnimationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
+    cn.style.webkitAnimationTimingFunction = 'linear';
+    cn.style.webkitAnimationIterationCount = 1;
     cn.style.animationName = 'ASS-animation-' + data._index + '-' + index;
     cn.style.animationDuration = (data.End - data.Start) + 's';
     cn.style.animationDelay = Math.min(0, data.Start - this.video.currentTime) + 's';
@@ -810,6 +820,7 @@ ASS.prototype._parseDrawingCommands = function(t, data) {
 ASS.prototype._createAnimation = function() {
   var dia = this.tree.Events.Dialogue,
       kfStr = '',
+      tmpStr = '',
       that = this;
   for (var i = dia.length - 1; i >= 0; --i) {
     var pt = dia[i].parsedText,
@@ -874,15 +885,18 @@ ASS.prototype._createAnimation = function() {
       }
     }
     if (JSON.stringify(kf) != '{}') {
-      kfStr += '@keyframes ASS-animation-' + dia[i]._index + ' { ';
+      tmpStr = '';
+      tmpStr += 'keyframes ASS-animation-' + dia[i]._index + ' { ';
       for (var j in kf) {
-        kfStr += j + '{';
+        tmpStr += j + '{';
         for (var k in kf[j]) {
-          kfStr += k + ': ' + kf[j][k] + ';';
+          tmpStr += k + ': ' + kf[j][k] + ';';
         }
-        kfStr += '} '
+        tmpStr += '} '
       }
-      kfStr += '}\n';
+      tmpStr += '}\n';
+      kfStr += '@' + tmpStr;
+      kfStr += '@-webkit-' + tmpStr;
     }
 
     for (var j = pt.content.length - 1; j >= 0; --j) {
@@ -945,15 +959,18 @@ ASS.prototype._createAnimation = function() {
         }
       }
       if (JSON.stringify(kf) != '{}') {
-        kfStr += '@keyframes ASS-animation-' + dia[i]._index + '-' + j + ' { ';
+        tmpStr = '';
+        tmpStr += 'keyframes ASS-animation-' + dia[i]._index + '-' + j + ' { ';
         for (var k in kf) {
-          kfStr += k + '{';
+          tmpStr += k + '{';
           for (var l in kf[k]) {
-            kfStr += l + ': ' + kf[k][l] + ';';
+            tmpStr += l + ': ' + kf[k][l] + ';';
           }
-          kfStr += '} '
+          tmpStr += '} '
         }
-        kfStr += '}\n';
+        tmpStr += '}\n';
+        kfStr += '@' + tmpStr;
+        kfStr += '@-webkit-' + tmpStr;
       }
     }
   }
