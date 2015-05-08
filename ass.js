@@ -342,14 +342,14 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         } else dia.alignment = tmp + 2;
       }
       if (/^pos/.test(cmd[j]) && !dia.pos) {
-        tmp = cmd[j].match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
+        tmp = cmd[j].match(/^pos\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
         dia.pos = {
           x: tmp[1] * 1,
           y: tmp[2] * 1
         };
       }
       if (/^org/.test(cmd[j]) && !dia.org) {
-        tmp = cmd[j].match(/^org\(\s*(.*?)\s*,\s*(.*?)\s*\)/);
+        tmp = cmd[j].match(/^org\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
         dia.org = {
           x: tmp[1] * 1,
           y: tmp[2] * 1
@@ -412,6 +412,7 @@ ASS.prototype._parseTags = function(dialogue, tree) {
         }
       }
     }
+    if (!ct.tags.p) ct.text = ct.text.replace(/\s/g, '&nbsp;');
     prevTags = ct.tags;
     dia.content.push(ct);
   }
