@@ -488,6 +488,8 @@ ASS.prototype._setStyle = function(data) {
   dia.MarginV = data.MarginV || dia.MarginV;
   dia.Effect = data.Effect;
   dia.channel = 0;
+  dia.minX = 0;
+  dia.minY = 0;
   if (pt.alignment) dia.Alignment = pt.alignment;
   if (pt.pos) dia.pos = pt.pos;
   if (pt.org) dia.org = pt.org;
@@ -530,44 +532,44 @@ ASS.prototype._setStyle = function(data) {
     if (dia.Effect.name == 'banner') {
       dia.node.style.wordBreak = 'normal';
       dia.node.style.whiteSpace = 'nowrap';
-      if (dia.Alignment <= 3) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight - dia.MarginV) + 'px';
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight) / 2 + 'px';
-      if (dia.Alignment >= 7) dia.node.style.top = dia.MarginV + 'px';
-      if (dia.Effect.lefttoright) dia.node.style.left = -dia.node.clientWidth + 'px';
-      else dia.node.style.left = this.stage.clientWidth + 'px';
+      if (dia.Alignment <= 3) dia.node.style.top = (this.stage.clientHeight - dia.node.clientHeight - dia.MarginV + dia.minY) + 'px';
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = ((this.stage.clientHeight - dia.node.clientHeight) / 2 + dia.minY) + 'px';
+      if (dia.Alignment >= 7) dia.node.style.top = (dia.MarginV + dia.minY) + 'px';
+      if (dia.Effect.lefttoright) dia.node.style.left = (-dia.node.clientWidth + dia.minX) + 'px';
+      else dia.node.style.left = (this.stage.clientWidth + dia.minX) + 'px';
     }
     if (/^scroll/.test(dia.Effect.name)) {
       dia.node.style.top = (/up/.test(dia.Effect.name) ? this.stage.clientHeight : -dia.node.clientHeight) + 'px';
-      if (dia.Alignment % 3 == 1) dia.node.style.left = '0';
-      if (dia.Alignment % 3 == 2) dia.node.style.left = (this.stage.clientWidth - dia.node.clientWidth) / 2 + 'px';
-      if (dia.Alignment % 3 == 0) dia.node.style.left = this.stage.clientWidth - dia.node.clientWidth + 'px';
+      if (dia.Alignment % 3 == 1) dia.node.style.left = dia.minX + 'px';
+      if (dia.Alignment % 3 == 2) dia.node.style.left = ((this.stage.clientWidth - dia.node.clientWidth) / 2 + dia.minX) + 'px';
+      if (dia.Alignment % 3 == 0) dia.node.style.left = (this.stage.clientWidth - dia.node.clientWidth + dia.minX) + 'px';
     }
   } else {
     dia.node.style.maxWidth = (this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) + 'px';
     if (dia.pos) {
-      if (dia.Alignment % 3 == 1) dia.node.style.left = this.scale * dia.pos.x + 'px';
-      if (dia.Alignment % 3 == 2) dia.node.style.left = this.scale * dia.pos.x - dia.node.clientWidth / 2 + 'px';
-      if (dia.Alignment % 3 == 0) dia.node.style.left = this.scale * dia.pos.x - dia.node.clientWidth + 'px';
-      if (dia.Alignment <= 3) dia.node.style.top = this.scale * dia.pos.y - dia.node.clientHeight + 'px';
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = this.scale * dia.pos.y - dia.node.clientHeight / 2 + 'px';
-      if (dia.Alignment >= 7) dia.node.style.top = this.scale * dia.pos.y + 'px';
+      if (dia.Alignment % 3 == 1) dia.node.style.left = (this.scale * dia.pos.x + dia.minX) + 'px';
+      if (dia.Alignment % 3 == 2) dia.node.style.left = (this.scale * dia.pos.x - dia.node.clientWidth / 2 + dia.minX) + 'px';
+      if (dia.Alignment % 3 == 0) dia.node.style.left = (this.scale * dia.pos.x - dia.node.clientWidth + dia.minX) + 'px';
+      if (dia.Alignment <= 3) dia.node.style.top = (this.scale * dia.pos.y - dia.node.clientHeight + dia.minY) + 'px';
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.node.style.top = (this.scale * dia.pos.y - dia.node.clientHeight / 2 + dia.minY) + 'px';
+      if (dia.Alignment >= 7) dia.node.style.top = (this.scale * dia.pos.y + dia.minY) + 'px';
     } else {
       if (dia.Alignment % 3 == 1) {
-        dia.node.style.left = '0';
+        dia.node.style.left = dia.minX + 'px';
         dia.node.style.marginLeft = this.scale * dia.MarginL + 'px';
       }
       if (dia.Alignment % 3 == 2) {
-        dia.node.style.left = (this.stage.clientWidth - dia.node.clientWidth) / 2 + 'px';
+        dia.node.style.left = ((this.stage.clientWidth - dia.node.clientWidth) / 2 + dia.minX) + 'px';
       }
       if (dia.Alignment % 3 == 0) {
-        dia.node.style.right = '0';
+        dia.node.style.right = dia.minX + 'px';
         dia.node.style.marginRight = this.scale * dia.MarginR + 'px';
       }
       if (dia.clientWidth > this.stage.clientWidth - this.scale * (dia.MarginL + dia.MarginR)) {
         dia.node.style.marginLeft = this.scale * dia.MarginL + 'px';
         dia.node.style.marginRight = this.scale * dia.MarginR + 'px';
       }
-      dia.node.style.top = this._getChannel(dia) + 'px';
+      dia.node.style.top = (this._getChannel(dia) + dia.minY) + 'px';
     }
   }
   return dia;
@@ -602,7 +604,7 @@ ASS.prototype._setTagsStyle = function(cn, ct, dia, data, index) {
     cn.style.whiteSpace = 'nowrap';
   }
   if (t.p) {
-    this._createSVG(cn, t, ct.text);
+    this._createSVG(cn, t, dia, ct.text);
   } else {
     cn.style.fontSize = this.scale * this._getRealFontSize(t.fs, t.fn) + 'px';
     cn.style.color = this._toRGBA(t.a1 + t.c1);
@@ -747,18 +749,16 @@ ASS.prototype._getRealFontSize = function(fs, fn) {
   this.container.removeChild(fse);
   return rfs;
 };
-ASS.prototype._createSVG = function(cn, t, data) {
+ASS.prototype._createSVG = function(cn, t, dia, data) {
   var sx = t.fscx ? t.fscx / 100 : 1,
       sy = t.fscy ? t.fscy / 100 : 1,
       c = this._toRGBA(t.a1 + t.c1),
       s = this.scale / (1 << (t.p - 1)),
       tmp = this._parseDrawingCommands(t, data),
-      ox = sx * s * tmp.minX,
-      oy = sy * s * (tmp.minY + tmp.pbo),
       svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
   cn.innerHTML = svg;
-  // TODO: offsets set to transform will effect its animation.
-  cn.style.transform += ' translate(' + ox + 'px, ' + oy + 'px)';
+  dia.minX = sx * s * tmp.minX;
+  dia.minY = sy * s * (tmp.minY + tmp.pbo);
 };
 ASS.prototype._parseDrawingCommands = function(t, data) {
   data = data.replace(/^\s*|\s*$/g, '').replace(/\s+/g, ' ').toLowerCase();
