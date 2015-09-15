@@ -1,4 +1,5 @@
-# ASS.js
+ASS.js
+======
 
 ASS.js parses ASS subtitle file format, then renders subtitles on HTML5 video.
 
@@ -14,7 +15,7 @@ ASS.js parses ASS subtitle file format, then renders subtitles on HTML5 video.
 	  var x = new XMLHttpRequest();
 	  x.open('GET', 'example.ass', 1);
 	  x.onreadystatechange = function() {
-	    if (x.readyState == 4 && x.status == 200) {
+	    if (x.readyState === 4 && x.status === 200) {
 	      var ass = new ASS();
 	      ass.init(x.responseText, document.getElementById('video'));
 	    }
@@ -88,3 +89,8 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * \org is not equal to transform-origin, it's nearly impossible to be set by CSS.
 * text-shadow with different quantity of values can't be animated by CSS, it seems I can't animate border or shadow by CSS as I use text-shadow to create the border of text.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and \move at the same time, only \move works.
+
+## License
+
+MIT
+
