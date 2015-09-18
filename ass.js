@@ -157,9 +157,41 @@ ASS.prototype._render = function(data) {
     minX: 0,
     minY: 0,
   };
-
+  dia.node.className = 'ASS-dialogue';
   this.stage.appendChild(dia.node);
   setTagsStyle.call(this, dia);
+  var tmp = dia.node.getBoundingClientRect();
+  dia.width = tmp.width;
+  dia.height = tmp.height;
+  if (dia.Effect) {
+    if (dia.Effect.name === 'banner') {
+      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
+      if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
+      if (dia.Effect.lefttoright) dia.x = -dia.width + dia.minX;
+      else dia.x = this.width + dia.minX;
+    }
+    if (/^scroll/.test(dia.Effect.name)) {
+      dia.y = /up/.test(dia.Effect.name) ? -dia.height : this.height;
+      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width + dia.minX;
+    }
+  } else {
+    if (dia.pos) {
+      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x + dia.minX;
+      if (dia.Alignment % 3 === 2) dia.x = this.scale * dia.pos.x - dia.width / 2 + dia.minX;
+      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width + dia.minX;
+      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height + dia.minY;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = this.scale * dia.pos.y - dia.height / 2 + dia.minY;
+      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y + dia.minY;
+    } else {
+      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR - dia.minX;
+      dia.y = this._getChannel(dia) + dia.minY;
+    }
+  }
   setDialogueStyle.call(this, dia);
 
   return dia;
@@ -168,8 +200,8 @@ ASS.prototype._getChannel = function(dia) {
   var L = dia.Layer,
       SW = this.width - Math.floor(this.scale * (dia.MarginL + dia.MarginR)),
       SH = this.height,
-      W = dia.node.clientWidth,
-      H = dia.node.clientHeight,
+      W = dia.width,
+      H = dia.height,
       V = Math.floor(this.scale * dia.MarginV),
       count = 0;
   channel[L] = channel[L] || {
@@ -219,7 +251,7 @@ ASS.prototype._getChannel = function(dia) {
   return dia.channel;
 };
 ASS.prototype._freeChannel = function(dia) {
-  for (var i = dia.channel + dia.node.clientHeight; i >= dia.channel; i--) {
+  for (var i = dia.channel + dia.height; i >= dia.channel; i--) {
     if (dia.Alignment % 3 === 1) channel[dia.Layer].left[i] = 0;
     else if (dia.Alignment % 3 === 2) channel[dia.Layer].middle[i] = 0;
     else channel[dia.Layer].right[i] = 0;
@@ -312,7 +344,7 @@ ASS.prototype._createAnimation = function() {
         for (var k in kf[j]) {
           tmpStr += k + ': ' + kf[j][k] + ';';
         }
-        tmpStr += '} '
+        tmpStr += '} ';
       }
       tmpStr += '}\n';
       kfStr += '@' + tmpStr;
@@ -421,7 +453,7 @@ var parseASS = function(data) {
       if (/:/.test(lines[i])) {
         var tmp = lines[i].match(/(.*?)\s*:\s*(.*)/);
         if (!isNaN(tmp[2] * 1)) tmp[2] *= 1;
-        tree.ScriptInfo[tmp[1]] = tmp[2] * 1 || tmp[2];
+        tree.ScriptInfo[tmp[1]] = tmp[2];
       }
     }
     if (state === 2) {
@@ -912,12 +944,14 @@ var setTagsStyle = function(dia) {
     var ct = dia.parsedText.content[i];
     if (!ct.text) continue;
     var cn = document.createElement('span');
+    var df = document.createDocumentFragment();
     cn.innerHTML = ct.text;
-    dia.node.appendChild(cn);
+    df.appendChild(cn);
     while (/<br>$/.test(cn.innerHTML)) {
       cn.innerHTML = cn.innerHTML.replace(/<br>$/, '');
-      dia.node.appendChild(document.createElement('br'));
+      df.appendChild(document.createElement('br'));
     }
+    dia.node.appendChild(df);
     var t = ct.tags,
         cssText = '',
         vct = this.video.currentTime;
@@ -945,8 +979,8 @@ var setTagsStyle = function(dia) {
       if (t.q === 3) {} // TODO
     }
     if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx !== 100 || t.fscy !== 100) {
-      cssText += 'transform:' + createTransform(t) + ';';
-      // cssText += 'transform:' + createMatrix3d(t) + ';';
+      // cssText += 'transform:' + createTransform(t) + ';';
+      cssText += 'transform:' + createMatrix3d(t) + ';';
       if (!t.p) cssText += 'display:inline-block;word-break:normal;white-space:nowrap;';
     }
     if (t.t) {
@@ -964,7 +998,6 @@ var setTagsStyle = function(dia) {
 var setDialogueStyle = function(dia) {
   var cssText = '',
       vct = this.video.currentTime;
-  dia.node.className = 'ASS-dialogue';
   if (dia.Layer) cssText += 'z-index:' + dia.Layer;
   if (dia.move || dia.fad || dia.fade || dia.Effect) {
     ['', '-webkit-'].forEach(function(v) {
@@ -978,49 +1011,18 @@ var setDialogueStyle = function(dia) {
   if (dia.Alignment % 3 === 1) cssText += 'text-align:left;';
   if (dia.Alignment % 3 === 2) cssText += 'text-align:center;';
   if (dia.Alignment % 3 === 0) cssText += 'text-align:right;';
-  if (dia.Effect) {
-    if (dia.Effect.name === 'banner') {
-      // cssText += 'word-break:normal;white-space:nowrap;';
-      if (dia.Alignment <= 3) cssText += 'top:' + (this.height - dia.node.clientHeight - dia.MarginV + dia.minY) + 'px;';
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) cssText += 'top:' + ((this.height - dia.node.clientHeight) / 2 + dia.minY) + 'px;';
-      if (dia.Alignment >= 7) cssText += 'top:' + (dia.MarginV + dia.minY) + 'px;';
-      if (dia.Effect.lefttoright) cssText += 'left:' + (-dia.node.clientWidth + dia.minX) + 'px;';
-      else cssText += 'left:' + (this.width + dia.minX) + 'px;';
-    }
-    if (/^scroll/.test(dia.Effect.name)) {
-      cssText += 'top:' + (/up/.test(dia.Effect.name) ? -dia.node.clientHeight : this.height) + 'px;';
-      if (dia.Alignment % 3 === 1) cssText += 'left:' + dia.minX + 'px;';
-      if (dia.Alignment % 3 === 2) cssText += 'left:' + ((this.width - dia.node.clientWidth) / 2 + dia.minX) + 'px;';
-      if (dia.Alignment % 3 === 0) cssText += 'left:' + (this.width - dia.node.clientWidth + dia.minX) + 'px;';
-    }
-  } else {
+  if (!dia.Effect) {
     cssText += 'max-width:' + (this.width - this.scale * (dia.MarginL + dia.MarginR)) + 'px;';
-    if (dia.pos) {
-      if (dia.Alignment % 3 === 1) cssText += 'left:' + (this.scale * dia.pos.x + dia.minX) + 'px;';
-      if (dia.Alignment % 3 === 2) cssText += 'left:' + (this.scale * dia.pos.x - dia.node.clientWidth / 2 + dia.minX) + 'px;';
-      if (dia.Alignment % 3 === 0) cssText += 'left:' + (this.scale * dia.pos.x - dia.node.clientWidth + dia.minX) + 'px;';
-      if (dia.Alignment <= 3) cssText += 'top:' + (this.scale * dia.pos.y - dia.node.clientHeight + dia.minY) + 'px;';
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) cssText += 'top:' + (this.scale * dia.pos.y - dia.node.clientHeight / 2 + dia.minY) + 'px;';
-      if (dia.Alignment >= 7) cssText += 'top:' + (this.scale * dia.pos.y + dia.minY) + 'px;';
-    } else {
-      if (dia.Alignment % 3 === 1) {
-        cssText += 'left:' + dia.minX + 'px;';
-        cssText += 'margin-left:' + this.scale * dia.MarginL + 'px;';
-      }
-      if (dia.Alignment % 3 === 2) {
-        cssText += 'left:' + ((this.width - dia.node.clientWidth) / 2 + dia.minX) + 'px;';
-      }
-      if (dia.Alignment % 3 === 0) {
-        cssText += 'right:' + dia.minX + 'px;';
-        cssText += 'margin-right:' + this.scale * dia.MarginR + 'px;';
-      }
-      if (dia.clientWidth > this.width - this.scale * (dia.MarginL + dia.MarginR)) {
+    if (!dia.pos) {
+      if (dia.Alignment % 3 === 1) cssText += 'margin-left:' + this.scale * dia.MarginL + 'px;';
+      if (dia.Alignment % 3 === 0) cssText += 'margin-right:' + this.scale * dia.MarginR + 'px;';
+      if (dia.width > this.width - this.scale * (dia.MarginL + dia.MarginR)) {
         cssText += 'margin-left:' + this.scale * dia.MarginL + 'px;';
         cssText += 'margin-right:' + this.scale * dia.MarginR + 'px;';
       }
-      cssText += 'top:' + (this._getChannel(dia) + dia.minY) + 'px';
     }
   }
+  cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
   dia.node.style.cssText = cssText;
 };
 
