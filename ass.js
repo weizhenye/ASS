@@ -192,6 +192,15 @@ ASS.prototype._render = function(data) {
       dia.y = this._getChannel(dia) + dia.minY;
     }
   }
+  if (!dia.org) {
+    dia.org = { x: 0, y: 0 };
+    if (dia.Alignment % 3 === 1) dia.org.x = dia.x;
+    if (dia.Alignment % 3 === 2) dia.org.x = dia.x + this.scale * dia.width / 2;
+    if (dia.Alignment % 3 === 0) dia.org.x = dia.x + this.scale * dia.width;
+    if (dia.Alignment <= 3) dia.org.y = dia.y + this.scale * dia.height;
+    if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.org.y = dia.y + this.scale * dia.height / 2;
+    if (dia.Alignment >= 7) dia.org.y = dia.y;
+  }
   setDialogueStyle.call(this, dia);
 
   return dia;
@@ -429,13 +438,14 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var baseTags = {};
 var channel = [];
+var PERSPECTIVE_NUM = 314; // TODO: I don't know why it's 314, it just performances well.
 var parseASS = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var lines = data.split('\n'),
       state = 0,
       _index = 0,
       tree = {
-        ScriptInfo: { 'Title': '&lt;untitled&gt;', 'Original Script': '&lt;unknown&gt;'},
+        ScriptInfo: { 'Title': '&lt;untitled&gt;', 'Original Script': '&lt;unknown&gt;' },
         V4Styles: { Format: {}, Style: {} },
         Events: { Format: {}, Dialogue: [] },
       };
@@ -833,7 +843,7 @@ var createBaseTags = function(s) {
   };
 };
 var createTransform = function(t) {
-  var str = 'perspective(400px)';
+  var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
   t.fscx = t.fscx || 100;
   t.fscy = t.fscy || 100;
   t.fax = t.fax || 0;
@@ -859,7 +869,7 @@ var createMatrix3d = function(t) {
     0, 0, 1, 0,
     0, 0, 0, 1,
   ];
-  var p = -1 / 400;
+  var p = -1 / PERSPECTIVE_NUM;
   var perspective = [
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -979,10 +989,14 @@ var setTagsStyle = function(dia) {
       if (t.q === 3) {} // TODO
     }
     if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx !== 100 || t.fscy !== 100) {
-      // cssText += 'transform:' + createTransform(t) + ';';
-      cssText += 'transform:' + createMatrix3d(t) + ';';
+      // var tmp = createTransform(t);
+      var tmp = createMatrix3d(t);
+      ['', '-webkit-'].forEach(function(v) {
+        cssText += v + 'transform:' + tmp + ';';
+      });
       if (!t.p) cssText += 'display:inline-block;word-break:normal;white-space:nowrap;';
     }
+    cssText += '-webkit-transform-origin:inherit;transform-origin:inherit;';
     if (t.t) {
       ['', '-webkit-'].forEach(function(v) {
         cssText += v + 'animation-name:ASS-animation-' + dia._index + '-' + i + ';';
@@ -1008,6 +1022,9 @@ var setDialogueStyle = function(dia) {
       cssText += v + 'animation-iteration-count:1;';
     });
   }
+  ['', '-webkit-'].forEach(function(v) {
+    cssText += v + 'transform-origin:' + (dia.org.x - dia.x) + 'px ' + (dia.org.y - dia.y) + 'px;';
+  });
   if (dia.Alignment % 3 === 1) cssText += 'text-align:left;';
   if (dia.Alignment % 3 === 2) cssText += 'text-align:center;';
   if (dia.Alignment % 3 === 0) cssText += 'text-align:right;';
