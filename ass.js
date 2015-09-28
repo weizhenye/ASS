@@ -8,6 +8,7 @@ function ASS() {
   this.scale = 1;
   this.container = document.createElement('div');
   this.container.className = 'ASS-container';
+  this.container.appendChild(fontSizeElement);
   this.stage = document.createElement('div');
   this.stage.className = 'ASS-stage ASS-animation-paused';
 }
@@ -35,7 +36,7 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
 
-  var CSSstr = '.ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; -webkit-animation-play-state: paused !important;}';
+  var CSSstr = '.ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; -webkit-animation-play-state: paused !important; } .ASS-font-size-element { position: absolute; visibility: hidden; }';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -266,18 +267,6 @@ ASS.prototype._freeChannel = function(dia) {
     else channel[dia.Layer].right[i] = 0;
   }
 };
-ASS.prototype._getRealFontSize = function(fs, fn) {
-  var rfs,
-      fse = document.createElement('div');
-  fse.innerHTML = 'ASS.js';
-  fse.style.fontFamily = '\'' + fn + '\', Arial';
-  fse.style.fontSize = fs + 'px';
-  fse.style.visibility = 'hidden';
-  this.container.appendChild(fse);
-  rfs = fs * fs / fse.clientHeight;
-  this.container.removeChild(fse);
-  return rfs;
-};
 ASS.prototype._createAnimation = function() {
   var dia = this.tree.Events.Dialogue,
       kfStr = '',
@@ -372,10 +361,10 @@ ASS.prototype._createAnimation = function() {
           t[3] = '100.000%';
           for (var l = 0; l <= 3; ++l) if (!kf[t[l]]) kf[t[l]] = [];
           if (ttags.fs) {
-            kf[t[0]]['font-size'] = this.scale * this._getRealFontSize(tags.fs, tags.fn) + 'px';
-            kf[t[1]]['font-size'] = this.scale * this._getRealFontSize(tags.fs, tags.fn) + 'px';
-            kf[t[2]]['font-size'] = this.scale * this._getRealFontSize(ttags.fs, tags.fn) + 'px';
-            kf[t[3]]['font-size'] = this.scale * this._getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf[t[0]]['font-size'] = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px';
+            kf[t[1]]['font-size'] = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px';
+            kf[t[2]]['font-size'] = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf[t[3]]['font-size'] = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
           }
           if (ttags.fsp) {
             kf[t[0]]['letter-spacing'] = this.scale * tags.fsp + 'px';
@@ -438,6 +427,10 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var baseTags = {};
 var channel = [];
+var realFontSizeCache = {};
+var fontSizeElement = document.createElement('div');
+fontSizeElement.className = 'ASS-font-size-element';
+fontSizeElement.textContent = 'M';
 var PERSPECTIVE_NUM = 314; // TODO: I don't know why it's 314, it just performances well.
 var parseASS = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -949,6 +942,14 @@ var toRGBA = function(c) {
       r = parseInt(t[4], 16);
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
 };
+var getRealFontSize = function(fs, fn) {
+  var key = fn + '-' + fs;
+  if (!realFontSizeCache[key]) {
+    fontSizeElement.style.cssText = 'font-size:' + fs + 'px;font-family:\'' + fn + '\', Arial;';
+    realFontSizeCache[key] = fs * fs / fontSizeElement.clientHeight;
+  }
+  return realFontSizeCache[key];
+};
 var setTagsStyle = function(dia) {
   for (var len = dia.parsedText.content.length, i = 0; i < len; ++i) {
     var ct = dia.parsedText.content[i];
@@ -968,7 +969,7 @@ var setTagsStyle = function(dia) {
     if (t.p) createSVG(cn, ct, dia, this.scale);
     else {
       cssText += 'font-family:\'' + t.fn + '\', Arial;';
-      cssText += 'font-size:' + this.scale * this._getRealFontSize(t.fs, t.fn) + 'px;';
+      cssText += 'font-size:' + this.scale * getRealFontSize(t.fs, t.fn) + 'px;';
       cssText += 'color:' + toRGBA(t.a1 + t.c1) + ';';
       if (dia.BorderStyle === 1) cssText += 'text-shadow:' + createShadow(t, (/Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1)) + ';';
       if (dia.BorderStyle === 3) {
