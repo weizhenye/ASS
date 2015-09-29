@@ -71,7 +71,7 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __\fsc[x/y], \fa[x/y], \fr[x/y/z]__: not transformed as expected
 		- __\k, \kf, \ko, \kt, \K__: Karaoke
 		- __\q__ WrapStyle: 0, 3
-		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \3c, \4c, \2a, \3a, \4a, \bord, \xbord, \ybord, \shad, \xshad, \yshad, \clip, \iclip, \be, \blur
+		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \clip, \iclip
 		- __\clip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
 		- __\clip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
 		- __\iclip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
@@ -85,10 +85,9 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * \N in Aegisub has less height than &lt;br&gt; in browsers, subbers should avoid to use multiple \N to position a dialogue, use \pos instead.
 * A dialogue with multiple \t is not rendered correctly, for transforms in browsers are order-sensitive.
 * A dialogue with multiple rotations (\fr[x/y/z]) is not rotated perfectly same as that in Aegisub.
-* text-shadow with different quantity of values can't be animated by CSS, it seems I can't animate border or shadow by CSS as I use text-shadow to create the border of text.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and \move at the same time, only \move works.
 
 ## License
 
-MIT
+[MIT](https://github.com/weizhenye/ASS/blob/master/LICENSE)
 
