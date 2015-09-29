@@ -22,9 +22,9 @@ ASS.prototype.init = function(data, video) {
     this.video.parentNode.insertBefore(this.container, this.video);
     this.container.appendChild(this.video);
     this.container.appendChild(this.stage);
-    this.video.addEventListener('seeking', function() { that._seek(); });
-    this.video.addEventListener('play', function() { that._play(); });
-    this.video.addEventListener('pause', function() { that._pause(); });
+    this.video.addEventListener('seeking', function() {that._seek();});
+    this.video.addEventListener('play', function() {that._play();});
+    this.video.addEventListener('pause', function() {that._pause();});
     if (isPlaying && this.video.paused) this.video.play();
   }
 
@@ -36,7 +36,7 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
 
-  var CSSstr = '.ASS-stage { overflow: hidden; z-index: 2147483647; pointer-events: none; position: absolute; } .ASS-dialogue { position: absolute; } .ASS-animation-paused * { animation-play-state: paused !important; -webkit-animation-play-state: paused !important; } .ASS-font-size-element { position: absolute; visibility: hidden; }';
+  var CSSstr = '.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-dialogue span{display:inline-block;-webkit-transform-origin:inherit;transform-origin:inherit;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -66,7 +66,8 @@ ASS.prototype.resize = function() {
   this.height = h;
   this.stage.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
   this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
-  this._createAnimation();
+  // this._createAnimation();
+  createAnimation.call(this);
   this._seek();
   return this;
 };
@@ -118,9 +119,14 @@ ASS.prototype._launch = function() {
   var ct = this.video.currentTime,
       dias = this.tree.Events.Dialogue;
   for (var i = this.runline.length - 1; i >= 0; --i) {
-    if (this.runline[i].End < ct) {
-      if (!this.runline[i].pos && !this.runline[i].Effect) this._freeChannel(this.runline[i]);
-      this.stage.removeChild(this.runline[i].node);
+    var dia = this.runline[i],
+        end = dia.End;
+    if (dia.Effect && /scroll/.test(dia.Effect.name)) {
+      end = Math.min(end, dia.Start + (dia.Effect.y2 - dia.Effect.y1) / (1000 / dia.Effect.delay));
+    }
+    if (end < ct) {
+      if (!dia.pos && !dia.Effect) this._freeChannel(dia);
+      this.stage.removeChild(dia.node);
       this.runline.splice(i, 1);
     }
   }
@@ -152,7 +158,7 @@ ASS.prototype._render = function(data) {
     move: pt.move,
     fad: pt.fad,
     fade: pt.fade,
-    pos: pt.pos || (pt.move ? { x: 0, y: 0 } : null),
+    pos: pt.pos || (pt.move ? {x: 0, y: 0} : null),
     org: pt.org,
     channel: 0,
     minX: 0,
@@ -161,9 +167,9 @@ ASS.prototype._render = function(data) {
   dia.node.className = 'ASS-dialogue';
   this.stage.appendChild(dia.node);
   setTagsStyle.call(this, dia);
-  var tmp = dia.node.getBoundingClientRect();
-  dia.width = tmp.width;
-  dia.height = tmp.height;
+  var bcr = dia.node.getBoundingClientRect();
+  dia.width = bcr.width;
+  dia.height = bcr.height;
   if (dia.Effect) {
     if (dia.Effect.name === 'banner') {
       if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
@@ -194,7 +200,7 @@ ASS.prototype._render = function(data) {
     }
   }
   if (!dia.org) {
-    dia.org = { x: 0, y: 0 };
+    dia.org = {x: 0, y: 0};
     if (dia.Alignment % 3 === 1) dia.org.x = dia.x;
     if (dia.Alignment % 3 === 2) dia.org.x = dia.x + this.scale * dia.width / 2;
     if (dia.Alignment % 3 === 0) dia.org.x = dia.x + this.scale * dia.width;
@@ -267,163 +273,37 @@ ASS.prototype._freeChannel = function(dia) {
     else channel[dia.Layer].right[i] = 0;
   }
 };
-ASS.prototype._createAnimation = function() {
-  var dia = this.tree.Events.Dialogue,
-      kfStr = '',
-      tmpStr = '',
-      that = this;
-  for (var i = dia.length - 1; i >= 0; --i) {
-    var pt = dia[i].parsedText,
-        dur = (dia[i].End - dia[i].Start) * 1000,
-        kf = {},
-        t = [];
-    if (dia[i].Effect && !pt.move) {
-      if (!kf['0.000%']) kf['0.000%'] = {};
-      if (!kf['100.000%']) kf['100.000%'] = {};
-      var eff = dia[i].Effect;
-      if (eff.name === 'banner') {
-        kf['0.000%']['transform'] = 'translateX(0px)';
-        kf['100.000%']['transform'] = 'translateX(' + (eff.lefttoright ? 1 : -1) * this.scale * dur / eff.delay + 'px)';
-      }
-      if (/^scroll/.test(eff.name)) {
-        var y1 = eff.y1,
-            y2 = eff.y2 || this.height / this.scale,
-            factor = (y2 - y1) / (dur / eff.delay),
-            updown = /up/.test(eff.name) ? 1 : -1;
-        if (factor < 1) {
-          t[1] = (factor * 100).toFixed(3) + '%';
-          t[2] = Math.min(factor * 100 + .001, 100).toFixed(3) + '%';
-          for (var j = 1; j <= 2; j++) if (!kf[t[j]]) kf[t[j]] = {};
-          kf[t[1]]['transform'] = 'translateY(' + this.scale * y2 * updown + 'px)';
-          kf[t[1]]['opacity'] = 1;
-          kf[t[2]]['opacity'] = 0;
-          kf['100.000%']['opacity'] = 0;
-        } else {
-          kf['100.000%']['transform'] = 'translateY(' + this.scale * dur / eff.delay * updown + 'px)';
+function KeyFrames(name) {
+  this.obj = {};
+  this.set = function(percentage, property, value) {
+    if (!this.obj[percentage]) this.obj[percentage] = {};
+    this.obj[percentage][property] = value;
+  };
+  this.toString = function() {
+    if (JSON.stringify(this.obj) === '{}') return '';
+    var str = 'keyframes ' + name + '{';
+    for (var percentage in this.obj) {
+      str += percentage + '{';
+      for (var property in this.obj[percentage]) {
+        if (property === 'transform') {
+          str += '-webkit-transform:' + this.obj[percentage][property] + ';';
         }
-        kf['0.000%']['transform'] = 'translateY(' + this.scale * y1 * updown + 'px)';
+        str += property + ':' + this.obj[percentage][property] + ';';
       }
+      str += '}';
     }
-    if (!pt.fad && pt.fade && pt.fade.length === 2) pt.fad = pt.fade;
-    if (pt.fad && pt.fad.length === 2) {
-      t[0] = '0.000%';
-      t[1] = (Math.min(dur, pt.fad[0]) / dur * 100).toFixed(3) + '%';
-      t[2] = (Math.max(0, dur - pt.fad[1]) / dur * 100).toFixed(3) + '%';
-      t[3] = '100.000%';
-      for (var j = 0; j <= 3; j++) if (!kf[t[j]]) kf[t[j]] = {};
-      kf[t[0]]['opacity'] = 0;
-      kf[t[1]]['opacity'] = 1;
-      kf[t[2]]['opacity'] = 1;
-      kf[t[3]]['opacity'] = 0;
-    }
-    if (pt.fade && pt.fade.length === 7) {
-      t[0] = '0.000%';
-      for (var j = 1; j <= 4; ++j) t[j] = (Math.min(dur, pt.fade[j + 2]) / dur * 100).toFixed(3) + '%';
-      t[5] = '100.000%';
-      for (var j = 0; j <= 5; ++j) if (!kf[t[j]]) kf[t[j]] = {};
-      for (var j = 0; j <= 5; ++j) kf[t[j]]['opacity'] = 1 - pt.fade[j >> 1] / 255;
-    }
-    if (pt.move && pt.move.length === 6) {
-      if (!pt.pos) pt.pos = {x: 0, y: 0};
-      if (pt.move.length === 6) {
-        t[0] = '0.000%';
-        t[1] = (Math.min(dur, pt.move[4]) / dur * 100).toFixed(3) + '%';
-        t[2] = (Math.min(dur, pt.move[5]) / dur * 100).toFixed(3) + '%';
-        t[3] = '100.000%';
-        for (var j = 0; j <= 3; ++j) if (!kf[t[j]]) kf[t[j]] = {};
-        for (var j = 0; j <= 3; ++j) kf[t[j]]['transform'] = 'translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px)';
-      }
-    }
-    if (JSON.stringify(kf) != '{}') {
-      tmpStr = '';
-      tmpStr += 'keyframes ASS-animation-' + dia[i]._index + ' { ';
-      for (var j in kf) {
-        tmpStr += j + '{';
-        for (var k in kf[j]) {
-          tmpStr += k + ': ' + kf[j][k] + ';';
-        }
-        tmpStr += '} ';
-      }
-      tmpStr += '}\n';
-      kfStr += '@' + tmpStr;
-      kfStr += '@-webkit-' + tmpStr;
-    }
-
-    for (var j = pt.content.length - 1; j >= 0; --j) {
-      kf = {};
-      var tags = pt.content[j].tags;
-      if (tags.t) {
-        for (var k = tags.t.length - 1; k >= 0; --k) {
-          var ttags = tags.t[k].tags;
-          t[0] = '0.000%';
-          t[1] = (Math.min(dur, tags.t[k].t1 + .1) / dur * 100).toFixed(3) + '%';
-          t[2] = (Math.min(dur, tags.t[k].t2) / dur * 100).toFixed(3) + '%';
-          t[3] = '100.000%';
-          for (var l = 0; l <= 3; ++l) if (!kf[t[l]]) kf[t[l]] = [];
-          if (ttags.fs) {
-            kf[t[0]]['font-size'] = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px';
-            kf[t[1]]['font-size'] = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px';
-            kf[t[2]]['font-size'] = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
-            kf[t[3]]['font-size'] = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
-          }
-          if (ttags.fsp) {
-            kf[t[0]]['letter-spacing'] = this.scale * tags.fsp + 'px';
-            kf[t[1]]['letter-spacing'] = this.scale * tags.fsp + 'px';
-            kf[t[2]]['letter-spacing'] = this.scale * ttags.fsp + 'px';
-            kf[t[3]]['letter-spacing'] = this.scale * ttags.fsp + 'px';
-          }
-          if (ttags.c1 || ttags.a1) {
-            if (!ttags.c1) ttags.c1 = tags.c1;
-            if (!ttags.a1) ttags.a1 = tags.a1;
-            kf[t[0]]['color'] = toRGBA(tags.a1 + tags.c1);
-            kf[t[1]]['color'] = toRGBA(tags.a1 + tags.c1);
-            kf[t[2]]['color'] = toRGBA(ttags.a1 + ttags.c1);
-            kf[t[3]]['color'] = toRGBA(ttags.a1 + ttags.c1);
-          }
-          if (ttags.a1 && ttags.a2 && ttags.a3 && ttags.a4 &&
-              ttags.a1 === ttags.a2 && ttags.a2 === ttags.a3 && ttags.a3 === ttags.a4) {
-            kf[t[0]]['opacity'] = 1 - parseInt(tags.a1, 16) / 255;
-            kf[t[1]]['opacity'] = 1 - parseInt(tags.a1, 16) / 255;
-            kf[t[2]]['opacity'] = 1 - parseInt(ttags.a1, 16) / 255;
-            kf[t[3]]['opacity'] = 1 - parseInt(ttags.a1, 16) / 255;
-          }
-          if (ttags.fscx != 100 || ttags.fscy != 100 || ttags.frx || ttags.fry || ttags.frz || ttags.fax || ttags.fay) {
-            ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'].forEach(function(e) {
-              if (!ttags[e]) ttags[e] = tags[e];
-            });
-            kf[t[0]]['transform'] = createTransform(tags);
-            kf[t[1]]['transform'] = createTransform(tags);
-            kf[t[2]]['transform'] = createTransform(ttags);
-            kf[t[3]]['transform'] = createTransform(ttags);
-          }
-        }
-      }
-      if (JSON.stringify(kf) != '{}') {
-        tmpStr = '';
-        tmpStr += 'keyframes ASS-animation-' + dia[i]._index + '-' + j + ' { ';
-        for (var k in kf) {
-          tmpStr += k + '{';
-          for (var l in kf[k]) {
-            tmpStr += l + ': ' + kf[k][l] + ';';
-          }
-          tmpStr += '} '
-        }
-        tmpStr += '}\n';
-        kfStr += '@' + tmpStr;
-        kfStr += '@-webkit-' + tmpStr;
-      }
-    }
-  }
-  document.getElementById('ASS-animation').innerHTML = kfStr;
-};
+    str += '}\n';
+    return '@' + str + '@-webkit-' + str;
+  };
+}
 var RAF = window.requestAnimationFrame ||
           window.mozRequestAnimationFrame ||
           window.webkitRequestAnimationFrame ||
-          function(cb) { return setTimeout(cb, 50 / 3); };
+          function(cb) {return setTimeout(cb, 50 / 3);};
 var CAF = window.cancelAnimationFrame ||
           window.mozCancelAnimationFrame ||
           window.webkitCancelAnimationFrame ||
-          function(id) { clearTimeout(id); };
+          function(id) {clearTimeout(id);};
 var RAFID = 0;
 var baseTags = {};
 var channel = [];
@@ -438,9 +318,9 @@ var parseASS = function(data) {
       state = 0,
       _index = 0,
       tree = {
-        ScriptInfo: { 'Title': '&lt;untitled&gt;', 'Original Script': '&lt;unknown&gt;' },
-        V4Styles: { Format: {}, Style: {} },
-        Events: { Format: {}, Dialogue: [] },
+        ScriptInfo: {'Title': '&lt;untitled&gt;', 'Original Script': '&lt;unknown&gt;'},
+        V4Styles: {Format: {}, Style: {}},
+        Events: {Format: {}, Dialogue: []},
       };
   for (var len = lines.length, i = 0; i < len; ++i) {
     lines[i] = lines[i].replace(/^\s+|\s+$/g, '');
@@ -501,7 +381,7 @@ var parseASS = function(data) {
         tmp2.MarginL *= 1;
         tmp2.MarginR *= 1;
         tmp2.MarginV *= 1;
-        tmp2.Effect = parseEffect(tmp2.Effect);
+        tmp2.Effect = parseEffect(tmp2.Effect, tree.ScriptInfo.PlayResY);
         tmp2._index = ++_index;
         tmp2.parsedText = parseTags(tmp2);
         if (tmp2.Start < tmp2.End) tree.Events.Dialogue.push(tmp2);
@@ -518,7 +398,7 @@ var parseTime = function(time, timer) {
       tr = timer ? (timer / 100) : 1;
   return (t[1] * 3600 + t[2] * 60 + t[3] * 1) * tr;
 };
-var parseEffect = function(str) {
+var parseEffect = function(str, resY) {
   if (!str) return null;
   var tmp = str.toLowerCase().split(';'),
       eff = {};
@@ -530,13 +410,8 @@ var parseEffect = function(str) {
   }
   if (/^scroll\s/.test(tmp[0])) {
     eff.name = tmp[0];
-    if (tmp[1] < tmp[2]) {
-      eff.y1 = tmp[1] * 1;
-      eff.y2 = tmp[2] * 1;
-    } else {
-      eff.y1 = tmp[2] * 1;
-      eff.y2 = tmp[1] * 1;
-    }
+    eff.y1 = Math.min(tmp[1] * 1, tmp[2] * 1);
+    eff.y2 = Math.max(tmp[1] * 1, tmp[2] * 1) || resY;
     eff.delay = tmp[3] * 1 || 1;
     eff.fadeawayheight = tmp[4] * 1 || 0;
   }
@@ -546,10 +421,10 @@ var parseTags = function(dialogue) {
   var text = dialogue.Text.replace(/\\N/g, '<br>').replace(/\\h/g, '&nbsp;'),
       kv = text.split(/{([^{}]*?)}/),
       prevTags = JSON.parse(JSON.stringify(baseTags[dialogue.Style])),
-      dia = { content: [] };
+      dia = {content: []};
   if (kv[0].length) dia.content.push({tags: prevTags, text: kv[0]});
   for (var i = 1; i < kv.length; i += 2) {
-    var ct = { text: kv[i + 1], tags: {} },
+    var ct = {text: kv[i + 1], tags: {}},
         cmd = kv[i].split('\\'); // split(/(?<!\(.*?)\\(?!.*?\))/)
     for (var j = 0; j < cmd.length; ++j) {
       if (/^t\(/.test(cmd[j])) {
@@ -590,11 +465,11 @@ var parseTags = function(dialogue) {
       }
       if (/^pos/.test(cmd[j]) && !dia.pos) {
         tmp = cmd[j].match(/^pos\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
-        dia.pos = { x: tmp[1] * 1, y: tmp[2] * 1 };
+        dia.pos = {x: tmp[1] * 1, y: tmp[2] * 1};
       }
       if (/^org/.test(cmd[j]) && !dia.org) {
         tmp = cmd[j].match(/^org\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
-        dia.org = { x: tmp[1] * 1, y: tmp[2] * 1 };
+        dia.org = {x: tmp[1] * 1, y: tmp[2] * 1};
       }
       if (/^move/.test(cmd[j]) && !dia.move) {
         tmp = cmd[j].match(/^move\s*\((.*)\)/)[1].split(/\s*,\s*/);
@@ -625,7 +500,7 @@ var parseTags = function(dialogue) {
         if (!tmp[0]) continue;
         var tcmd = tmp[tmp.length - 1].split('\\'),
             tct = {t1: 0, t2: (dialogue.End - dialogue.Start) * 1000, accel: 1, tags: {}};
-        for (var k = tcmd.length - 1; k >= 0; --k) parseAnimatableTags.call(tct, tcmd[k]);
+        for (var k = tcmd.length - 1; k >= 0; k--) parseAnimatableTags.call(tct, tcmd[k]);
         if (tmp.length === 2) {
           tct.accel = tmp[0] * 1;
         }
@@ -699,8 +574,8 @@ var parseAnimatableTags = function(cmd) {
   if (/^i?clip/.test(cmd)) { // TODO
     var tn = cmd.match(/^(i?clip)/)[1];
     tmp = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
-    if (tmp.length === 1) this.tags[tn] = { scale: 1, command: tmp[0] };
-    if (tmp.length === 2) this.tags[tn] = { scale: tmp[0] * 1, command: tmp[1] };
+    if (tmp.length === 1) this.tags[tn] = {scale: 1, command: tmp[0]};
+    if (tmp.length === 2) this.tags[tn] = {scale: tmp[0] * 1, command: tmp[1]};
     if (tmp.length === 4) {
       for (var i = tmp.length - 1; i >= 0; i--) tmp[i] *= 1;
       this.tags[tn] = tmp;
@@ -766,10 +641,141 @@ var parseDrawingCommands = function(t, text) {
     w: maxX - minX,
     h: maxY - minY,
     minX: minX,
-    minY: minY
+    minY: minY,
   };
 };
-var createSVG = function(cn, ct, dia, scale) {
+var createAnimation = function() {
+  var kfStr = '';
+  for (var i = this.tree.Events.Dialogue.length - 1; i >= 0; i--) {
+    var dia = this.tree.Events.Dialogue[i],
+        pt = dia.parsedText,
+        dur = (dia.End - dia.Start) * 1000,
+        kf = new KeyFrames('ASS-animation-' + dia._index),
+        t = [];
+    if (dia.Effect && !pt.move) {
+      var eff = dia.Effect;
+      if (eff.name === 'banner') {
+        kf.set('0.000%', 'transform', 'translateX(0)');
+        kf.set('100.000%', 'transform', 'translateX(' + this.scale * (dur / eff.delay) * (eff.lefttoright ? 1 : -1) + 'px)');
+      }
+      if (/^scroll/.test(eff.name)) {
+        var updown = /up/.test(eff.name) ? 1 : -1,
+            tmp1 = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
+            tmp2 = 'translateY(' + this.scale * eff.y2 * updown + 'px)';
+        t[1] = Math.min(100, (eff.y2 - eff.y1) / (dur / eff.delay) * 100).toFixed(3) + '%';
+        kf.set('0.000%', 'transform', tmp1);
+        kf.set(t[1], 'transform', tmp2);
+        kf.set('100.000%', 'transform', tmp2);
+      }
+    }
+    if (!pt.fad && pt.fade && pt.fade.length === 2) pt.fad = pt.fade;
+    if (pt.fad && pt.fad.length === 2) {
+      t[0] = '0.000%';
+      t[1] = Math.min(100, pt.fad[0] / dur * 100).toFixed(3) + '%';
+      t[2] = Math.max(0, (dur - pt.fad[1]) / dur * 100).toFixed(3) + '%';
+      t[3] = '100.000%';
+      kf.set(t[0], 'opacity', 0);
+      kf.set(t[1], 'opacity', 1);
+      kf.set(t[2], 'opacity', 1);
+      kf.set(t[3], 'opacity', 0);
+    }
+    if (pt.fade && pt.fade.length === 7) {
+      t[0] = '0.000%';
+      t[5] = '100.000%';
+      for (var j = 1; j <= 4; j++) t[j] = Math.min(100, pt.fade[j + 2] / dur * 100).toFixed(3) + '%';
+      for (var j = 0; j <= 5; j++) kf.set(t[j], 'opacity', 1 - pt.fade[j >> 1] / 255);
+    }
+    if (pt.move && pt.move.length === 6) {
+      if (!pt.pos) pt.pos = {x: 0, y: 0};
+      if (pt.move.length === 6) {
+        t[0] = '0.000%';
+        t[1] = Math.min(100, pt.move[4] / dur * 100).toFixed(3) + '%';
+        t[2] = Math.min(100, pt.move[5] / dur * 100).toFixed(3) + '%';
+        t[3] = '100.000%';
+        for (var j = 0; j <= 3; j++) kf.set(t[j], 'transform', 'translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px)');
+      }
+    }
+    kfStr += kf.toString();
+
+    for (var j = pt.content.length - 1; j >= 0; j--) {
+      kf = new KeyFrames('ASS-animation-' + dia._index + '-' + j);
+      var tags = pt.content[j].tags;
+      if (tags.t) {
+        for (var k = tags.t.length - 1; k >= 0; k--) {
+          var ttags = tags.t[k].tags;
+          t[0] = '0.000%';
+          // t[1] = (Math.min(dur, tags.t[k].t1 + .1) / dur * 100).toFixed(3) + '%';
+          t[1] = Math.min(100, tags.t[k].t1 / dur * 100).toFixed(3) + '%';
+          t[2] = Math.min(100, tags.t[k].t2 / dur * 100).toFixed(3) + '%';
+          t[3] = '100.000%';
+          if (ttags.fs) {
+            var tmp1 = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px',
+                tmp2 = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf.set(t[0], 'font-size', tmp1);
+            kf.set(t[1], 'font-size', tmp1);
+            kf.set(t[2], 'font-size', tmp2);
+            kf.set(t[3], 'font-size', tmp2);
+          }
+          if (ttags.fsp) {
+            var tmp1 = this.scale * tags.fsp + 'px',
+                tmp2 = this.scale * ttags.fsp + 'px';
+            kf.set(t[0], 'letter-spacing', tmp1);
+            kf.set(t[1], 'letter-spacing', tmp1);
+            kf.set(t[2], 'letter-spacing', tmp2);
+            kf.set(t[3], 'letter-spacing', tmp2);
+          }
+          if (ttags.c1 || ttags.a1) {
+            ttags.c1 = ttags.c1 || tags.c1;
+            ttags.a1 = ttags.a1 || tags.a1;
+            var tmp1 = toRGBA(tags.a1 + tags.c1),
+                tmp2 = toRGBA(ttags.a1 + ttags.c1);
+            kf.set(t[0], 'color', tmp1);
+            kf.set(t[1], 'color', tmp1);
+            kf.set(t[2], 'color', tmp2);
+            kf.set(t[3], 'color', tmp2);
+          }
+          if (ttags.a1 && ttags.a2 && ttags.a3 && ttags.a4 &&
+              ttags.a1 === ttags.a2 && ttags.a2 === ttags.a3 && ttags.a3 === ttags.a4) {
+            var tmp1 = 1 - parseInt(tags.a1, 16) / 255,
+                tmp2 = 1 - parseInt(ttags.a1, 16) / 255;
+            kf.set(t[0], 'opacity', tmp1);
+            kf.set(t[1], 'opacity', tmp1);
+            kf.set(t[2], 'opacity', tmp2);
+            kf.set(t[3], 'opacity', tmp2);
+          }
+          if (ttags.c3 || ttags.a3 || ttags.c3 || ttags.a4 || ttags.blur ||
+              ttags.xbord || ttags.ybord || ttags.xshad || ttags.yshad) {
+            ['c3', 'a3', 'c4', 'a4'].forEach(function(e) {
+              if (!ttags[e]) ttags[e] = tags[e];
+            });
+            var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1,
+                tmp1 = createShadow(tags, sbas),
+                tmp2 = createShadow(ttags, sbas);
+            kf.set(t[0], 'text-shadow', tmp1);
+            kf.set(t[1], 'text-shadow', tmp1);
+            kf.set(t[2], 'text-shadow', tmp2);
+            kf.set(t[3], 'text-shadow', tmp2);
+          }
+          if ((ttags.fscx && ttags.fscx !== 100) || (ttags.fscy && ttags.fscy !== 100) ||
+              ttags.frx || ttags.fry || ttags.frz || ttags.fax || ttags.fay) {
+            ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'].forEach(function(e) {
+              if (!ttags[e]) ttags[e] = tags[e];
+            });
+            var tmp1 = createTransform(tags),
+                tmp2 = createTransform(ttags);
+            kf.set(t[0], 'transform', tmp1);
+            kf.set(t[1], 'transform', tmp1);
+            kf.set(t[2], 'transform', tmp2);
+            kf.set(t[3], 'transform', tmp2);
+          }
+        }
+      }
+      kfStr += kf.toString();
+    }
+  }
+  document.getElementById('ASS-animation').innerHTML = kfStr;
+};
+var createSVG = function(ct, dia, scale) {
   var t = ct.tags,
       sx = t.fscx ? t.fscx / 100 : 1,
       sy = t.fscy ? t.fscy / 100 : 1,
@@ -777,18 +783,18 @@ var createSVG = function(cn, ct, dia, scale) {
       s = scale / (1 << (t.p - 1)),
       tmp = parseDrawingCommands(t, ct.text),
       svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
-  cn.innerHTML = svg;
   dia.minX = sx * s * tmp.minX;
   dia.minY = sy * s * (tmp.minY + tmp.pbo);
+  return svg;
 };
 var createShadow = function(t, scale) {
   var ts = '';
   var oc = toRGBA(t.a3 + t.c3),
-      ox = t.xbord * scale,
-      oy = t.ybord * scale,
+      ox = (t.xbord || 0) * scale,
+      oy = (t.ybord || 0) * scale,
       sc = toRGBA(t.a4 + t.c4),
-      sx = t.xshad * scale,
-      sy = t.yshad * scale,
+      sx = (t.xshad || 0) * scale,
+      sy = (t.yshad || 0) * scale,
       blur = t.blur || 0;
   if (!(ox + oy + sx + sy)) return 'none';
   if (ox || oy) {
@@ -951,23 +957,14 @@ var getRealFontSize = function(fs, fn) {
   return realFontSizeCache[key];
 };
 var setTagsStyle = function(dia) {
+  var df = document.createDocumentFragment();
   for (var len = dia.parsedText.content.length, i = 0; i < len; ++i) {
     var ct = dia.parsedText.content[i];
     if (!ct.text) continue;
-    var cn = document.createElement('span');
-    var df = document.createDocumentFragment();
-    cn.innerHTML = ct.text;
-    df.appendChild(cn);
-    while (/<br>$/.test(cn.innerHTML)) {
-      cn.innerHTML = cn.innerHTML.replace(/<br>$/, '');
-      df.appendChild(document.createElement('br'));
-    }
-    dia.node.appendChild(df);
     var t = ct.tags,
         cssText = '',
         vct = this.video.currentTime;
-    if (t.p) createSVG(cn, ct, dia, this.scale);
-    else {
+    if (!t.p) {
       cssText += 'font-family:\'' + t.fn + '\', Arial;';
       cssText += 'font-size:' + this.scale * getRealFontSize(t.fs, t.fn) + 'px;';
       cssText += 'color:' + toRGBA(t.a1 + t.c1) + ';';
@@ -990,14 +987,13 @@ var setTagsStyle = function(dia) {
       if (t.q === 3) {} // TODO
     }
     if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx !== 100 || t.fscy !== 100) {
-      // var tmp = createTransform(t);
-      var tmp = createMatrix3d(t);
+      var tmp = createTransform(t);
+      // var tmp = createMatrix3d(t);
       ['', '-webkit-'].forEach(function(v) {
         cssText += v + 'transform:' + tmp + ';';
       });
-      if (!t.p) cssText += 'display:inline-block;word-break:normal;white-space:nowrap;';
+      if (!t.p) cssText += 'word-break:normal;white-space:nowrap;';
     }
-    cssText += '-webkit-transform-origin:inherit;transform-origin:inherit;';
     if (t.t) {
       ['', '-webkit-'].forEach(function(v) {
         cssText += v + 'animation-name:ASS-animation-' + dia._index + '-' + i + ';';
@@ -1007,8 +1003,18 @@ var setTagsStyle = function(dia) {
         cssText += v + 'animation-iteration-count:1;';
       });
     }
-    cn.style.cssText = cssText;
+
+    var parts = ct.text.split('<br>');
+    for (var lenj = parts.length, j = 0; j < lenj; j++) {
+      if (j) df.appendChild(document.createElement('br'));
+      if (!parts[j]) continue;
+      var cn = document.createElement('span');
+      cn.innerHTML = t.p ? createSVG(ct, dia, this.scale) : parts[j];
+      cn.style.cssText = cssText;
+      df.appendChild(cn);
+    }
   }
+  dia.node.appendChild(df);
 };
 var setDialogueStyle = function(dia) {
   var cssText = '',
