@@ -36,7 +36,7 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
 
-  var CSSstr = '.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-dialogue span{display:inline-block;-webkit-transform-origin:inherit;transform-origin:inherit;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+  var CSSstr = '.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -125,7 +125,7 @@ ASS.prototype._launch = function() {
       end = Math.min(end, dia.Start + (dia.Effect.y2 - dia.Effect.y1) / (1000 / dia.Effect.delay));
     }
     if (end < ct) {
-      if (!dia.pos && !dia.Effect) this._freeChannel(dia);
+      if (!dia.pos && !dia.Effect && !dia.t) this._freeChannel(dia);
       this.stage.removeChild(dia.node);
       this.runline.splice(i, 1);
     }
@@ -163,6 +163,7 @@ ASS.prototype._render = function(data) {
     channel: 0,
     minX: 0,
     minY: 0,
+    t: false,
   };
   dia.node.className = 'ASS-dialogue';
   this.stage.appendChild(dia.node);
@@ -196,19 +197,15 @@ ASS.prototype._render = function(data) {
       if (dia.Alignment % 3 === 1) dia.x = dia.minX;
       if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
       if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR - dia.minX;
-      dia.y = this._getChannel(dia) + dia.minY;
+      if (dia.t) {
+        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
+        if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
+        if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
+      } else dia.y = this._getChannel(dia) + dia.minY;
     }
   }
-  if (!dia.org) {
-    dia.org = {x: 0, y: 0};
-    if (dia.Alignment % 3 === 1) dia.org.x = dia.x;
-    if (dia.Alignment % 3 === 2) dia.org.x = dia.x + this.scale * dia.width / 2;
-    if (dia.Alignment % 3 === 0) dia.org.x = dia.x + this.scale * dia.width;
-    if (dia.Alignment <= 3) dia.org.y = dia.y + this.scale * dia.height;
-    if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.org.y = dia.y + this.scale * dia.height / 2;
-    if (dia.Alignment >= 7) dia.org.y = dia.y;
-  }
   setDialogueStyle.call(this, dia);
+  setTransformOrigin(dia);
 
   return dia;
 };
@@ -396,7 +393,7 @@ var parseASS = function(data) {
 var parseTime = function(time, timer) {
   var t = time.match(/(.*):(.*):(.*)/),
       tr = timer ? (timer / 100) : 1;
-  return (t[1] * 3600 + t[2] * 60 + t[3] * 1) * tr;
+  return (t[1] * 3600 + t[2] * 60 + t[3] * 1) / tr;
 };
 var parseEffect = function(str, resY) {
   if (!str) return null;
@@ -704,7 +701,6 @@ var createAnimation = function() {
         for (var k = tags.t.length - 1; k >= 0; k--) {
           var ttags = tags.t[k].tags;
           t[0] = '0.000%';
-          // t[1] = (Math.min(dur, tags.t[k].t1 + .1) / dur * 100).toFixed(3) + '%';
           t[1] = Math.min(100, tags.t[k].t1 / dur * 100).toFixed(3) + '%';
           t[2] = Math.min(100, tags.t[k].t2 / dur * 100).toFixed(3) + '%';
           t[3] = '100.000%';
@@ -788,8 +784,8 @@ var createSVG = function(ct, dia, scale) {
   return svg;
 };
 var createShadow = function(t, scale) {
-  var ts = '';
-  var oc = toRGBA(t.a3 + t.c3),
+  var ts = '',
+      oc = toRGBA(t.a3 + t.c3),
       ox = (t.xbord || 0) * scale,
       oy = (t.ybord || 0) * scale,
       sc = toRGBA(t.a4 + t.c4),
@@ -803,16 +799,16 @@ var createShadow = function(t, scale) {
         for (var x = 1; x < ox; ++x)
           for (var y = 1; y < oy; ++y)
             if (i || j)
-              ts += oc + ' ' + i * x + 'px ' + j * y + 'px, ';
-        ts += oc + ' ' + i * ox + 'px ' + j * oy + 'px, ';
+              ts += oc + ' ' + i * x + 'px ' + j * y + 'px,';
+        ts += oc + ' ' + i * ox + 'px ' + j * oy + 'px,';
       }
   }
   if (sx || sy) {
     for (var x = Math.max(sx - ox, ox); x <= sx + ox; x++)
       for (var y = Math.max(sy - oy, ox); y <= sy + oy; y++)
-        ts += sc + ' ' + x + 'px ' + y + 'px ' + blur + 'px, ';
+        ts += sc + ' ' + x + 'px ' + y + 'px ' + blur + 'px,';
     ts += sc + ' ' + (sx + ox) + 'px ' + (sy + oy) + 'px ' + blur + 'px';
-  } else ts = ts.substr(0, ts.length - 2);
+  } else ts = ts.substr(0, ts.length - 1);
   return ts;
 };
 var createBaseTags = function(s) {
@@ -842,7 +838,6 @@ var createBaseTags = function(s) {
   };
 };
 var createTransform = function(t) {
-  var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
   t.fscx = t.fscx || 100;
   t.fscy = t.fscy || 100;
   t.fax = t.fax || 0;
@@ -850,6 +845,7 @@ var createTransform = function(t) {
   t.frx = t.frx || 0;
   t.fry = t.fry || 0;
   t.frz = t.frz || 0;
+  var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
   str += ' scale(' + (t.p ? 1 : t.fscx / 100) + ', ' + (t.p ? 1 : t.fscy / 100) + ')';
   str += ' skew(' + t.fax + 'rad, ' + t.fay + 'rad)';
   str += ' rotateY(' + t.fry + 'deg)';
@@ -942,16 +938,16 @@ var matrixMultiply = function(a, b) {
 };
 var toRGBA = function(c) {
   var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/),
-      a = (1 - parseInt(t[1], 16) / 255).toFixed(1),
-      b = parseInt(t[2], 16),
-      g = parseInt(t[3], 16),
-      r = parseInt(t[4], 16);
-  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+      a = (1 - ('0x' + t[1]) / 255).toFixed(1),
+      b = +('0x' + t[2]),
+      g = +('0x' + t[3]),
+      r = +('0x' + t[4]);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
 };
 var getRealFontSize = function(fs, fn) {
   var key = fn + '-' + fs;
   if (!realFontSizeCache[key]) {
-    fontSizeElement.style.cssText = 'font-size:' + fs + 'px;font-family:\'' + fn + '\', Arial;';
+    fontSizeElement.style.cssText = 'font-size:' + fs + 'px;font-family:\'' + fn + '\',Arial;';
     realFontSizeCache[key] = fs * fs / fontSizeElement.clientHeight;
   }
   return realFontSizeCache[key];
@@ -962,10 +958,10 @@ var setTagsStyle = function(dia) {
     var ct = dia.parsedText.content[i];
     if (!ct.text) continue;
     var t = ct.tags,
-        cssText = '',
+        cssText = 'display:inline-block;',
         vct = this.video.currentTime;
     if (!t.p) {
-      cssText += 'font-family:\'' + t.fn + '\', Arial;';
+      cssText += 'font-family:\'' + t.fn + '\',Arial;';
       cssText += 'font-size:' + this.scale * getRealFontSize(t.fs, t.fn) + 'px;';
       cssText += 'color:' + toRGBA(t.a1 + t.c1) + ';';
       if (dia.BorderStyle === 1) cssText += 'text-shadow:' + createShadow(t, (/Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1)) + ';';
@@ -992,7 +988,7 @@ var setTagsStyle = function(dia) {
       ['', '-webkit-'].forEach(function(v) {
         cssText += v + 'transform:' + tmp + ';';
       });
-      if (!t.p) cssText += 'word-break:normal;white-space:nowrap;';
+      if (!t.p) cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
     }
     if (t.t) {
       ['', '-webkit-'].forEach(function(v) {
@@ -1002,13 +998,16 @@ var setTagsStyle = function(dia) {
         cssText += v + 'animation-timing-function:linear;';
         cssText += v + 'animation-iteration-count:1;';
       });
+      dia.t = true;
     }
 
+    dia.hasRotate = /"fr[xyz]":[^0]/.test(JSON.stringify(t));
     var parts = ct.text.split('<br>');
     for (var lenj = parts.length, j = 0; j < lenj; j++) {
       if (j) df.appendChild(document.createElement('br'));
       if (!parts[j]) continue;
       var cn = document.createElement('span');
+      cn.dataset.hasRotate = dia.hasRotate;
       cn.innerHTML = t.p ? createSVG(ct, dia, this.scale) : parts[j];
       cn.style.cssText = cssText;
       df.appendChild(cn);
@@ -1029,9 +1028,6 @@ var setDialogueStyle = function(dia) {
       cssText += v + 'animation-iteration-count:1;';
     });
   }
-  ['', '-webkit-'].forEach(function(v) {
-    cssText += v + 'transform-origin:' + (dia.org.x - dia.x) + 'px ' + (dia.org.y - dia.y) + 'px;';
-  });
   if (dia.Alignment % 3 === 1) cssText += 'text-align:left;';
   if (dia.Alignment % 3 === 2) cssText += 'text-align:center;';
   if (dia.Alignment % 3 === 0) cssText += 'text-align:right;';
@@ -1048,6 +1044,28 @@ var setDialogueStyle = function(dia) {
   }
   cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
   dia.node.style.cssText = cssText;
+};
+var setTransformOrigin = function(dia) {
+  if (!dia.hasRotate) return;
+  if (!dia.org) {
+    dia.org = {x: 0, y: 0};
+    if (dia.Alignment % 3 === 1) dia.org.x = dia.x;
+    if (dia.Alignment % 3 === 2) dia.org.x = dia.x + dia.width / 2;
+    if (dia.Alignment % 3 === 0) dia.org.x = dia.x + dia.width;
+    if (dia.Alignment <= 3) dia.org.y = dia.y + dia.height;
+    if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.org.y = dia.y + dia.height / 2;
+    if (dia.Alignment >= 7) dia.org.y = dia.y;
+  }
+  var children = dia.node.childNodes;
+  for (var i = children.length - 1; i >= 0; i--) {
+    if (children[i].dataset.hasRotate) {
+      // It's not extremely precise for offsets are round the value to an integer.
+      var top = children[i].offsetTop,
+          left = children[i].offsetLeft;
+      var to = 'transform-origin:' + (dia.org.x - dia.x - left) + 'px ' + (dia.org.y - dia.y - top) + 'px;';
+      children[i].style.cssText += '-webkit-' + to + to;
+    }
+  }
 };
 
 window.ASS = ASS;
