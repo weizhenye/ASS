@@ -846,95 +846,12 @@ var createTransform = function(t) {
   t.fry = t.fry || 0;
   t.frz = t.frz || 0;
   var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
-  str += ' scale(' + (t.p ? 1 : t.fscx / 100) + ', ' + (t.p ? 1 : t.fscy / 100) + ')';
-  str += ' skew(' + t.fax + 'rad, ' + t.fay + 'rad)';
   str += ' rotateY(' + t.fry + 'deg)';
   str += ' rotateX(' + t.frx + 'deg)';
   str += ' rotateZ(' + (-t.frz) + 'deg)';
+  str += ' scale(' + (t.p ? 1 : t.fscx / 100) + ', ' + (t.p ? 1 : t.fscy / 100) + ')';
+  str += ' skew(' + t.fax + 'rad, ' + t.fay + 'rad)';
   return str;
-};
-var createMatrix3d = function(t) {
-  var sin = Math.sin;
-  var cos = Math.cos;
-  var tan = Math.tan;
-  var DEG2RAD = Math.PI / 180;
-  var m3d = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ];
-  var p = -1 / PERSPECTIVE_NUM;
-  var perspective = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, p,
-    0, 0, 0, 1,
-  ];
-  var rx = (t.frx || 0) * DEG2RAD;
-  var rotateX = [
-    1, 0,        0,       0,
-    0, cos(rx),  sin(rx), 0,
-    0, -sin(rx), cos(rx), 0,
-    0, 0,        0,       1,
-  ];
-  var ry = (t.fry || 0) * DEG2RAD;
-  var rotateY = [
-    cos(ry), 0, -sin(ry), 0,
-    0,       1, 0,        0,
-    sin(ry), 0, cos(ry),  0,
-    0,       0, 0,        1,
-  ];
-  var rz = -(t.frz || 0) * DEG2RAD;
-  var rotateZ = [
-    cos(rz),  sin(rz), 0, 0,
-    -sin(rz), cos(rz), 0, 0,
-    0,        0,       1, 0,
-    0,        0,       0, 1,
-  ];
-  var sx = (t.fscx && !t.p) ? t.fscx / 100 : 1;
-  var sy = (t.fscy && !t.p) ? t.fscy / 100 : 1;
-  var scale = [
-    sx, 0,  0, 0,
-    0,  sy, 0, 0,
-    0,  0,  1, 0,
-    0,  0,  0, 1,
-  ];
-  var ax = t.fax || 0;
-  var ay = t.fay || 0;
-  var skew = [
-    1,       tan(ay), 0, 0,
-    tan(ax), 1,       0, 0,
-    0,       0,       1, 0,
-    0,       0,       0, 1,
-  ];
-  m3d = matrixMultiply(perspective, m3d);
-  m3d = matrixMultiply(scale, m3d);
-  m3d = matrixMultiply(skew, m3d);
-  m3d = matrixMultiply(rotateY, m3d);
-  m3d = matrixMultiply(rotateX, m3d);
-  m3d = matrixMultiply(rotateZ, m3d);
-  return 'matrix3d(' + m3d.join(',') + ')';
-};
-var matrixMultiply = function(a, b) {
-  return [
-    a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12],
-    a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13],
-    a[0] * b[2] + a[1] * b[6] + a[2] * b[10] + a[3] * b[14],
-    a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15],
-    a[4] * b[0] + a[5] * b[4] + a[6] * b[8] + a[7] * b[12],
-    a[4] * b[1] + a[5] * b[5] + a[6] * b[9] + a[7] * b[13],
-    a[4] * b[2] + a[5] * b[6] + a[6] * b[10] + a[7] * b[14],
-    a[4] * b[3] + a[5] * b[7] + a[6] * b[11] + a[7] * b[15],
-    a[8] * b[0] + a[9] * b[4] + a[10] * b[8] + a[11] * b[12],
-    a[8] * b[1] + a[9] * b[5] + a[10] * b[9] + a[11] * b[13],
-    a[8] * b[2] + a[9] * b[6] + a[10] * b[10] + a[11] * b[14],
-    a[8] * b[3] + a[9] * b[7] + a[10] * b[11] + a[11] * b[15],
-    a[12] * b[0] + a[13] * b[4] + a[14] * b[8] + a[15] * b[12],
-    a[12] * b[1] + a[13] * b[5] + a[14] * b[9] + a[15] * b[13],
-    a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14],
-    a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15],
-  ];
 };
 var toRGBA = function(c) {
   var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/),
@@ -983,10 +900,8 @@ var setTagsStyle = function(dia) {
       if (t.q === 3) {} // TODO
     }
     if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx !== 100 || t.fscy !== 100) {
-      var tmp = createTransform(t);
-      // var tmp = createMatrix3d(t);
       ['', '-webkit-'].forEach(function(v) {
-        cssText += v + 'transform:' + tmp + ';';
+        cssText += v + 'transform:' + createTransform(t) + ';';
       });
       if (!t.p) cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
     }
