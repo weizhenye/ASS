@@ -580,60 +580,111 @@ var parseAnimatableTags = function(cmd) {
   }
 };
 var parseDrawingCommands = function(t, text) {
-  text = text.replace(/^\s*|\s*$/g, '').replace(/\s+/g, ' ').toLowerCase();
-  var ele = text.split(' '),
-      cmd = [],
-      cmds = [],
-      minX = 2147483647,
+  text = text.replace(/([mnlbspc])/gi, ' $1 ')
+             .replace(/^\s*|\s*$/g, '')
+             .replace(/\s+/g, ' ')
+             .toLowerCase();
+  var rawCommands = text.split(/\s(?=[mnlbspc])/),
+      commands = [],
+      prevCommand;
+  var s2b = function(points) {
+    // D3.js, d3_svg_lineBasisOpen()
+    var bb1 = [0, 2/3, 1/3, 0],
+        bb2 = [0, 1/3, 2/3, 0],
+        bb3 = [0, 1/6, 2/3, 1/6];
+    var dot4 = function(a, b) {
+      return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+    };
+    var px = [points[points.length - 1].x, points[0].x, points[1].x, points[2].x],
+        py = [points[points.length - 1].y, points[0].y, points[1].y, points[2].y];
+    var path = ['L', new Point(dot4(bb3, px), dot4(bb3, py))];
+    if (prevCommand.type === 'M') path[0] = 'M';
+    for (var i = 3; i < points.length; i++) {
+      px = [points[i - 3].x, points[i - 2].x, points[i - 1].x, points[i].x];
+      py = [points[i - 3].y, points[i - 2].y, points[i - 1].y, points[i].y];
+      path.push('C' + new Point(dot4(bb1, px), dot4(bb1, py)),
+                ',' + new Point(dot4(bb2, px), dot4(bb2, py)),
+                ',' + new Point(dot4(bb3, px), dot4(bb3, py)));
+    }
+    return path.join('');
+  };
+  function Point(x, y) {
+    this.x = x * 1;
+    this.y = y * 1;
+    this.toString = function() {
+      return this.x + ',' + this.y;
+    };
+  }
+  function DrawingCommand(type) {
+    this.points = [];
+    this.type = null;
+    if (/m/.test(type)) this.type = 'M';
+    if (/n|l/.test(type)) this.type = 'L';
+    if (/b/.test(type)) this.type = 'C';
+    if (/s/.test(type)) this.type = '_S';
+    this.isValid = function() {
+      if (!this.points.length || !this.type) return false;
+      if (/C|S/.test(this.type) && this.points.length < 3) return false;
+      return true;
+    };
+    this.offset = function(x, y) {
+      for (var i = this.points.length - 1; i >= 0; i--) {
+        this.points[i].x += x;
+        this.points[i].y += y;
+      }
+    };
+    this.toString = function() {
+      if (this.type === '_S') return s2b(this.points);
+      return this.type + this.points.join();
+    };
+  }
+  var minX = 2147483647,
       minY = 2147483647,
-      maxX = 0,
-      maxY = 0,
-      str = '';
-  for (var i = 0; i < ele.length; ++i) {
-    if (/[mnlbspc]/.test(ele[i])) {
-      if (cmd.length) cmds.push(cmd);
-      cmd = [];
+      maxX = -2147483648,
+      maxY = -2147483648;
+  var i = 0;
+  while (i < rawCommands.length) {
+    var p = rawCommands[i].split(' '),
+        command = new DrawingCommand(p[0]);
+    for (var lenj = p.length - !(p.length & 1), j = 1; j < lenj; j += 2) {
+      command.points.push(new Point(p[j], p[j + 1]));
+      minX = Math.min(minX, p[j]);
+      minY = Math.min(minY, p[j + 1]);
+      maxX = Math.max(maxX, p[j]);
+      maxY = Math.max(maxY, p[j + 1]);
     }
-    cmd.push(ele[i]);
-  }
-  cmds.push(cmd);
-  cmd = [];
-  for (var i = cmds.length - 1; i >= 0; --i) {
-    if (cmds[i][0] === 'p') {
-      cmd.push(cmds[i][2]);
-      cmd.push(cmds[i][1]);
-      cmds.splice(i, 1);
-    } else if (cmds[i][0] === 's') {
-      cmds[i] = cmds[i].concat(cmd.reverse());
+    if (/p|c/.test(p[0])) {
+      if (commands[i - 1].type === '_S') {
+        if (p[0] === 'p') {
+          commands[i - 1].points = commands[i - 1].points.concat(command.points);
+        }
+        if (p[0] === 'c') {
+          var tmp = commands[i - 1].points;
+          commands[i - 1].points.push(new Point(tmp[0].x, tmp[0].y),
+                                      new Point(tmp[1].x, tmp[1].y),
+                                      new Point(tmp[2].x, tmp[2].y));
+        }
+      }
+      rawCommands.splice(i, 1);
     } else {
-      cmd = [];
+      if (p[0] === 's') {
+        var prev = commands[i - 1].points[commands[i - 1].points.length - 1];
+        command.points.unshift(new Point(prev.x, prev.y));
+      }
+      if (command.isValid()) commands.push(command);
+      i++;
     }
   }
-  for (var i = cmds.length - 1; i >= 0; --i) {
-    if (/m/.test(cmds[i][0])) cmds[i][0] = 'M';
-    if (/n|l/.test(cmds[i][0])) cmds[i][0] = 'L';
-    if (/b|s/.test(cmds[i][0])) cmds[i][0] = 'C';
-    for (var j = 1; j < cmds[i].length + (cmds[i].length & 1) - 1; j += 2) {
-      cmds[i][j] *= 1;
-      cmds[i][j + 1] *= 1;
-      if (cmds[i][j] < minX) minX = cmds[i][j];
-      if (cmds[i][j + 1] < minY) minY = cmds[i][j + 1];
-      if (cmds[i][j] > maxX) maxX = cmds[i][j];
-      if (cmds[i][j + 1] > maxY) maxY = cmds[i][j + 1];
-    }
+  prevCommand = commands[0];
+  var arr = [];
+  for (var len = commands.length, i = 0; i < len; i++) {
+    commands[i].offset(-minX, -minY);
+    arr.push(commands[i].toString());
+    prevCommand = commands[i];
   }
-  for (var i = cmds.length - 1; i >= 0; --i) {
-    for (var j = 1; j < cmds[i].length + (cmds[i].length & 1) - 1; j += 2) {
-      cmds[i][j] -= minX;
-      cmds[i][j + 1] -= minY;
-    }
-  }
-  for (var i = 0; i < cmds.length; ++i)
-    for (var j = 0; j < cmds[i].length + (cmds[i].length & 1) - 1; ++j)
-      str += cmds[i][j] + ' ';
-  str += 'Z';
+  console.log(commands);
   return {
-    d: str,
+    d: arr.join('') + 'Z',
     pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,
     w: maxX - minX,
     h: maxY - minY,
@@ -900,8 +951,9 @@ var setTagsStyle = function(dia) {
       if (t.q === 3) {} // TODO
     }
     if (t.fax || t.fay || t.frx || t.fry || t.frz || t.fscx !== 100 || t.fscy !== 100) {
+      var tmp = createTransform(t);
       ['', '-webkit-'].forEach(function(v) {
-        cssText += v + 'transform:' + createTransform(t) + ';';
+        cssText += v + 'transform:' + tmp + ';';
       });
       if (!t.p) cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
     }
