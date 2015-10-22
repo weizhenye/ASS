@@ -84,7 +84,6 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 * `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
-* In some cases, libass and xy-vsfilter renders the `s` drawing command to different shape, ASS.js is sometimes same as libass and sometimes xy-vsfilter. Actually I'm not very clear about B-spline, I get some idea from [D3.js](https://github.com/mbostock/d3/blob/master/src/svg/line.js).
 
 ## License
 

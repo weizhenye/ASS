@@ -586,7 +586,8 @@ var parseDrawingCommands = function(t, text) {
              .toLowerCase();
   var rawCommands = text.split(/\s(?=[mnlbspc])/),
       commands = [],
-      prevCommand;
+      prevCommand,
+      nextCommand;
   var s2b = function(points) {
     // D3.js, d3_svg_lineBasisOpen()
     var bb1 = [0, 2/3, 1/3, 0],
@@ -605,6 +606,9 @@ var parseDrawingCommands = function(t, text) {
       path.push('C' + new Point(dot4(bb1, px), dot4(bb1, py)),
                 ',' + new Point(dot4(bb2, px), dot4(bb2, py)),
                 ',' + new Point(dot4(bb3, px), dot4(bb3, py)));
+    }
+    if (nextCommand.type === 'L' || nextCommand.type === 'C') {
+      path.push('L', points[points.length - 1]);
     }
     return path.join('');
   };
@@ -675,14 +679,13 @@ var parseDrawingCommands = function(t, text) {
       i++;
     }
   }
-  prevCommand = commands[0];
   var arr = [];
   for (var len = commands.length, i = 0; i < len; i++) {
+    prevCommand = commands[Math.max(i - 1, 0)];
+    nextCommand = commands[Math.min(i + 1, len - 1)];
     commands[i].offset(-minX, -minY);
     arr.push(commands[i].toString());
-    prevCommand = commands[i];
   }
-  console.log(commands);
   return {
     d: arr.join('') + 'Z',
     pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,
