@@ -17,8 +17,8 @@ ASS.prototype.init = function(data, video) {
   if (video && !this.video) {
     var isPlaying = !video.paused;
     this.video = video;
-    this.container.style.position = this.video.style.position;
-    this.video.style.position = 'absolute';
+    // this.container.style.position = this.video.style.position;
+    // this.video.style.position = 'absolute';
     this.video.parentNode.insertBefore(this.container, this.video);
     this.container.appendChild(this.video);
     this.container.appendChild(this.stage);
@@ -36,7 +36,7 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
 
-  var CSSstr = '.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+  var CSSstr = '.ASS-container{position:relative;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
   var styleNode = document.createElement('style');
   styleNode.type = 'text/css';
   styleNode.id = 'ASS-style';
@@ -64,6 +64,7 @@ ASS.prototype.resize = function() {
       l = (cp > vp) ? (cw - w) / 2 : 0;
   this.width = w;
   this.height = h;
+  this.container.style.cssText = 'width:' + w + 'px;height:' + h + 'px;';
   this.stage.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
   this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
   // this._createAnimation();
@@ -586,7 +587,8 @@ var parseDrawingCommands = function(t, text) {
              .toLowerCase();
   var rawCommands = text.split(/\s(?=[mnlbspc])/),
       commands = [],
-      prevCommand;
+      prevCommand,
+      nextCommand;
   var s2b = function(points) {
     // D3.js, d3_svg_lineBasisOpen()
     var bb1 = [0, 2/3, 1/3, 0],
@@ -605,6 +607,9 @@ var parseDrawingCommands = function(t, text) {
       path.push('C' + new Point(dot4(bb1, px), dot4(bb1, py)),
                 ',' + new Point(dot4(bb2, px), dot4(bb2, py)),
                 ',' + new Point(dot4(bb3, px), dot4(bb3, py)));
+    }
+    if (nextCommand.type === 'L' || nextCommand.type === 'C') {
+      path.push('L', points[points.length - 1]);
     }
     return path.join('');
   };
@@ -675,14 +680,13 @@ var parseDrawingCommands = function(t, text) {
       i++;
     }
   }
-  prevCommand = commands[0];
   var arr = [];
   for (var len = commands.length, i = 0; i < len; i++) {
+    prevCommand = commands[Math.max(i - 1, 0)];
+    nextCommand = commands[Math.min(i + 1, len - 1)];
     commands[i].offset(-minX, -minY);
     arr.push(commands[i].toString());
-    prevCommand = commands[i];
   }
-  console.log(commands);
   return {
     d: arr.join('') + 'Z',
     pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,

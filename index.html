@@ -2,156 +2,56 @@
 <!-- ASS♂We♂Can -->
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>ASS.js - A Renderer For ASS File</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="A JavaScript renderer for ASS subtitle format">
   <meta name="keywords" content="ASS, subtitle, JavaScript">
+  <meta name="author" content="weizhenye">
+  <title>ASS.js - A JavaScript renderer for ASS subtitle format</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<header>ASS.js - A Renderer For ASS File</header>
-<nav><a id="github" href="https://github.com/weizhenye/ASS">View on GitHub</a></nav>
-<div id="buttons" style="visibility: hidden;">
-  <button id="w640">640*360</button><button id="w960">960*540</button>
+<header id="site-header">
+  <div id="site-title">ASS.js</div>
+  <div id="site-subtitle">A JavaScript renderer for ASS subtitle format</div>
+  <iframe src="https://ghbtns.com/github-btn.html?user=weizhenye&repo=ASS&type=star&count=true&size=large" frameborder="0" scrolling="0" width="120" height="30"></iframe>
+</header>
+<div class="wrapper">
+  <fieldset id="init">
+    <legend>Initialization</legend>
+    <button id="init-video">Load test video</button>
+    <button id="init-ass">Load test ASS</button>
+  </fieldset>
+  <fieldset id="controls">
+    <legend>Controls</legend>
+    <button id="controls-resize" disabled>Resize</button>
+    <button id="controls-show" disabled>Show</button>
+    <button id="controls-hide" disabled>Hide</button>
+  </fieldset>
 </div>
-<div id="demo">
-  <div id="error">File format error</div>
-  <div id="drop-ASS"><br><br><br><br>Drop ASS file here</div><div id="drop-video"><br><br><br><br>Drop video file here</div>
+<div id="demo" class="wrapper">
+  <div id="drop-video" class="drop-area">
+    <div class="drop-text">Select or drag a video file here</div>
+    <input type="file">
+  </div><div id="drop-ASS" class="drop-area">
+    <div class="drop-text">and an ASS file here</div>
+    <input type="file">
+  </div>
 </div>
+<div id="message"></div>
 
 <script src="ass.js"></script>
+<script src="main.js"></script>
 <script>
-var $ = function(id) { return document.getElementById(id); }
-var $c = function(tag) { return document.createElement(tag); }
-var dropVideo = $('drop-video'),
-    dropASS = $('drop-ASS'),
-    ass = new ASS(),
-    _Timer,
-    videoReady = false,
-    ASSReady = false,
-    video,
-    content;
-dropVideo.ondragleave = dropASS.ondragleave = function() { this.style.borderColor = '#CCC'; }
-dropVideo.ondragover = dropASS.ondragover = function(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  this.style.borderColor = '#888';
-}
-dropVideo.ondrop = function(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  this.style.borderColor = '#CCC';
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  var file = e.dataTransfer.files[0],
-      src;
-  video = $c('video')
-  if (window.URL && window.URL.createObjectURL)
-    src = window.URL.createObjectURL(file);
-  else if (window.webkitURL && window.webkitURL.createObjectURL)
-    src = window.webkitURL.createObjectURL(file);
-  else if (window.createObjectURL)
-    src = window.createObjectURL(file);
-  else if (window.createBlobURL)
-    src = window.createBlobURL(file);
-  video.src = src;
-  video.id = 'video';
-  video.controls = true;
-  video.style.width = '640px';
-  video.style.height = '360px';
-  video.style.backgroundColor = '#000';
-  video.style.display = 'inline-block';
-  video.style.position = 'absolute';
-  video.onloadedmetadata = function() {
-    videoReady = true;
-    $('demo').insertBefore(video, dropVideo);
-    dropVideo.style.display = 'none';
-    if (videoReady && ASSReady) init();
-  };
-  video.onerror = function(e) {
-    videoReady = false;
-    fadeOut($('error'));
-  };
-}
-dropASS.ondrop = function(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  this.style.borderColor = '#CCC';
-
-  var file = e.dataTransfer.files[0];
-      reader = new FileReader(file);
-  if (!/\.ass$/i.test(file.name)) {
-    fadeOut($('error'));
-    return;
-  }
-  reader.readAsText(file);
-  reader.onload = function(ev) {
-    var data = ev.target.result;
-    if (!/^\[Script Info\]/i.test(data)) {
-      fadeOut($('error'));
-      ASSReady = false;
-    } else {
-      ASSReady = true;
-      content = data;
-      if (videoReady && ASSReady) init();
-      dropASS.innerHTML = '<br><br><br><br>ASS file dropped.';
-      dropASS.style.border = '10px solid #CCC';
-    }
-  }
-}
-function init() {
-  ass.init(content, video);
-  var info = $c('div');
-  info.id = 'info';
-  $('demo').insertBefore(info, dropASS);
-  dropASS.style.display = 'none';
-  var dl = $c('dl'),
-      dt = $c('dt');
-  dt.innerHTML = 'File Infomation';
-  dl.appendChild(dt);
-  for (var i in ass.tree.ScriptInfo) {
-    var dd = $c('dd');
-    dd.innerHTML = '<strong>' + i + '</strong>: ' + ass.tree.ScriptInfo[i];
-    dl.appendChild(dd);
-  }
-  info.appendChild(dl);
-  $('buttons').style.visibility = 'visible';
-}
-function fadeOut(d) {
-  clearInterval(_Timer);
-  d.style.opacity = 1;
-  d.style.display = 'block';
-  var op = 200;
-  _Timer = setInterval(function() {
-    op -= 2;
-    if (op < 0) op = 0;
-    d.style.opacity = Math.min(1, op / 100);
-    if (op == 0) {
-      clearInterval(_Timer);
-      d.style.display = 'none';
-      op = 200;
-    }
-  }, 50);
-}
-$('w640').onclick = function() {
-  video.style.width = '640px';
-  video.style.height = '360px';
-  ass.resize();
-};
-$('w960').onclick = function() {
-  video.style.width = '960px';
-  video.style.height = '540px';
-  ass.resize();
-};
-</script>
-<script>
-  // (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  // (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  // m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  // })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  // ga('create', 'UA-34447075-2', 'auto');
-  // ga('send', 'pageview');
+  ga('create', 'UA-34447075-2', 'auto');
+  ga('send', 'pageview');
 </script>
 </body>
 </html>
