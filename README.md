@@ -3,7 +3,7 @@ ASS.js
 
 ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 video.
 
-[Demo](http://ass.woozy.im/)
+[Demo](https://ass.js.org/)
 
 [ASS specs](https://github.com/weizhenye/ASS/blob/master/ass-specs.md)(zh-Hans)
 
