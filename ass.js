@@ -17,8 +17,6 @@ ASS.prototype.init = function(data, video) {
   if (video && !this.video) {
     var isPlaying = !video.paused;
     this.video = video;
-    this.container.style.position = this.video.style.position;
-    this.video.style.position = 'absolute';
     this.video.parentNode.insertBefore(this.container, this.video);
     this.container.appendChild(this.video);
     this.container.appendChild(this.stage);
@@ -36,16 +34,15 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
 
-  var CSSstr = '.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
-  var styleNode = document.createElement('style');
-  styleNode.type = 'text/css';
-  styleNode.id = 'ASS-style';
-  styleNode.appendChild(document.createTextNode(CSSstr));
-  document.head.appendChild(styleNode);
-  styleNode = document.createElement('style');
-  styleNode.type = 'text/css';
-  styleNode.id = 'ASS-animation';
-  document.head.appendChild(styleNode);
+  var styleNode = document.getElementById('ASS-style');
+  if (!styleNode) {
+    var CSSstr = '.ASS-container{position:relative;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+    styleNode = document.createElement('style');
+    styleNode.type = 'text/css';
+    styleNode.id = 'ASS-style';
+    styleNode.appendChild(document.createTextNode(CSSstr));
+    document.head.appendChild(styleNode);
+  }
 
   this.resize();
   return this;
@@ -64,9 +61,9 @@ ASS.prototype.resize = function() {
       l = (cp > vp) ? (cw - w) / 2 : 0;
   this.width = w;
   this.height = h;
+  this.container.style.cssText = 'width:' + w + 'px;height:' + h + 'px;';
   this.stage.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
   this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
-  // this._createAnimation();
   createAnimation.call(this);
   this._seek();
   return this;
@@ -304,6 +301,10 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var baseTags = {};
 var channel = [];
+var animationStyleNode = document.createElement('style');
+animationStyleNode.type = 'text/css';
+animationStyleNode.className = 'ASS-animation';
+document.head.appendChild(animationStyleNode);
 var realFontSizeCache = {};
 var fontSizeElement = document.createElement('div');
 fontSizeElement.className = 'ASS-font-size-element';
@@ -823,7 +824,7 @@ var createAnimation = function() {
       kfStr += kf.toString();
     }
   }
-  document.getElementById('ASS-animation').innerHTML = kfStr;
+  animationStyleNode.innerHTML = kfStr;
 };
 var createSVG = function(ct, dia, scale) {
   var t = ct.tags,
