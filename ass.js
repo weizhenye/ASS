@@ -122,7 +122,6 @@ ASS.prototype._launch = function() {
       end = Math.min(end, dia.Start + (dia.Effect.y2 - dia.Effect.y1) / (1000 / dia.Effect.delay));
     }
     if (end < ct) {
-      if (!dia.pos && !dia.Effect && !dia.t) this._freeChannel(dia);
       this.stage.removeChild(dia.node);
       this.runline.splice(i, 1);
     }
@@ -177,7 +176,7 @@ ASS.prototype._render = function(data) {
       else dia.x = this.width + dia.minX;
     }
     if (/^scroll/.test(dia.Effect.name)) {
-      dia.y = /up/.test(dia.Effect.name) ? -dia.height : this.height;
+      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
       if (dia.Alignment % 3 === 1) dia.x = dia.minX;
       if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
       if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width + dia.minX;
@@ -213,83 +212,61 @@ ASS.prototype._getChannel = function(dia) {
       W = dia.width,
       H = dia.height,
       V = Math.floor(this.scale * dia.MarginV),
+      vct = this.video.currentTime,
       count = 0;
   channel[L] = channel[L] || {
     left: new Uint16Array(SH + 1),
-    middle: new Uint16Array(SH + 1),
+    center: new Uint16Array(SH + 1),
     right: new Uint16Array(SH + 1),
+    leftEnd: new Uint32Array(SH + 1),
+    centerEnd: new Uint32Array(SH + 1),
+    rightEnd: new Uint32Array(SH + 1),
   };
-  var judge = function(x) {
+  var align = ['right', 'left', 'center'][dia.Alignment % 3];
+  var willCollide = function(x) {
     var l = channel[L].left[x],
-        m = channel[L].middle[x],
-        r = channel[L].right[x];
-    if ((l + m + r > 0) &&
-        ( (dia.Alignment % 3 === 1 && (l || (m && W + m / 2 > SW / 2) || (W + r > SW))) ||
-          (dia.Alignment % 3 === 2 && ((2 * l + W > SW) || m || (2 * r + W > SW))) ||
-          (dia.Alignment % 3 === 0 && ((l + W > SW) || (m && W + m / 2 > SW / 2) || r))
-        )) {
-      count = 0;
-    } else ++count;
+        c = channel[L].center[x],
+        r = channel[L].right[x],
+        le = channel[L].leftEnd[x] / 100,
+        ce = channel[L].centerEnd[x] / 100,
+        re = channel[L].rightEnd[x] / 100;
+    if (align === 'left') {
+      if ((le > vct && l) ||
+          (ce > vct && c && 2 * W + c > SW) ||
+          (re > vct && r && W + r > SW)) return true;
+    }
+    if (align === 'center') {
+      if ((le > vct && l && 2 * l + W > SW) ||
+          (ce > vct && c) ||
+          (re > vct && r && 2 * r + W > SW)) return true;
+    }
+    if (align === 'right') {
+      if ((le > vct && l && l + W > SW) ||
+          (ce > vct && c && 2 * W + c > SW) ||
+          (re > vct && r)) return true;
+    }
+    return false;
+  };
+  var found = function(x) {
+    if (willCollide(x)) count = 0;
+    else count++;
     if (count >= H) {
       dia.channel = x;
       return true;
     } else return false;
   };
   if (dia.Alignment <= 3) {
-    for (var i = SH - V - 1; i > V; --i) {
-      if (judge(i)) break;
-    }
+    for (var i = SH - V - 1; i > V; i--) if (found(i)) break;
   } else if (dia.Alignment >= 7) {
-    for (var i = V + 1; i < SH - V; ++i) {
-      if (judge(i)) break;
-    }
-  } else {
-    for (var i = (SH - H) >> 1; i < SH - V; ++i) {
-      if (judge(i)) break;
-    }
-  }
+    for (var i = V + 1; i < SH - V; i++) if (found(i)) break;
+  } else for (var i = (SH - H) >> 1; i < SH - V; i++) if (found(i)) break;
   if (dia.Alignment > 3) dia.channel -= H - 1;
-  for (var i = dia.channel; i < dia.channel + H; ++i) {
-    if (dia.Alignment % 3 === 1) {
-      channel[L].left[i] = W;
-    } else if (dia.Alignment % 3 === 2) {
-      channel[L].middle[i] = W;
-    } else {
-      channel[L].right[i] = W;
-    }
+  for (var i = dia.channel; i < dia.channel + H; i++) {
+    channel[L][align][i] = W;
+    channel[L][align + 'End'][i] = dia.End * 100;
   }
   return dia.channel;
 };
-ASS.prototype._freeChannel = function(dia) {
-  for (var i = dia.channel + dia.height; i >= dia.channel; i--) {
-    if (dia.Alignment % 3 === 1) channel[dia.Layer].left[i] = 0;
-    else if (dia.Alignment % 3 === 2) channel[dia.Layer].middle[i] = 0;
-    else channel[dia.Layer].right[i] = 0;
-  }
-};
-function KeyFrames(name) {
-  this.obj = {};
-  this.set = function(percentage, property, value) {
-    if (!this.obj[percentage]) this.obj[percentage] = {};
-    this.obj[percentage][property] = value;
-  };
-  this.toString = function() {
-    if (JSON.stringify(this.obj) === '{}') return '';
-    var str = 'keyframes ' + name + '{';
-    for (var percentage in this.obj) {
-      str += percentage + '{';
-      for (var property in this.obj[percentage]) {
-        if (property === 'transform') {
-          str += '-webkit-transform:' + this.obj[percentage][property] + ';';
-        }
-        str += property + ':' + this.obj[percentage][property] + ';';
-      }
-      str += '}';
-    }
-    str += '}\n';
-    return '@' + str + '@-webkit-' + str;
-  };
-}
 var RAF = window.requestAnimationFrame ||
           window.mozRequestAnimationFrame ||
           window.webkitRequestAnimationFrame ||
@@ -309,7 +286,6 @@ var realFontSizeCache = {};
 var fontSizeElement = document.createElement('div');
 fontSizeElement.className = 'ASS-font-size-element';
 fontSizeElement.textContent = 'M';
-var PERSPECTIVE_NUM = 314; // TODO: I don't know why it's 314, it just performances well.
 var parseASS = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var lines = data.split('\n'),
@@ -399,14 +375,16 @@ var parseTime = function(time, timer) {
 var parseEffect = function(str, resY) {
   if (!str) return null;
   var tmp = str.toLowerCase().split(';'),
-      eff = {};
+      eff = null;
   if (tmp[0] === 'banner') {
+    eff = {};
     eff.name = tmp[0];
     eff.delay = tmp[1] * 1 || 1;
     eff.lefttoright = tmp[2] * 1 || 0;
     eff.fadeawaywidth = tmp[3] * 1 || 0;
   }
   if (/^scroll\s/.test(tmp[0])) {
+    eff = {};
     eff.name = tmp[0];
     eff.y1 = Math.min(tmp[1] * 1, tmp[2] * 1);
     eff.y2 = Math.max(tmp[1] * 1, tmp[2] * 1) || resY;
@@ -697,6 +675,29 @@ var parseDrawingCommands = function(t, text) {
   };
 };
 var createAnimation = function() {
+  function KeyFrames(name) {
+    this.obj = {};
+    this.set = function(percentage, property, value) {
+      if (!this.obj[percentage]) this.obj[percentage] = {};
+      this.obj[percentage][property] = value;
+    };
+    this.toString = function() {
+      if (JSON.stringify(this.obj) === '{}') return '';
+      var str = 'keyframes ' + name + '{';
+      for (var percentage in this.obj) {
+        str += percentage + '{';
+        for (var property in this.obj[percentage]) {
+          if (property === 'transform') {
+            str += '-webkit-transform:' + this.obj[percentage][property] + ';';
+          }
+          str += property + ':' + this.obj[percentage][property] + ';';
+        }
+        str += '}';
+      }
+      str += '}\n';
+      return '@' + str + '@-webkit-' + str;
+    };
+  }
   var kfStr = '';
   for (var i = this.tree.Events.Dialogue.length - 1; i >= 0; i--) {
     var dia = this.tree.Events.Dialogue[i],
@@ -711,7 +712,7 @@ var createAnimation = function() {
         kf.set('100.000%', 'transform', 'translateX(' + this.scale * (dur / eff.delay) * (eff.lefttoright ? 1 : -1) + 'px)');
       }
       if (/^scroll/.test(eff.name)) {
-        var updown = /up/.test(eff.name) ? 1 : -1,
+        var updown = /up/.test(eff.name) ? -1 : 1,
             tmp1 = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
             tmp2 = 'translateY(' + this.scale * eff.y2 * updown + 'px)';
         t[1] = Math.min(100, (eff.y2 - eff.y1) / (dur / eff.delay) * 100).toFixed(3) + '%';
@@ -900,7 +901,8 @@ var createTransform = function(t) {
   t.frx = t.frx || 0;
   t.fry = t.fry || 0;
   t.frz = t.frz || 0;
-  var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
+  // TODO: I don't know why perspective is 314, it just performances well.
+  var str = 'perspective(314px)';
   str += ' rotateY(' + t.fry + 'deg)';
   str += ' rotateX(' + t.frx + 'deg)';
   str += ' rotateZ(' + (-t.frz) + 'deg)';
