@@ -151,6 +151,7 @@ ASS.prototype._render = function(data) {
     Effect: data.Effect,
     parsedText: data.parsedText,
     _index: data._index,
+    animationName: data.animationName,
     move: pt.move,
     fad: pt.fad,
     fade: pt.fade,
@@ -533,19 +534,19 @@ var parseAnimatableTags = function(cmd) {
   if (/^shad/.test(cmd)) this.tags.xshad = this.tags.yshad = cmd.match(/^shad(.*)/)[1] * 1;
   if (/^xshad/.test(cmd)) this.tags.xshad = cmd.match(/^xshad(.*)/)[1] * 1;
   if (/^yshad/.test(cmd)) this.tags.yshad = cmd.match(/^yshad(.*)/)[1] * 1;
-  if (/^\d?c&H/.test(cmd)) {
-    tmp = cmd.match(/^(\d?)c&H(\w+)/);
+  if (/^\d?c&?H?[0-9a-f]+/i.test(cmd)) {
+    tmp = cmd.match(/^(\d?)c&?H?(\w+)/);
     if (!tmp[1]) tmp[1] = '1';
     while (tmp[2].length < 6) tmp[2] = '0' + tmp[2];
     this.tags['c' + tmp[1]] = tmp[2];
   }
-  if (/^\d?a&H/.test(cmd)) {
+  if (/^\d?a&H[0-9a-f]+/i.test(cmd)) {
     tmp = cmd.match(/^(\d?)a&H(\w\w)/);
     if (!tmp[1]) tmp[1] = '1';
     this.tags['a' + tmp[1]] = tmp[2];
   }
-  if (/^alpha&H/.test(cmd)) {
-    for (var i = 1; i <= 4; i++) this.tags['a' + i] = cmd.match(/^alpha&H(\w\w)/)[1];
+  if (/^alpha&?H?[0-9a-f]+/i.test(cmd)) {
+    for (var i = 1; i <= 4; i++) this.tags['a' + i] = cmd.match(/^alpha&?H?(\w\w)/)[1];
   }
   if (/^i?clip/.test(cmd)) { // TODO
     var tn = cmd.match(/^(i?clip)/)[1];
@@ -675,15 +676,14 @@ var parseDrawingCommands = function(t, text) {
   };
 };
 var createAnimation = function() {
-  function KeyFrames(name) {
+  function KeyFrames() {
     this.obj = {};
     this.set = function(percentage, property, value) {
       if (!this.obj[percentage]) this.obj[percentage] = {};
       this.obj[percentage][property] = value;
     };
     this.toString = function() {
-      if (JSON.stringify(this.obj) === '{}') return '';
-      var str = 'keyframes ' + name + '{';
+      var str = '{';
       for (var percentage in this.obj) {
         str += percentage + '{';
         for (var property in this.obj[percentage]) {
@@ -695,15 +695,29 @@ var createAnimation = function() {
         str += '}';
       }
       str += '}\n';
-      return '@' + str + '@-webkit-' + str;
+      return str;
     };
   }
-  var kfStr = '';
+  var kfObj = {};
+  var generateUUID = function() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0,
+          v = (c == 'x' ? r : (r & 0x3 | 0x8));
+      return v.toString(16);
+    });
+  };
+  var getName = function(str) {
+    for (var name in kfObj) {
+      if (kfObj[name] === str) return name;
+    }
+    return null;
+  };
   for (var i = this.tree.Events.Dialogue.length - 1; i >= 0; i--) {
     var dia = this.tree.Events.Dialogue[i],
         pt = dia.parsedText,
         dur = (dia.End - dia.Start) * 1000,
-        kf = new KeyFrames('ASS-animation-' + dia._index),
+        kf = new KeyFrames(),
+        kfStr = '',
         t = [];
     if (dia.Effect && !pt.move) {
       var eff = dia.Effect;
@@ -748,10 +762,16 @@ var createAnimation = function() {
         for (var j = 0; j <= 3; j++) kf.set(t[j], 'transform', 'translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px)');
       }
     }
-    kfStr += kf.toString();
+    kfStr = kf.toString();
+    var name = getName(kfStr);
+    if (name === null) {
+      name = 'ASS-' + generateUUID();
+      kfObj[name] = kfStr;
+    }
+    dia.animationName = name;
 
     for (var j = pt.content.length - 1; j >= 0; j--) {
-      kf = new KeyFrames('ASS-animation-' + dia._index + '-' + j);
+      kf = new KeyFrames();
       var tags = pt.content[j].tags;
       if (tags.t) {
         for (var k = tags.t.length - 1; k >= 0; k--) {
@@ -797,7 +817,7 @@ var createAnimation = function() {
           }
           if (ttags.c3 || ttags.a3 || ttags.c3 || ttags.a4 || ttags.blur ||
               ttags.xbord || ttags.ybord || ttags.xshad || ttags.yshad) {
-            ['c3', 'a3', 'c4', 'a4'].forEach(function(e) {
+            ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur'].forEach(function(e) {
               if (!ttags[e]) ttags[e] = tags[e];
             });
             var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1,
@@ -822,10 +842,20 @@ var createAnimation = function() {
           }
         }
       }
-      kfStr += kf.toString();
+      kfStr = kf.toString();
+      var name = getName(kfStr);
+      if (name === null) {
+        name = 'ASS-' + generateUUID();
+        kfObj[name] = kfStr;
+      }
+      pt.content[j].animationName = name;
     }
   }
-  animationStyleNode.innerHTML = kfStr;
+  var cssText = '';
+  for (var name in kfObj) {
+    cssText += '@keyframes ' + name + kfObj[name] + '@-webkit-keyframes ' + name + kfObj[name];
+  }
+  animationStyleNode.innerHTML = cssText;
 };
 var createSVG = function(ct, dia, scale) {
   var t = ct.tags,
@@ -965,7 +995,7 @@ var setTagsStyle = function(dia) {
     }
     if (t.t) {
       ['', '-webkit-'].forEach(function(v) {
-        cssText += v + 'animation-name:ASS-animation-' + dia._index + '-' + i + ';';
+        cssText += v + 'animation-name:' + ct.animationName + ';';
         cssText += v + 'animation-duration:' + (dia.End - dia.Start) + 's;';
         cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
         cssText += v + 'animation-timing-function:linear;';
@@ -994,7 +1024,7 @@ var setDialogueStyle = function(dia) {
   if (dia.Layer) cssText += 'z-index:' + dia.Layer;
   if (dia.move || dia.fad || dia.fade || dia.Effect) {
     ['', '-webkit-'].forEach(function(v) {
-      cssText += v + 'animation-name:ASS-animation-' + dia._index + ';';
+      cssText += v + 'animation-name:' + dia.animationName + ';';
       cssText += v + 'animation-duration:' + (dia.End - dia.Start) + 's;';
       cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
       cssText += v + 'animation-timing-function:linear;';
