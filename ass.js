@@ -9,6 +9,7 @@ function ASS() {
   this.container = document.createElement('div');
   this.container.className = 'ASS-container';
   this.container.appendChild(fontSizeElement);
+  this.container.appendChild(clipPathElement);
   this.stage = document.createElement('div');
   this.stage.className = 'ASS-stage ASS-animation-paused';
 }
@@ -157,6 +158,7 @@ ASS.prototype._render = function(data) {
     fade: pt.fade,
     pos: pt.pos || (pt.move ? {x: 0, y: 0} : null),
     org: pt.org,
+    clip: pt.clip,
     channel: 0,
     minX: 0,
     minY: 0,
@@ -287,6 +289,13 @@ var realFontSizeCache = {};
 var fontSizeElement = document.createElement('div');
 fontSizeElement.className = 'ASS-font-size-element';
 fontSizeElement.textContent = 'M';
+var xmlns = 'http://www.w3.org/2000/svg';
+var clipPathElement = document.createElementNS(xmlns, 'svg');
+clipPathElement.setAttributeNS(null, 'class', 'ASS-clip-path');
+clipPathElement.setAttributeNS(null, 'width', 0);
+clipPathElement.setAttributeNS(null, 'height', 0);
+var clipPathDefs = document.createElementNS(xmlns, 'defs');
+clipPathElement.appendChild(clipPathDefs);
 var parseASS = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var lines = data.split('\n'),
@@ -420,6 +429,7 @@ var parseTags = function(dialogue) {
     for (var j = 0; j < cmd.length; ++j) {
       var tmp;
       parseAnimatableTags.call(ct, cmd[j]);
+      if (ct.tags.clip) dia.clip = ct.tags.clip;
       if (/^b\d/.test(cmd[j])) ct.tags.b = cmd[j].match(/^b(\d+)/)[1] * 1;
       if (/^i\d/.test(cmd[j])) ct.tags.i = cmd[j][1] * 1;
       if (/^u\d/.test(cmd[j])) ct.tags.u = cmd[j][1] * 1;
@@ -548,18 +558,28 @@ var parseAnimatableTags = function(cmd) {
   if (/^alpha&?H?[0-9a-f]+/i.test(cmd)) {
     for (var i = 1; i <= 4; i++) this.tags['a' + i] = cmd.match(/^alpha&?H?(\w\w)/)[1];
   }
-  if (/^i?clip/.test(cmd)) { // TODO
-    var tn = cmd.match(/^(i?clip)/)[1];
+  if (/^i?clip/.test(cmd)) {
     tmp = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
-    if (tmp.length === 1) this.tags[tn] = {scale: 1, command: tmp[0]};
-    if (tmp.length === 2) this.tags[tn] = {scale: tmp[0] * 1, command: tmp[1]};
+    this.tags.clip = {
+      inverse: /iclip/.test(cmd),
+      scale: null,
+      commands: null,
+      dots: null,
+    };
+    if (tmp.length === 1) {
+      this.tags.clip.scale = 1;
+      this.tags.clip.commands = tmp[0];
+    }
+    if (tmp.length === 2) {
+      this.tags.clip.scale = tmp[0] * 1;
+      this.tags.clip.commands = tmp[1];
+    }
     if (tmp.length === 4) {
-      for (var i = tmp.length - 1; i >= 0; i--) tmp[i] *= 1;
-      this.tags[tn] = tmp;
+      this.tags.clip.dots = [tmp[0] * 1, tmp[1] * 1, tmp[2] * 1, tmp[3] * 1];
     }
   }
 };
-var parseDrawingCommands = function(t, text) {
+var parseDrawingCommands = function(text, isOffset) {
   text = text.replace(/([mnlbspc])/gi, ' $1 ')
              .replace(/^\s*|\s*$/g, '')
              .replace(/\s+/g, ' ')
@@ -663,14 +683,15 @@ var parseDrawingCommands = function(t, text) {
   for (var len = commands.length, i = 0; i < len; i++) {
     prevCommand = commands[Math.max(i - 1, 0)];
     nextCommand = commands[Math.min(i + 1, len - 1)];
-    commands[i].offset(-minX, -minY);
+    isOffset && commands[i].offset(-minX, -minY);
     arr.push(commands[i].toString());
   }
   return {
     d: arr.join('') + 'Z',
-    pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,
-    w: maxX - minX,
-    h: maxY - minY,
+    width: maxX - minX,
+    height: maxY - minY,
+    maxX: maxX,
+    maxY: maxY,
     minX: minX,
     minY: minY,
   };
@@ -699,13 +720,6 @@ var createAnimation = function() {
     };
   }
   var kfObj = {};
-  var generateUUID = function() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0,
-          v = (c == 'x' ? r : (r & 0x3 | 0x8));
-      return v.toString(16);
-    });
-  };
   var getName = function(str) {
     for (var name in kfObj) {
       if (kfObj[name] === str) return name;
@@ -863,11 +877,45 @@ var createSVG = function(ct, dia, scale) {
       sy = t.fscy ? t.fscy / 100 : 1,
       c = toRGBA(t.a1 + t.c1),
       s = scale / (1 << (t.p - 1)),
-      tmp = parseDrawingCommands(t, ct.text),
-      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
+      tmp = parseDrawingCommands(ct.text, true),
+      pbo = t.pbo ? Math.max(t.pbo - tmp.maxY + tmp.minY, 0) : 0;
   dia.minX = sx * s * tmp.minX;
-  dia.minY = sy * s * (tmp.minY + tmp.pbo);
+  dia.minY = sy * s * (tmp.minY + pbo);
+  var svg = document.createElementNS(xmlns, 'svg');
+  svg.setAttributeNS(null, 'width', tmp.width * s * sx);
+  svg.setAttributeNS(null, 'height', tmp.height * s * sy);
+  var g = document.createElementNS(xmlns, 'g');
+  g.setAttributeNS(null, 'transform', 'scale(' + s * sx + ' ' + s * sy + ')');
+  var path = document.createElementNS(xmlns, 'path');
+  path.setAttributeNS(null, 'd', tmp.d);
+  path.setAttributeNS(null, 'fill', c);
+  g.appendChild(path);
+  svg.appendChild(g);
   return svg;
+};
+var createClipPath = function(dia, scale) {
+  if (dia.clip) {
+    // if (dia.clip.commands !== null) {
+    //   var id = 'ASS-' + generateUUID();
+    //   dia.clipPath = document.createElementNS(xmlns, 'clipPath');
+    //   dia.clipPath.setAttributeNS(null, 'id', id);
+    //   var tmp = parseDrawingCommands(dia.clip.commands, false);
+    //   var path = document.createElementNS(xmlns, 'path');
+    //   path.setAttributeNS(null, 'd', tmp.d);
+    //   dia.clipPath.appendChild(path);
+    //   clipPathDefs.appendChild(dia.clipPath);
+    // }
+    if (dia.clip.dots !== null) {
+      var d = dia.clip.dots,
+          l = d[0] * scale - dia.x,
+          t = d[1] * scale - dia.y,
+          r = dia.x + dia.width - d[2] * scale,
+          b = dia.y + dia.height - d[3] * scale;
+      var cp = 'clip-path:inset(' + [t, r, b, l].join('px ') + 'px);';
+      return '-webkit-' + cp + cp;
+    }
+  }
+  return '';
 };
 var createShadow = function(t, scale) {
   var ts = '',
@@ -940,6 +988,13 @@ var createTransform = function(t) {
   str += ' skew(' + t.fax + 'rad, ' + t.fay + 'rad)';
   return str;
 };
+var generateUUID = function() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0,
+        v = (c == 'x' ? r : (r & 0x3 | 0x8));
+    return v.toString(16);
+  });
+};
 var toRGBA = function(c) {
   var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/),
       a = (1 - ('0x' + t[1]) / 255).toFixed(1),
@@ -1011,7 +1066,8 @@ var setTagsStyle = function(dia) {
       if (!parts[j]) continue;
       var cn = document.createElement('span');
       cn.dataset.hasRotate = dia.hasRotate;
-      cn.innerHTML = t.p ? createSVG(ct, dia, this.scale) : parts[j];
+      if (t.p) cn.appendChild(createSVG(ct, dia, this.scale));
+      else cn.innerHTML = parts[j];
       cn.style.cssText = cssText;
       df.appendChild(cn);
     }
@@ -1046,6 +1102,7 @@ var setDialogueStyle = function(dia) {
     }
   }
   cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
+  cssText += createClipPath(dia, this.scale);
   dia.node.style.cssText = cssText;
 };
 var setTransformOrigin = function(dia) {
