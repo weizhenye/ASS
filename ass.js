@@ -34,10 +34,11 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResX = this.video.videoWidth;
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
+  clipPathElement.setAttributeNS(null, 'viewBox', [0, 0, this.tree.ScriptInfo.PlayResX, this.tree.ScriptInfo.PlayResY].join(' '));
 
   var styleNode = document.getElementById('ASS-style');
   if (!styleNode) {
-    var CSSstr = '.ASS-container{position:relative;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+    var CSSstr = '.ASS-container{position:relative;}.ASS-fix-font-size{position:absolute;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
     styleNode = document.createElement('style');
     styleNode.type = 'text/css';
     styleNode.id = 'ASS-style';
@@ -64,6 +65,7 @@ ASS.prototype.resize = function() {
   this.height = h;
   this.container.style.cssText = 'width:' + w + 'px;height:' + h + 'px;';
   this.stage.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
+  clipPathElement.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
   this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
   createAnimation.call(this);
   this._seek();
@@ -94,9 +96,8 @@ ASS.prototype._pause = function() {
 ASS.prototype._seek = function() {
   var ct = this.video.currentTime,
       dias = this.tree.Events.Dialogue;
-  while (this.stage.lastChild) {
-    this.stage.removeChild(this.stage.lastChild);
-  }
+  while (this.stage.lastChild) this.stage.removeChild(this.stage.lastChild);
+  while (clipPathDefs.lastChild) clipPathDefs.removeChild(clipPathDefs.lastChild);
   this.runline = [];
   channel = [];
   this.position = (function() {
@@ -124,6 +125,7 @@ ASS.prototype._launch = function() {
     }
     if (end < ct) {
       this.stage.removeChild(dia.node);
+      clipPathDefs.removeChild(dia.clipPath);
       this.runline.splice(i, 1);
     }
   }
@@ -160,8 +162,6 @@ ASS.prototype._render = function(data) {
     org: pt.org,
     clip: pt.clip,
     channel: 0,
-    minX: 0,
-    minY: 0,
     t: false,
   };
   dia.node.className = 'ASS-dialogue';
@@ -172,35 +172,35 @@ ASS.prototype._render = function(data) {
   dia.height = bcr.height;
   if (dia.Effect) {
     if (dia.Effect.name === 'banner') {
-      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
-      if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
-      if (dia.Effect.lefttoright) dia.x = -dia.width + dia.minX;
-      else dia.x = this.width + dia.minX;
+      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2;
+      if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      if (dia.Effect.lefttoright) dia.x = -dia.width;
+      else dia.x = this.width;
     }
     if (/^scroll/.test(dia.Effect.name)) {
       dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
-      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width + dia.minX;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
     }
   } else {
     if (dia.pos) {
-      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x + dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = this.scale * dia.pos.x - dia.width / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width + dia.minX;
-      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height + dia.minY;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = this.scale * dia.pos.y - dia.height / 2 + dia.minY;
-      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y + dia.minY;
+      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
+      if (dia.Alignment % 3 === 2) dia.x = this.scale * dia.pos.x - dia.width / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
+      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = this.scale * dia.pos.y - dia.height / 2;
+      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
     } else {
-      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR - dia.minX;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR/* - dia.minX*/;
       if (dia.t) {
         if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
-        if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
-        if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
-      } else dia.y = this._getChannel(dia) + dia.minY;
+        if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2;
+        if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      } else dia.y = this._getChannel(dia);
     }
   }
   setDialogueStyle.call(this, dia);
@@ -287,13 +287,11 @@ animationStyleNode.className = 'ASS-animation';
 document.head.appendChild(animationStyleNode);
 var realFontSizeCache = {};
 var fontSizeElement = document.createElement('div');
-fontSizeElement.className = 'ASS-font-size-element';
+fontSizeElement.className = 'ASS-fix-font-size';
 fontSizeElement.textContent = 'M';
 var xmlns = 'http://www.w3.org/2000/svg';
 var clipPathElement = document.createElementNS(xmlns, 'svg');
 clipPathElement.setAttributeNS(null, 'class', 'ASS-clip-path');
-clipPathElement.setAttributeNS(null, 'width', 0);
-clipPathElement.setAttributeNS(null, 'height', 0);
 var clipPathDefs = document.createElementNS(xmlns, 'defs');
 clipPathElement.appendChild(clipPathDefs);
 var parseASS = function(data) {
@@ -550,9 +548,8 @@ var parseAnimatableTags = function(cmd) {
     while (tmp[2].length < 6) tmp[2] = '0' + tmp[2];
     this.tags['c' + tmp[1]] = tmp[2];
   }
-  if (/^\d?a&H[0-9a-f]+/i.test(cmd)) {
-    tmp = cmd.match(/^(\d?)a&H(\w\w)/);
-    if (!tmp[1]) tmp[1] = '1';
+  if (/^\da&?H?[0-9a-f]+/i.test(cmd)) {
+    tmp = cmd.match(/^(\d)a&?H?(\w\w)/);
     this.tags['a' + tmp[1]] = tmp[2];
   }
   if (/^alpha&?H?[0-9a-f]+/i.test(cmd)) {
@@ -579,7 +576,7 @@ var parseAnimatableTags = function(cmd) {
     }
   }
 };
-var parseDrawingCommands = function(text, isOffset) {
+var parseDrawingCommands = function(text) {
   text = text.replace(/([mnlbspc])/gi, ' $1 ')
              .replace(/^\s*|\s*$/g, '')
              .replace(/\s+/g, ' ')
@@ -631,12 +628,6 @@ var parseDrawingCommands = function(text, isOffset) {
       if (/C|S/.test(this.type) && this.points.length < 3) return false;
       return true;
     };
-    this.offset = function(x, y) {
-      for (var i = this.points.length - 1; i >= 0; i--) {
-        this.points[i].x += x;
-        this.points[i].y += y;
-      }
-    };
     this.toString = function() {
       if (this.type === '_S') return s2b(this.points);
       return this.type + this.points.join();
@@ -683,15 +674,12 @@ var parseDrawingCommands = function(text, isOffset) {
   for (var len = commands.length, i = 0; i < len; i++) {
     prevCommand = commands[Math.max(i - 1, 0)];
     nextCommand = commands[Math.min(i + 1, len - 1)];
-    isOffset && commands[i].offset(-minX, -minY);
     arr.push(commands[i].toString());
   }
   return {
     d: arr.join('') + 'Z',
     width: maxX - minX,
     height: maxY - minY,
-    maxX: maxX,
-    maxY: maxY,
     minX: minX,
     minY: minY,
   };
@@ -871,49 +859,47 @@ var createAnimation = function() {
   }
   animationStyleNode.innerHTML = cssText;
 };
-var createSVG = function(ct, dia, scale) {
+var createSVG = function(cn, ct, dia, scale) {
   var t = ct.tags,
-      sx = t.fscx ? t.fscx / 100 : 1,
-      sy = t.fscy ? t.fscy / 100 : 1,
-      c = toRGBA(t.a1 + t.c1),
       s = scale / (1 << (t.p - 1)),
-      tmp = parseDrawingCommands(ct.text, true),
-      pbo = t.pbo ? Math.max(t.pbo - tmp.maxY + tmp.minY, 0) : 0;
-  dia.minX = sx * s * tmp.minX;
-  dia.minY = sy * s * (tmp.minY + pbo);
+      sx = (t.fscx ? t.fscx / 100 : 1) * s,
+      sy = (t.fscy ? t.fscy / 100 : 1) * s,
+      pdc = parseDrawingCommands(ct.text);
   var svg = document.createElementNS(xmlns, 'svg');
-  svg.setAttributeNS(null, 'width', tmp.width * s * sx);
-  svg.setAttributeNS(null, 'height', tmp.height * s * sy);
-  var g = document.createElementNS(xmlns, 'g');
-  g.setAttributeNS(null, 'transform', 'scale(' + s * sx + ' ' + s * sy + ')');
+  svg.setAttributeNS(null, 'width', pdc.width * sx);
+  svg.setAttributeNS(null, 'height', pdc.height * sy);
+  svg.setAttributeNS(null, 'viewBox', [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '));
   var path = document.createElementNS(xmlns, 'path');
-  path.setAttributeNS(null, 'd', tmp.d);
-  path.setAttributeNS(null, 'fill', c);
-  g.appendChild(path);
-  svg.appendChild(g);
+  path.setAttributeNS(null, 'd', pdc.d);
+  path.setAttributeNS(null, 'fill', toRGBA(t.a1 + t.c1));
+  svg.appendChild(path);
+  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;';
+  svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
   return svg;
 };
 var createClipPath = function(dia, scale) {
   if (dia.clip) {
-    // if (dia.clip.commands !== null) {
-    //   var id = 'ASS-' + generateUUID();
-    //   dia.clipPath = document.createElementNS(xmlns, 'clipPath');
-    //   dia.clipPath.setAttributeNS(null, 'id', id);
-    //   var tmp = parseDrawingCommands(dia.clip.commands, false);
-    //   var path = document.createElementNS(xmlns, 'path');
-    //   path.setAttributeNS(null, 'd', tmp.d);
-    //   dia.clipPath.appendChild(path);
-    //   clipPathDefs.appendChild(dia.clipPath);
-    // }
+    var cp = 'clip-path:';
+    if (dia.clip.commands !== null) {
+      var id = 'ASS-' + generateUUID();
+      dia.clipPath = document.createElementNS(xmlns, 'clipPath');
+      dia.clipPath.setAttributeNS(null, 'id', id);
+      var pdc = parseDrawingCommands(dia.clip.commands);
+      var path = document.createElementNS(xmlns, 'path');
+      path.setAttributeNS(null, 'd', pdc.d);
+      dia.clipPath.appendChild(path);
+      clipPathDefs.appendChild(dia.clipPath);
+      cp += 'url(#' + id + ');';
+    }
     if (dia.clip.dots !== null) {
       var d = dia.clip.dots,
           l = d[0] * scale - dia.x,
           t = d[1] * scale - dia.y,
           r = dia.x + dia.width - d[2] * scale,
           b = dia.y + dia.height - d[3] * scale;
-      var cp = 'clip-path:inset(' + [t, r, b, l].join('px ') + 'px);';
-      return '-webkit-' + cp + cp;
+      cp += 'inset(' + [t, r, b, l].join('px ') + 'px);';
     }
+    return '-webkit-' + cp + cp;
   }
   return '';
 };
@@ -1066,9 +1052,11 @@ var setTagsStyle = function(dia) {
       if (!parts[j]) continue;
       var cn = document.createElement('span');
       cn.dataset.hasRotate = dia.hasRotate;
-      if (t.p) cn.appendChild(createSVG(ct, dia, this.scale));
-      else cn.innerHTML = parts[j];
-      cn.style.cssText = cssText;
+      if (t.p) {
+        cn.appendChild(createSVG(cn, ct, dia, this.scale));
+        if (t.pbo) cssText += 'vertical-align:' + (-t.pbo) + 'px;';
+      } else cn.innerHTML = parts[j];
+      cn.style.cssText += cssText;
       df.appendChild(cn);
     }
   }
