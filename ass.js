@@ -195,9 +195,9 @@ ASS.prototype._render = function(data) {
     } else {
       if (dia.Alignment % 3 === 1) dia.x = 0;
       if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR/* - dia.minX*/;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR;
       if (dia.t) {
-        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
+        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
         if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2;
         if (dia.Alignment >= 7) dia.y = dia.MarginV;
       } else dia.y = this._getChannel(dia);

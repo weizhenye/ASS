@@ -46,25 +46,25 @@ Items with <del>strikethrough</del> means they won't be supported.
 
 #### [Script Info]
 
-* <del>Synch Point</del>
-* <del>PlayDepth</del>
+* ~~Synch Point~~
+* ~~PlayDepth~~
 * __WrapStyle__: 0, 3
 * __Collisions__: Reverse
 
 
 #### [V4+ Styles]
 
-There is no outline for text in CSS, text-stroke is webkit only and has poor performance, so I use text-shadow to replace outline.
+There is no outline for text in CSS, `text-stroke` is webkit only and has poor performance, so I use `text-shadow` to replace outline.
 
 #### [Events]
 
-* <del>Picture</del>
-* <del>Sound</del>
-* <del>Movie</del>
-* <del>Command</del>
+* ~~Picture~~
+* ~~Sound~~
+* ~~Movie~~
+* ~~Command~~
 * __Dialogue__
 	+ __Effect__
-		- <del>Karaoke</del>: as an effect type is obsolete
+		- ~~Karaoke~~: as an effect type is obsolete
 		- __Scroll up__: fadeawayheight
 		- __Scroll down__: fadeawayheight
 		- __Banner__: fadeawaywidth
@@ -73,17 +73,18 @@ There is no outline for text in CSS, text-stroke is webkit only and has poor per
 		- __\k, \kf, \ko, \kt, \K__: Karaoke
 		- __\q__ WrapStyle: 0, 3
 		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \\[i]clip
-		- __\\[i]clip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
-		- __\\[i]clip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
+		- __\\iclip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
+		- __\\iclip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
 
-#### <del>[Fonts]</del>
-#### <del>[Graphics]</del>
+#### ~~[Fonts]~~
+#### ~~[Graphics]~~
 
 ## Known issues
 
 * `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
+* For I'm using the `clip-path` CSS property to implement `\clip`, [IE and Edge are not supported yet](http://caniuse.com/#feat=css-clip-path).
 
 ## License
 
