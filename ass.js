@@ -559,12 +559,11 @@ var parseAnimatableTags = function(cmd) {
     tmp = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
     this.tags.clip = {
       inverse: /iclip/.test(cmd),
-      scale: null,
+      scale: 1,
       commands: null,
       dots: null,
     };
     if (tmp.length === 1) {
-      this.tags.clip.scale = 1;
       this.tags.clip.commands = tmp[0];
     }
     if (tmp.length === 2) {
@@ -877,28 +876,32 @@ var createSVG = function(cn, ct, dia, scale) {
   svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
   return svg;
 };
-var createClipPath = function(dia, scale) {
+var createClipPath = function(dia) {
   if (dia.clip) {
-    var cp = 'clip-path:';
-    if (dia.clip.commands !== null) {
-      var id = 'ASS-' + generateUUID();
-      dia.clipPath = document.createElementNS(xmlns, 'clipPath');
-      dia.clipPath.setAttributeNS(null, 'id', id);
-      var pdc = parseDrawingCommands(dia.clip.commands);
-      var path = document.createElementNS(xmlns, 'path');
-      path.setAttributeNS(null, 'd', pdc.d);
-      dia.clipPath.appendChild(path);
-      clipPathDefs.appendChild(dia.clipPath);
-      cp += 'url(#' + id + ');';
-    }
+    var d = '',
+        id = 'ASS-' + generateUUID(),
+        s = 1 / (1 << (dia.clip.scale - 1));
     if (dia.clip.dots !== null) {
-      var d = dia.clip.dots,
-          l = d[0] * scale - dia.x,
-          t = d[1] * scale - dia.y,
-          r = dia.x + dia.width - d[2] * scale,
-          b = dia.y + dia.height - d[3] * scale;
-      cp += 'inset(' + [t, r, b, l].join('px ') + 'px);';
+      var p = dia.clip.dots;
+      d = 'M' + [p[0], p[1]].join() + 'L' + [p[0], p[3], p[2], p[3], p[2], p[1]].join() + 'Z';
     }
+    if (dia.clip.commands !== null) {
+      d = parseDrawingCommands(dia.clip.commands).d;
+    }
+    if (dia.clip.inverse) {
+      var x = this.tree.ScriptInfo.PlayResX / s,
+          y = this.tree.ScriptInfo.PlayResY / s;
+      d += 'M0,0L' + [0, y, x, y, x, 0, 0, 0].join() + 'Z';
+    }
+    dia.clipPath = document.createElementNS(xmlns, 'clipPath');
+    dia.clipPath.setAttributeNS(null, 'id', id);
+    var path = document.createElementNS(xmlns, 'path');
+    path.setAttributeNS(null, 'd', d);
+    path.setAttributeNS(null, 'transform', 'scale(' + s + ')');
+    path.setAttributeNS(null, 'clip-rule', 'evenodd');
+    dia.clipPath.appendChild(path);
+    clipPathDefs.appendChild(dia.clipPath);
+    var cp = 'clip-path:url(#' + id + ');';
     return '-webkit-' + cp + cp;
   }
   return '';
@@ -1090,7 +1093,7 @@ var setDialogueStyle = function(dia) {
     }
   }
   cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
-  cssText += createClipPath(dia, this.scale);
+  cssText += createClipPath.call(this, dia);
   dia.node.style.cssText = cssText;
 };
 var setTransformOrigin = function(dia) {

@@ -73,8 +73,6 @@ There is no outline for text in CSS, `text-stroke` is webkit only and has poor p
 		- __\k, \kf, \ko, \kt, \K__: Karaoke
 		- __\q__ WrapStyle: 0, 3
 		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \\[i]clip
-		- __\\iclip(&lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;)__
-		- __\\iclip([&lt;scale&gt;, ]&lt;drawing commands&gt;)__
 
 #### ~~[Fonts]~~
 #### ~~[Graphics]~~
