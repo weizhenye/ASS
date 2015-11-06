@@ -9,6 +9,7 @@ function ASS() {
   this.container = document.createElement('div');
   this.container.className = 'ASS-container';
   this.container.appendChild(fontSizeElement);
+  this.container.appendChild(clipPathElement);
   this.stage = document.createElement('div');
   this.stage.className = 'ASS-stage ASS-animation-paused';
 }
@@ -17,8 +18,6 @@ ASS.prototype.init = function(data, video) {
   if (video && !this.video) {
     var isPlaying = !video.paused;
     this.video = video;
-    // this.container.style.position = this.video.style.position;
-    // this.video.style.position = 'absolute';
     this.video.parentNode.insertBefore(this.container, this.video);
     this.container.appendChild(this.video);
     this.container.appendChild(this.stage);
@@ -35,17 +34,17 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResX = this.video.videoWidth;
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
+  clipPathElement.setAttributeNS(null, 'viewBox', [0, 0, this.tree.ScriptInfo.PlayResX, this.tree.ScriptInfo.PlayResY].join(' '));
 
-  var CSSstr = '.ASS-container{position:relative;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
-  var styleNode = document.createElement('style');
-  styleNode.type = 'text/css';
-  styleNode.id = 'ASS-style';
-  styleNode.appendChild(document.createTextNode(CSSstr));
-  document.head.appendChild(styleNode);
-  styleNode = document.createElement('style');
-  styleNode.type = 'text/css';
-  styleNode.id = 'ASS-animation';
-  document.head.appendChild(styleNode);
+  var styleNode = document.getElementById('ASS-style');
+  if (!styleNode) {
+    var CSSstr = '.ASS-container{position:relative;}.ASS-fix-font-size{position:absolute;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+    styleNode = document.createElement('style');
+    styleNode.type = 'text/css';
+    styleNode.id = 'ASS-style';
+    styleNode.appendChild(document.createTextNode(CSSstr));
+    document.head.appendChild(styleNode);
+  }
 
   this.resize();
   return this;
@@ -66,8 +65,8 @@ ASS.prototype.resize = function() {
   this.height = h;
   this.container.style.cssText = 'width:' + w + 'px;height:' + h + 'px;';
   this.stage.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
+  clipPathElement.style.cssText = 'width:' + w + 'px;height:' + h + 'px;top:' + t + 'px;left:' + l + 'px;';
   this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX, h / this.tree.ScriptInfo.PlayResY);
-  // this._createAnimation();
   createAnimation.call(this);
   this._seek();
   return this;
@@ -97,9 +96,8 @@ ASS.prototype._pause = function() {
 ASS.prototype._seek = function() {
   var ct = this.video.currentTime,
       dias = this.tree.Events.Dialogue;
-  while (this.stage.lastChild) {
-    this.stage.removeChild(this.stage.lastChild);
-  }
+  while (this.stage.lastChild) this.stage.removeChild(this.stage.lastChild);
+  while (clipPathDefs.lastChild) clipPathDefs.removeChild(clipPathDefs.lastChild);
   this.runline = [];
   channel = [];
   this.position = (function() {
@@ -126,8 +124,8 @@ ASS.prototype._launch = function() {
       end = Math.min(end, dia.Start + (dia.Effect.y2 - dia.Effect.y1) / (1000 / dia.Effect.delay));
     }
     if (end < ct) {
-      if (!dia.pos && !dia.Effect && !dia.t) this._freeChannel(dia);
       this.stage.removeChild(dia.node);
+      clipPathDefs.removeChild(dia.clipPath);
       this.runline.splice(i, 1);
     }
   }
@@ -156,14 +154,14 @@ ASS.prototype._render = function(data) {
     Effect: data.Effect,
     parsedText: data.parsedText,
     _index: data._index,
+    animationName: data.animationName,
     move: pt.move,
     fad: pt.fad,
     fade: pt.fade,
     pos: pt.pos || (pt.move ? {x: 0, y: 0} : null),
     org: pt.org,
+    clip: pt.clip,
     channel: 0,
-    minX: 0,
-    minY: 0,
     t: false,
   };
   dia.node.className = 'ASS-dialogue';
@@ -174,35 +172,35 @@ ASS.prototype._render = function(data) {
   dia.height = bcr.height;
   if (dia.Effect) {
     if (dia.Effect.name === 'banner') {
-      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
-      if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
-      if (dia.Effect.lefttoright) dia.x = -dia.width + dia.minX;
-      else dia.x = this.width + dia.minX;
+      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2;
+      if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      if (dia.Effect.lefttoright) dia.x = -dia.width;
+      else dia.x = this.width;
     }
     if (/^scroll/.test(dia.Effect.name)) {
-      dia.y = /up/.test(dia.Effect.name) ? -dia.height : this.height;
-      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width + dia.minX;
+      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
     }
   } else {
     if (dia.pos) {
-      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x + dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = this.scale * dia.pos.x - dia.width / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width + dia.minX;
-      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height + dia.minY;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = this.scale * dia.pos.y - dia.height / 2 + dia.minY;
-      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y + dia.minY;
+      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
+      if (dia.Alignment % 3 === 2) dia.x = this.scale * dia.pos.x - dia.width / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
+      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = this.scale * dia.pos.y - dia.height / 2;
+      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
     } else {
-      if (dia.Alignment % 3 === 1) dia.x = dia.minX;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2 + dia.minX;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR - dia.minX;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width - this.scale * dia.MarginR;
       if (dia.t) {
-        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV + dia.minY;
-        if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2 + dia.minY;
-        if (dia.Alignment >= 7) dia.y = dia.MarginV + dia.minY;
-      } else dia.y = this._getChannel(dia) + dia.minY;
+        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+        if (dia.Alignment >= 4 && dia.Alignment <= 6) dia.y = (this.height - dia.height) / 2;
+        if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      } else dia.y = this._getChannel(dia);
     }
   }
   setDialogueStyle.call(this, dia);
@@ -217,83 +215,61 @@ ASS.prototype._getChannel = function(dia) {
       W = dia.width,
       H = dia.height,
       V = Math.floor(this.scale * dia.MarginV),
+      vct = this.video.currentTime,
       count = 0;
   channel[L] = channel[L] || {
     left: new Uint16Array(SH + 1),
-    middle: new Uint16Array(SH + 1),
+    center: new Uint16Array(SH + 1),
     right: new Uint16Array(SH + 1),
+    leftEnd: new Uint32Array(SH + 1),
+    centerEnd: new Uint32Array(SH + 1),
+    rightEnd: new Uint32Array(SH + 1),
   };
-  var judge = function(x) {
+  var align = ['right', 'left', 'center'][dia.Alignment % 3];
+  var willCollide = function(x) {
     var l = channel[L].left[x],
-        m = channel[L].middle[x],
-        r = channel[L].right[x];
-    if ((l + m + r > 0) &&
-        ( (dia.Alignment % 3 === 1 && (l || (m && W + m / 2 > SW / 2) || (W + r > SW))) ||
-          (dia.Alignment % 3 === 2 && ((2 * l + W > SW) || m || (2 * r + W > SW))) ||
-          (dia.Alignment % 3 === 0 && ((l + W > SW) || (m && W + m / 2 > SW / 2) || r))
-        )) {
-      count = 0;
-    } else ++count;
+        c = channel[L].center[x],
+        r = channel[L].right[x],
+        le = channel[L].leftEnd[x] / 100,
+        ce = channel[L].centerEnd[x] / 100,
+        re = channel[L].rightEnd[x] / 100;
+    if (align === 'left') {
+      if ((le > vct && l) ||
+          (ce > vct && c && 2 * W + c > SW) ||
+          (re > vct && r && W + r > SW)) return true;
+    }
+    if (align === 'center') {
+      if ((le > vct && l && 2 * l + W > SW) ||
+          (ce > vct && c) ||
+          (re > vct && r && 2 * r + W > SW)) return true;
+    }
+    if (align === 'right') {
+      if ((le > vct && l && l + W > SW) ||
+          (ce > vct && c && 2 * W + c > SW) ||
+          (re > vct && r)) return true;
+    }
+    return false;
+  };
+  var found = function(x) {
+    if (willCollide(x)) count = 0;
+    else count++;
     if (count >= H) {
       dia.channel = x;
       return true;
     } else return false;
   };
   if (dia.Alignment <= 3) {
-    for (var i = SH - V - 1; i > V; --i) {
-      if (judge(i)) break;
-    }
+    for (var i = SH - V - 1; i > V; i--) if (found(i)) break;
   } else if (dia.Alignment >= 7) {
-    for (var i = V + 1; i < SH - V; ++i) {
-      if (judge(i)) break;
-    }
-  } else {
-    for (var i = (SH - H) >> 1; i < SH - V; ++i) {
-      if (judge(i)) break;
-    }
-  }
+    for (var i = V + 1; i < SH - V; i++) if (found(i)) break;
+  } else for (var i = (SH - H) >> 1; i < SH - V; i++) if (found(i)) break;
   if (dia.Alignment > 3) dia.channel -= H - 1;
-  for (var i = dia.channel; i < dia.channel + H; ++i) {
-    if (dia.Alignment % 3 === 1) {
-      channel[L].left[i] = W;
-    } else if (dia.Alignment % 3 === 2) {
-      channel[L].middle[i] = W;
-    } else {
-      channel[L].right[i] = W;
-    }
+  for (var i = dia.channel; i < dia.channel + H; i++) {
+    channel[L][align][i] = W;
+    channel[L][align + 'End'][i] = dia.End * 100;
   }
   return dia.channel;
 };
-ASS.prototype._freeChannel = function(dia) {
-  for (var i = dia.channel + dia.height; i >= dia.channel; i--) {
-    if (dia.Alignment % 3 === 1) channel[dia.Layer].left[i] = 0;
-    else if (dia.Alignment % 3 === 2) channel[dia.Layer].middle[i] = 0;
-    else channel[dia.Layer].right[i] = 0;
-  }
-};
-function KeyFrames(name) {
-  this.obj = {};
-  this.set = function(percentage, property, value) {
-    if (!this.obj[percentage]) this.obj[percentage] = {};
-    this.obj[percentage][property] = value;
-  };
-  this.toString = function() {
-    if (JSON.stringify(this.obj) === '{}') return '';
-    var str = 'keyframes ' + name + '{';
-    for (var percentage in this.obj) {
-      str += percentage + '{';
-      for (var property in this.obj[percentage]) {
-        if (property === 'transform') {
-          str += '-webkit-transform:' + this.obj[percentage][property] + ';';
-        }
-        str += property + ':' + this.obj[percentage][property] + ';';
-      }
-      str += '}';
-    }
-    str += '}\n';
-    return '@' + str + '@-webkit-' + str;
-  };
-}
 var RAF = window.requestAnimationFrame ||
           window.mozRequestAnimationFrame ||
           window.webkitRequestAnimationFrame ||
@@ -305,11 +281,19 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var baseTags = {};
 var channel = [];
+var animationStyleNode = document.createElement('style');
+animationStyleNode.type = 'text/css';
+animationStyleNode.className = 'ASS-animation';
+document.head.appendChild(animationStyleNode);
 var realFontSizeCache = {};
 var fontSizeElement = document.createElement('div');
-fontSizeElement.className = 'ASS-font-size-element';
+fontSizeElement.className = 'ASS-fix-font-size';
 fontSizeElement.textContent = 'M';
-var PERSPECTIVE_NUM = 314; // TODO: I don't know why it's 314, it just performances well.
+var xmlns = 'http://www.w3.org/2000/svg';
+var clipPathElement = document.createElementNS(xmlns, 'svg');
+clipPathElement.setAttributeNS(null, 'class', 'ASS-clip-path');
+var clipPathDefs = document.createElementNS(xmlns, 'defs');
+clipPathElement.appendChild(clipPathDefs);
 var parseASS = function(data) {
   data = data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var lines = data.split('\n'),
@@ -399,14 +383,16 @@ var parseTime = function(time, timer) {
 var parseEffect = function(str, resY) {
   if (!str) return null;
   var tmp = str.toLowerCase().split(';'),
-      eff = {};
+      eff = null;
   if (tmp[0] === 'banner') {
+    eff = {};
     eff.name = tmp[0];
     eff.delay = tmp[1] * 1 || 1;
     eff.lefttoright = tmp[2] * 1 || 0;
     eff.fadeawaywidth = tmp[3] * 1 || 0;
   }
   if (/^scroll\s/.test(tmp[0])) {
+    eff = {};
     eff.name = tmp[0];
     eff.y1 = Math.min(tmp[1] * 1, tmp[2] * 1);
     eff.y2 = Math.max(tmp[1] * 1, tmp[2] * 1) || resY;
@@ -441,6 +427,7 @@ var parseTags = function(dialogue) {
     for (var j = 0; j < cmd.length; ++j) {
       var tmp;
       parseAnimatableTags.call(ct, cmd[j]);
+      if (ct.tags.clip) dia.clip = ct.tags.clip;
       if (/^b\d/.test(cmd[j])) ct.tags.b = cmd[j].match(/^b(\d+)/)[1] * 1;
       if (/^i\d/.test(cmd[j])) ct.tags.i = cmd[j][1] * 1;
       if (/^u\d/.test(cmd[j])) ct.tags.u = cmd[j][1] * 1;
@@ -555,32 +542,40 @@ var parseAnimatableTags = function(cmd) {
   if (/^shad/.test(cmd)) this.tags.xshad = this.tags.yshad = cmd.match(/^shad(.*)/)[1] * 1;
   if (/^xshad/.test(cmd)) this.tags.xshad = cmd.match(/^xshad(.*)/)[1] * 1;
   if (/^yshad/.test(cmd)) this.tags.yshad = cmd.match(/^yshad(.*)/)[1] * 1;
-  if (/^\d?c&H/.test(cmd)) {
-    tmp = cmd.match(/^(\d?)c&H(\w+)/);
+  if (/^\d?c&?H?[0-9a-f]+/i.test(cmd)) {
+    tmp = cmd.match(/^(\d?)c&?H?(\w+)/);
     if (!tmp[1]) tmp[1] = '1';
     while (tmp[2].length < 6) tmp[2] = '0' + tmp[2];
     this.tags['c' + tmp[1]] = tmp[2];
   }
-  if (/^\d?a&H/.test(cmd)) {
-    tmp = cmd.match(/^(\d?)a&H(\w\w)/);
-    if (!tmp[1]) tmp[1] = '1';
+  if (/^\da&?H?[0-9a-f]+/i.test(cmd)) {
+    tmp = cmd.match(/^(\d)a&?H?(\w\w)/);
     this.tags['a' + tmp[1]] = tmp[2];
   }
-  if (/^alpha&H/.test(cmd)) {
-    for (var i = 1; i <= 4; i++) this.tags['a' + i] = cmd.match(/^alpha&H(\w\w)/)[1];
+  if (/^alpha&?H?[0-9a-f]+/i.test(cmd)) {
+    for (var i = 1; i <= 4; i++) this.tags['a' + i] = cmd.match(/^alpha&?H?(\w\w)/)[1];
   }
-  if (/^i?clip/.test(cmd)) { // TODO
-    var tn = cmd.match(/^(i?clip)/)[1];
+  if (/^i?clip/.test(cmd)) {
     tmp = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
-    if (tmp.length === 1) this.tags[tn] = {scale: 1, command: tmp[0]};
-    if (tmp.length === 2) this.tags[tn] = {scale: tmp[0] * 1, command: tmp[1]};
+    this.tags.clip = {
+      inverse: /iclip/.test(cmd),
+      scale: 1,
+      commands: null,
+      dots: null,
+    };
+    if (tmp.length === 1) {
+      this.tags.clip.commands = tmp[0];
+    }
+    if (tmp.length === 2) {
+      this.tags.clip.scale = tmp[0] * 1;
+      this.tags.clip.commands = tmp[1];
+    }
     if (tmp.length === 4) {
-      for (var i = tmp.length - 1; i >= 0; i--) tmp[i] *= 1;
-      this.tags[tn] = tmp;
+      this.tags.clip.dots = [tmp[0] * 1, tmp[1] * 1, tmp[2] * 1, tmp[3] * 1];
     }
   }
 };
-var parseDrawingCommands = function(t, text) {
+var parseDrawingCommands = function(text) {
   text = text.replace(/([mnlbspc])/gi, ' $1 ')
              .replace(/^\s*|\s*$/g, '')
              .replace(/\s+/g, ' ')
@@ -632,12 +627,6 @@ var parseDrawingCommands = function(t, text) {
       if (/C|S/.test(this.type) && this.points.length < 3) return false;
       return true;
     };
-    this.offset = function(x, y) {
-      for (var i = this.points.length - 1; i >= 0; i--) {
-        this.points[i].x += x;
-        this.points[i].y += y;
-      }
-    };
     this.toString = function() {
       if (this.type === '_S') return s2b(this.points);
       return this.type + this.points.join();
@@ -684,25 +673,52 @@ var parseDrawingCommands = function(t, text) {
   for (var len = commands.length, i = 0; i < len; i++) {
     prevCommand = commands[Math.max(i - 1, 0)];
     nextCommand = commands[Math.min(i + 1, len - 1)];
-    commands[i].offset(-minX, -minY);
     arr.push(commands[i].toString());
   }
   return {
     d: arr.join('') + 'Z',
-    pbo: t.pbo ? Math.max(t.pbo - maxY + minY, 0) : 0,
-    w: maxX - minX,
-    h: maxY - minY,
+    width: maxX - minX,
+    height: maxY - minY,
     minX: minX,
     minY: minY,
   };
 };
 var createAnimation = function() {
-  var kfStr = '';
+  function KeyFrames() {
+    this.obj = {};
+    this.set = function(percentage, property, value) {
+      if (!this.obj[percentage]) this.obj[percentage] = {};
+      this.obj[percentage][property] = value;
+    };
+    this.toString = function() {
+      var str = '{';
+      for (var percentage in this.obj) {
+        str += percentage + '{';
+        for (var property in this.obj[percentage]) {
+          if (property === 'transform') {
+            str += '-webkit-transform:' + this.obj[percentage][property] + ';';
+          }
+          str += property + ':' + this.obj[percentage][property] + ';';
+        }
+        str += '}';
+      }
+      str += '}\n';
+      return str;
+    };
+  }
+  var kfObj = {};
+  var getName = function(str) {
+    for (var name in kfObj) {
+      if (kfObj[name] === str) return name;
+    }
+    return null;
+  };
   for (var i = this.tree.Events.Dialogue.length - 1; i >= 0; i--) {
     var dia = this.tree.Events.Dialogue[i],
         pt = dia.parsedText,
         dur = (dia.End - dia.Start) * 1000,
-        kf = new KeyFrames('ASS-animation-' + dia._index),
+        kf = new KeyFrames(),
+        kfStr = '',
         t = [];
     if (dia.Effect && !pt.move) {
       var eff = dia.Effect;
@@ -711,7 +727,7 @@ var createAnimation = function() {
         kf.set('100.000%', 'transform', 'translateX(' + this.scale * (dur / eff.delay) * (eff.lefttoright ? 1 : -1) + 'px)');
       }
       if (/^scroll/.test(eff.name)) {
-        var updown = /up/.test(eff.name) ? 1 : -1,
+        var updown = /up/.test(eff.name) ? -1 : 1,
             tmp1 = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
             tmp2 = 'translateY(' + this.scale * eff.y2 * updown + 'px)';
         t[1] = Math.min(100, (eff.y2 - eff.y1) / (dur / eff.delay) * 100).toFixed(3) + '%';
@@ -747,10 +763,16 @@ var createAnimation = function() {
         for (var j = 0; j <= 3; j++) kf.set(t[j], 'transform', 'translate(' + this.scale * (pt.move[j < 2 ? 0 : 2] - pt.pos.x) + 'px, ' + this.scale * (pt.move[j < 2 ? 1 : 3] - pt.pos.y) + 'px)');
       }
     }
-    kfStr += kf.toString();
+    kfStr = kf.toString();
+    var name = getName(kfStr);
+    if (name === null) {
+      name = 'ASS-' + generateUUID();
+      kfObj[name] = kfStr;
+    }
+    dia.animationName = name;
 
     for (var j = pt.content.length - 1; j >= 0; j--) {
-      kf = new KeyFrames('ASS-animation-' + dia._index + '-' + j);
+      kf = new KeyFrames();
       var tags = pt.content[j].tags;
       if (tags.t) {
         for (var k = tags.t.length - 1; k >= 0; k--) {
@@ -796,7 +818,7 @@ var createAnimation = function() {
           }
           if (ttags.c3 || ttags.a3 || ttags.c3 || ttags.a4 || ttags.blur ||
               ttags.xbord || ttags.ybord || ttags.xshad || ttags.yshad) {
-            ['c3', 'a3', 'c4', 'a4'].forEach(function(e) {
+            ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur'].forEach(function(e) {
               if (!ttags[e]) ttags[e] = tags[e];
             });
             var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1,
@@ -821,22 +843,68 @@ var createAnimation = function() {
           }
         }
       }
-      kfStr += kf.toString();
+      kfStr = kf.toString();
+      var name = getName(kfStr);
+      if (name === null) {
+        name = 'ASS-' + generateUUID();
+        kfObj[name] = kfStr;
+      }
+      pt.content[j].animationName = name;
     }
   }
-  document.getElementById('ASS-animation').innerHTML = kfStr;
+  var cssText = '';
+  for (var name in kfObj) {
+    cssText += '@keyframes ' + name + kfObj[name] + '@-webkit-keyframes ' + name + kfObj[name];
+  }
+  animationStyleNode.innerHTML = cssText;
 };
-var createSVG = function(ct, dia, scale) {
+var createSVG = function(cn, ct, dia, scale) {
   var t = ct.tags,
-      sx = t.fscx ? t.fscx / 100 : 1,
-      sy = t.fscy ? t.fscy / 100 : 1,
-      c = toRGBA(t.a1 + t.c1),
       s = scale / (1 << (t.p - 1)),
-      tmp = parseDrawingCommands(t, ct.text),
-      svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + tmp.w * s * sx + '" height="' + tmp.h * s * sy + '">\n<g transform="scale(' + s * sx + ' ' + s * sy + ')">\n<path d="' + tmp.d + '" fill="' + c + '">\n</path>\n</g>\n</svg>';
-  dia.minX = sx * s * tmp.minX;
-  dia.minY = sy * s * (tmp.minY + tmp.pbo);
+      sx = (t.fscx ? t.fscx / 100 : 1) * s,
+      sy = (t.fscy ? t.fscy / 100 : 1) * s,
+      pdc = parseDrawingCommands(ct.text);
+  var svg = document.createElementNS(xmlns, 'svg');
+  svg.setAttributeNS(null, 'width', pdc.width * sx);
+  svg.setAttributeNS(null, 'height', pdc.height * sy);
+  svg.setAttributeNS(null, 'viewBox', [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '));
+  var path = document.createElementNS(xmlns, 'path');
+  path.setAttributeNS(null, 'd', pdc.d);
+  path.setAttributeNS(null, 'fill', toRGBA(t.a1 + t.c1));
+  svg.appendChild(path);
+  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;';
+  svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
   return svg;
+};
+var createClipPath = function(dia) {
+  if (dia.clip) {
+    var d = '',
+        id = 'ASS-' + generateUUID(),
+        s = 1 / (1 << (dia.clip.scale - 1));
+    if (dia.clip.dots !== null) {
+      var p = dia.clip.dots;
+      d = 'M' + [p[0], p[1]].join() + 'L' + [p[0], p[3], p[2], p[3], p[2], p[1]].join() + 'Z';
+    }
+    if (dia.clip.commands !== null) {
+      d = parseDrawingCommands(dia.clip.commands).d;
+    }
+    if (dia.clip.inverse) {
+      var x = this.tree.ScriptInfo.PlayResX / s,
+          y = this.tree.ScriptInfo.PlayResY / s;
+      d += 'M0,0L' + [0, y, x, y, x, 0, 0, 0].join() + 'Z';
+    }
+    dia.clipPath = document.createElementNS(xmlns, 'clipPath');
+    dia.clipPath.setAttributeNS(null, 'id', id);
+    var path = document.createElementNS(xmlns, 'path');
+    path.setAttributeNS(null, 'd', d);
+    path.setAttributeNS(null, 'transform', 'scale(' + s + ')');
+    path.setAttributeNS(null, 'clip-rule', 'evenodd');
+    dia.clipPath.appendChild(path);
+    clipPathDefs.appendChild(dia.clipPath);
+    var cp = 'clip-path:url(#' + id + ');';
+    return '-webkit-' + cp + cp;
+  }
+  return '';
 };
 var createShadow = function(t, scale) {
   var ts = '',
@@ -900,13 +968,21 @@ var createTransform = function(t) {
   t.frx = t.frx || 0;
   t.fry = t.fry || 0;
   t.frz = t.frz || 0;
-  var str = 'perspective(' + PERSPECTIVE_NUM + 'px)';
+  // TODO: I don't know why perspective is 314, it just performances well.
+  var str = 'perspective(314px)';
   str += ' rotateY(' + t.fry + 'deg)';
   str += ' rotateX(' + t.frx + 'deg)';
   str += ' rotateZ(' + (-t.frz) + 'deg)';
   str += ' scale(' + (t.p ? 1 : t.fscx / 100) + ', ' + (t.p ? 1 : t.fscy / 100) + ')';
   str += ' skew(' + t.fax + 'rad, ' + t.fay + 'rad)';
   return str;
+};
+var generateUUID = function() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0,
+        v = (c == 'x' ? r : (r & 0x3 | 0x8));
+    return v.toString(16);
+  });
 };
 var toRGBA = function(c) {
   var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/),
@@ -963,7 +1039,7 @@ var setTagsStyle = function(dia) {
     }
     if (t.t) {
       ['', '-webkit-'].forEach(function(v) {
-        cssText += v + 'animation-name:ASS-animation-' + dia._index + '-' + i + ';';
+        cssText += v + 'animation-name:' + ct.animationName + ';';
         cssText += v + 'animation-duration:' + (dia.End - dia.Start) + 's;';
         cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
         cssText += v + 'animation-timing-function:linear;';
@@ -979,8 +1055,11 @@ var setTagsStyle = function(dia) {
       if (!parts[j]) continue;
       var cn = document.createElement('span');
       cn.dataset.hasRotate = dia.hasRotate;
-      cn.innerHTML = t.p ? createSVG(ct, dia, this.scale) : parts[j];
-      cn.style.cssText = cssText;
+      if (t.p) {
+        cn.appendChild(createSVG(cn, ct, dia, this.scale));
+        if (t.pbo) cssText += 'vertical-align:' + (-t.pbo) + 'px;';
+      } else cn.innerHTML = parts[j];
+      cn.style.cssText += cssText;
       df.appendChild(cn);
     }
   }
@@ -992,7 +1071,7 @@ var setDialogueStyle = function(dia) {
   if (dia.Layer) cssText += 'z-index:' + dia.Layer;
   if (dia.move || dia.fad || dia.fade || dia.Effect) {
     ['', '-webkit-'].forEach(function(v) {
-      cssText += v + 'animation-name:ASS-animation-' + dia._index + ';';
+      cssText += v + 'animation-name:' + dia.animationName + ';';
       cssText += v + 'animation-duration:' + (dia.End - dia.Start) + 's;';
       cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
       cssText += v + 'animation-timing-function:linear;';
@@ -1014,6 +1093,7 @@ var setDialogueStyle = function(dia) {
     }
   }
   cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
+  cssText += createClipPath.call(this, dia);
   dia.node.style.cssText = cssText;
 };
 var setTransformOrigin = function(dia) {
