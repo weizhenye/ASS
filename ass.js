@@ -125,7 +125,7 @@ ASS.prototype._launch = function() {
     }
     if (end < ct) {
       this.stage.removeChild(dia.node);
-      clipPathDefs.removeChild(dia.clipPath);
+      if (dia.clipPath) clipPathDefs.removeChild(dia.clipPath);
       this.runline.splice(i, 1);
     }
   }
