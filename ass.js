@@ -205,6 +205,7 @@ ASS.prototype._render = function(data) {
   }
   setDialogueStyle.call(this, dia);
   setTransformOrigin(dia);
+  setClipPath.call(this, dia);
 
   return dia;
 };
@@ -575,11 +576,13 @@ var parseAnimatableTags = function(cmd) {
     }
   }
 };
-var parseDrawingCommands = function(text) {
+var parseDrawingCommands = function(text, normalizeX, normalizeY) {
   text = text.replace(/([mnlbspc])/gi, ' $1 ')
              .replace(/^\s*|\s*$/g, '')
              .replace(/\s+/g, ' ')
              .toLowerCase();
+  normalizeX = normalizeX || 1;
+  normalizeY = normalizeY || 1;
   var rawCommands = text.split(/\s(?=[mnlbspc])/),
       commands = [],
       prevCommand,
@@ -609,8 +612,8 @@ var parseDrawingCommands = function(text) {
     return path.join('');
   };
   function Point(x, y) {
-    this.x = x * 1;
-    this.y = y * 1;
+    this.x = x / normalizeX;
+    this.y = y / normalizeY;
     this.toString = function() {
       return this.x + ',' + this.y;
     };
@@ -881,20 +884,24 @@ var createClipPath = function(dia) {
     var d = '',
         id = 'ASS-' + generateUUID(),
         s = 1 / (1 << (dia.clip.scale - 1));
+    var prx = this.tree.ScriptInfo.PlayResX,
+        pry = this.tree.ScriptInfo.PlayResY;
     if (dia.clip.dots !== null) {
-      var p = dia.clip.dots;
-      d = 'M' + [p[0], p[1]].join() + 'L' + [p[0], p[3], p[2], p[3], p[2], p[1]].join() + 'Z';
+      var n = dia.clip.dots.map(function(d, i) {
+        if (i & 1) return d / pry;
+        else return d / prx;
+      });
+      d = 'M' + [n[0], n[1]].join() + 'L' + [n[0], n[3], n[2], n[3], n[2], n[1]].join() + 'Z';
     }
     if (dia.clip.commands !== null) {
-      d = parseDrawingCommands(dia.clip.commands).d;
+      d = parseDrawingCommands(dia.clip.commands, prx, pry).d;
     }
     if (dia.clip.inverse) {
-      var x = this.tree.ScriptInfo.PlayResX / s,
-          y = this.tree.ScriptInfo.PlayResY / s;
-      d += 'M0,0L' + [0, y, x, y, x, 0, 0, 0].join() + 'Z';
+      d += 'M0,0L' + [0, s, s, s, s, 0, 0, 0].join() + 'Z';
     }
     dia.clipPath = document.createElementNS(xmlns, 'clipPath');
     dia.clipPath.setAttributeNS(null, 'id', id);
+    dia.clipPath.setAttributeNS(null, 'clipPathUnits', 'objectBoundingBox');
     var path = document.createElementNS(xmlns, 'path');
     path.setAttributeNS(null, 'd', d);
     path.setAttributeNS(null, 'transform', 'scale(' + s + ')');
@@ -1092,8 +1099,8 @@ var setDialogueStyle = function(dia) {
       }
     }
   }
-  cssText += 'left:' + dia.x + 'px;top:' + dia.y + 'px;';
-  cssText += createClipPath.call(this, dia);
+  cssText += 'width:' + dia.width + 'px;height:' + dia.height + 'px;' +
+             'left:' + dia.x + 'px;top:' + dia.y + 'px;';
   dia.node.style.cssText = cssText;
 };
 var setTransformOrigin = function(dia) {
@@ -1116,6 +1123,16 @@ var setTransformOrigin = function(dia) {
       var to = 'transform-origin:' + (dia.org.x - dia.x - left) + 'px ' + (dia.org.y - dia.y - top) + 'px;';
       children[i].style.cssText += '-webkit-' + to + to;
     }
+  }
+};
+var setClipPath = function(dia) {
+  if (dia.clip) {
+    var fobb = document.createElement('div');
+    fobb.className = 'ASS-fix-objectBoundingBox';
+    fobb.style.cssText = 'width:' + this.width + 'px;height:' + this.height + 'px;' +
+                        'left:' + (-dia.x) + 'px;top:' + (-dia.y) + 'px;position:absolute;';
+    dia.node.appendChild(fobb);
+    dia.node.style.cssText += 'position:relative;' + createClipPath.call(this, dia);
   }
 };
 
