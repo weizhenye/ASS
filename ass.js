@@ -540,6 +540,8 @@ var parseAnimatableTags = function(cmd) {
   if (/^bord/.test(cmd)) this.tags.xbord = this.tags.ybord = cmd.match(/^bord(.*)/)[1] * 1;
   if (/^xbord/.test(cmd)) this.tags.xbord = cmd.match(/^xbord(.*)/)[1] * 1;
   if (/^ybord/.test(cmd)) this.tags.ybord = cmd.match(/^ybord(.*)/)[1] * 1;
+  if (this.tags.xbord < 0) this.tags.xbord = 0;
+  if (this.tags.ybord < 0) this.tags.ybord = 0;
   if (/^shad/.test(cmd)) this.tags.xshad = this.tags.yshad = cmd.match(/^shad(.*)/)[1] * 1;
   if (/^xshad/.test(cmd)) this.tags.xshad = cmd.match(/^xshad(.*)/)[1] * 1;
   if (/^yshad/.test(cmd)) this.tags.yshad = cmd.match(/^yshad(.*)/)[1] * 1;
@@ -861,23 +863,82 @@ var createAnimation = function() {
   }
   animationStyleNode.innerHTML = cssText;
 };
-var createSVG = function(cn, ct, dia, scale) {
+var createSVG = function(cn, ct, dia) {
   var t = ct.tags,
-      s = scale / (1 << (t.p - 1)),
+      s = this.scale / (1 << (t.p - 1)),
       sx = (t.fscx ? t.fscx / 100 : 1) * s,
       sy = (t.fscy ? t.fscy / 100 : 1) * s,
-      pdc = parseDrawingCommands(ct.text);
+      pdc = parseDrawingCommands(ct.text),
+      id = 'ASS-' + generateUUID();
   var svg = document.createElementNS(xmlns, 'svg');
   svg.setAttributeNS(null, 'width', pdc.width * sx);
   svg.setAttributeNS(null, 'height', pdc.height * sy);
   svg.setAttributeNS(null, 'viewBox', [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '));
+  var defs = document.createElementNS(xmlns, 'defs');
+  var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1;
+  defs.appendChild(createFilter(t, id, sbas));
   var path = document.createElementNS(xmlns, 'path');
   path.setAttributeNS(null, 'd', pdc.d);
   path.setAttributeNS(null, 'fill', toRGBA(t.a1 + t.c1));
+  svg.appendChild(defs);
   svg.appendChild(path);
-  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;';
+  var ft = 'filter:url(#' + id + ');';
+  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;-webkit-' + ft + ft;
   svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
   return svg;
+};
+var createFilter = function(t, id, s) {
+  var filter = document.createElementNS(xmlns, 'filter');
+  filter.setAttributeNS(null, 'id', id);
+  var bord = document.createElementNS(xmlns, 'feMorphology');
+  bord.setAttributeNS(null, 'radius', t.xbord * s + ' ' + t.ybord * s);
+  bord.setAttributeNS(null, 'operator', 'dilate');
+  bord.setAttributeNS(null, 'in', 'SourceGraphic');
+  bord.setAttributeNS(null, 'result', 'bord');
+  filter.appendChild(bord);
+  var c3 = document.createElementNS(xmlns, 'feFlood');
+  c3.setAttributeNS(null, 'flood-color', toRGBA(t.a3 + t.c3));
+  c3.setAttributeNS(null, 'result', 'c3');
+  filter.appendChild(c3);
+  var border = document.createElementNS(xmlns, 'feComposite');
+  border.setAttributeNS(null, 'operator', 'in');
+  border.setAttributeNS(null, 'in', 'c3');
+  border.setAttributeNS(null, 'in2', 'bord');
+  border.setAttributeNS(null, 'result', 'border');
+  filter.appendChild(border);
+  var blur = document.createElementNS(xmlns, 'feGaussianBlur');
+  blur.setAttributeNS(null, 'stdDeviation', (t.blur || 0) * s);
+  blur.setAttributeNS(null, 'in', 'SourceAlpha');
+  blur.setAttributeNS(null, 'result', 'blur');
+  filter.appendChild(blur);
+  var shad = document.createElementNS(xmlns, 'feOffset');
+  shad.setAttributeNS(null, 'dx', (t.xbord + Math.abs(t.xshad)) * (t.xshad > 0 ? s : -s));
+  shad.setAttributeNS(null, 'dy', (t.ybord + Math.abs(t.yshad)) * (t.yshad > 0 ? s : -s));
+  shad.setAttributeNS(null, 'in', 'blur');
+  shad.setAttributeNS(null, 'result', 'shad');
+  filter.appendChild(shad);
+  var c4 = document.createElementNS(xmlns, 'feFlood');
+  c4.setAttributeNS(null, 'flood-color', toRGBA(t.a4 + t.c4));
+  c4.setAttributeNS(null, 'result', 'c4');
+  filter.appendChild(c4);
+  var shadow = document.createElementNS(xmlns, 'feComposite');
+  shadow.setAttributeNS(null, 'operator', 'in');
+  shadow.setAttributeNS(null, 'in', 'c4');
+  shadow.setAttributeNS(null, 'in2', 'shad');
+  shadow.setAttributeNS(null, 'result', 'shadow');
+  filter.appendChild(shadow);
+  var merge = document.createElementNS(xmlns, 'feMerge');
+  var nodeShadow = document.createElementNS(xmlns, 'feMergeNode');
+  nodeShadow.setAttributeNS(null, 'in', 'shadow');
+  merge.appendChild(nodeShadow);
+  var nodeBorder = document.createElementNS(xmlns, 'feMergeNode');
+  nodeBorder.setAttributeNS(null, 'in', 'border');
+  merge.appendChild(nodeBorder);
+  var nodeSourceGraphic = document.createElementNS(xmlns, 'feMergeNode');
+  nodeSourceGraphic.setAttributeNS(null, 'in', 'SourceGraphic');
+  merge.appendChild(nodeSourceGraphic);
+  filter.appendChild(merge);
+  return filter;
 };
 var createClipPath = function(dia) {
   if (dia.clip) {
@@ -913,33 +974,38 @@ var createClipPath = function(dia) {
   }
   return '';
 };
-var createShadow = function(t, scale) {
-  var ts = '',
+var createShadow = function(t, s) {
+  var arr = [],
       oc = toRGBA(t.a3 + t.c3),
-      ox = (t.xbord || 0) * scale,
-      oy = (t.ybord || 0) * scale,
+      ox = t.xbord * s,
+      oy = t.ybord * s,
       sc = toRGBA(t.a4 + t.c4),
-      sx = (t.xshad || 0) * scale,
-      sy = (t.yshad || 0) * scale,
+      sx = t.xshad * s,
+      sy = t.yshad * s,
       blur = t.blur || 0;
   if (!(ox + oy + sx + sy)) return 'none';
   if (ox || oy) {
-    for (var i = -1; i <= 1; ++i)
-      for (var j = -1; j <= 1; ++j) {
-        for (var x = 1; x < ox; ++x)
-          for (var y = 1; y < oy; ++y)
-            if (i || j)
-              ts += oc + ' ' + i * x + 'px ' + j * y + 'px,';
-        ts += oc + ' ' + i * ox + 'px ' + j * oy + 'px,';
+    for (var i = -1; i <= 1; i++)
+      for (var j = -1; j <= 1; j++) {
+        for (var x = 1; x < ox; x++) {
+          for (var y = 1; y < oy; y++)
+            if (i || j) arr.push(oc + ' ' + i * x + 'px ' + j * y + 'px');
+        }
+        arr.push(oc + ' ' + i * ox + 'px ' + j * oy + 'px');
       }
   }
   if (sx || sy) {
-    for (var x = Math.max(sx - ox, ox); x <= sx + ox; x++)
-      for (var y = Math.max(sy - oy, ox); y <= sy + oy; y++)
-        ts += sc + ' ' + x + 'px ' + y + 'px ' + blur + 'px,';
-    ts += sc + ' ' + (sx + ox) + 'px ' + (sy + oy) + 'px ' + blur + 'px';
-  } else ts = ts.substr(0, ts.length - 1);
-  return ts;
+    var pnx = sx > 0 ? 1 : -1,
+        pny = sy > 0 ? 1 : -1;
+    sx = Math.abs(sx);
+    sy = Math.abs(sy);
+    for (var x = Math.max(ox, sx - ox); x < sx + ox; x++) {
+      for (var y = Math.max(oy, sy - oy); y < sy + oy; y++)
+        arr.push(sc + ' ' + x * pnx + 'px ' + y * pny + 'px ' + blur + 'px');
+    }
+    arr.push(sc + ' ' + (sx + ox) * pnx + 'px ' + (sy + oy) * pny + 'px ' + blur + 'px');
+  }
+  return arr.join();
 };
 var createBaseTags = function(s) {
   return {
@@ -1019,10 +1085,11 @@ var setTagsStyle = function(dia) {
       cssText += 'font-family:\'' + t.fn + '\',Arial;';
       cssText += 'font-size:' + this.scale * getRealFontSize(t.fs, t.fn) + 'px;';
       cssText += 'color:' + toRGBA(t.a1 + t.c1) + ';';
-      if (dia.BorderStyle === 1) cssText += 'text-shadow:' + createShadow(t, (/Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1)) + ';';
+      var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1;
+      if (dia.BorderStyle === 1) cssText += 'text-shadow:' + createShadow(t, sbas) + ';';
       if (dia.BorderStyle === 3) {
         cssText += 'background-color:' + toRGBA(t.a3 + t.c3) + ';';
-        cssText += 'box-shadow:' + createShadow(t, (/Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1)) + ';';
+        cssText += 'box-shadow:' + createShadow(t, sbas) + ';';
       }
       if (t.b === 0) cssText += 'font-weight:normal;';
       else if (t.b === 1) cssText += 'font-weight:bold;';
@@ -1063,7 +1130,7 @@ var setTagsStyle = function(dia) {
       var cn = document.createElement('span');
       cn.dataset.hasRotate = dia.hasRotate;
       if (t.p) {
-        cn.appendChild(createSVG(cn, ct, dia, this.scale));
+        cn.appendChild(createSVG.call(this, cn, ct, dia));
         if (t.pbo) cssText += 'vertical-align:' + (-t.pbo) + 'px;';
       } else cn.innerHTML = parts[j];
       cn.style.cssText += cssText;

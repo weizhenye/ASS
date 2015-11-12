@@ -69,7 +69,6 @@ There is no outline for text in CSS, `text-stroke` is webkit only and has poor p
 		- __Scroll down__: fadeawayheight
 		- __Banner__: fadeawaywidth
 	+ __Text__ (override codes)
-		- __\p__: border and shadow
 		- __\k, \kf, \ko, \kt, \K__: Karaoke
 		- __\q__ WrapStyle: 0, 3
 		- __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \\[i]clip
@@ -83,6 +82,7 @@ There is no outline for text in CSS, `text-stroke` is webkit only and has poor p
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
 * For I'm using the `clip-path` CSS property to implement `\clip`, [IE and Edge are not supported yet](http://caniuse.com/#feat=css-clip-path).
+* For I'm using the `filter` CSS property to create border and shadow for shapes, [IE and Edge are not supported yet](http://caniuse.com/#feat=css-filters).
 
 ## License
 
