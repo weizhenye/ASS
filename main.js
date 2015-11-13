@@ -36,11 +36,6 @@ dropASS.ondrop = function(e) {
 $('#drop-ASS input')[0].onchange = function() {
   loadASS(this.files[0]);
 };
-$('#init-video')[0].disabled = false;
-$('#init-ass')[0].disabled = false;
-$('#controls-resize')[0].disabled = true;
-$('#controls-show')[0].disabled = true;
-$('#controls-hide')[0].disabled = true;
 $('#init-video')[0].onclick = function() {
   this.disabled = true;
   video.src = TEST_VIDEO_FILE;

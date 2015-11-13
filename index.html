@@ -14,21 +14,21 @@
 </head>
 <body>
 <header id="site-header">
-  <div id="site-title">ASS.js</div>
-  <div id="site-subtitle">A JavaScript renderer for ASS subtitle format</div>
+  <h1 id="site-title">ASS.js</h1>
+  <h2 id="site-subtitle">A JavaScript renderer for ASS subtitle format</h2>
   <iframe src="https://ghbtns.com/github-btn.html?user=weizhenye&repo=ASS&type=star&count=true&size=large" frameborder="0" scrolling="0" width="120" height="30"></iframe>
 </header>
 <div class="wrapper">
-  <fieldset id="init">
+  <fieldset>
     <legend>Initialization</legend>
-    <button id="init-video">Load test video</button>
-    <button id="init-ass">Load test ASS</button>
+    <button id="init-video" autocomplete="off">Load test video</button>
+    <button id="init-ass" autocomplete="off">Load test ASS</button>
   </fieldset>
-  <fieldset id="controls">
+  <fieldset>
     <legend>Controls</legend>
-    <button id="controls-resize" disabled>Resize</button>
-    <button id="controls-show" disabled>Show</button>
-    <button id="controls-hide" disabled>Hide</button>
+    <button id="controls-resize" autocomplete="off" disabled>Resize</button>
+    <button id="controls-show" autocomplete="off" disabled>Show</button>
+    <button id="controls-hide" autocomplete="off" disabled>Hide</button>
   </fieldset>
 </div>
 <div id="demo" class="wrapper">
@@ -36,7 +36,7 @@
     <div class="drop-text">Select or drag a video file here</div>
     <input type="file">
   </div><div id="drop-ASS" class="drop-area">
-    <div class="drop-text">and an ASS file here</div>
+    <div class="drop-text">and ASS file here</div>
     <input type="file">
   </div>
 </div>
