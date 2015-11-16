@@ -869,73 +869,105 @@ var createSVG = function(cn, ct, dia) {
       sx = (t.fscx ? t.fscx / 100 : 1) * s,
       sy = (t.fscy ? t.fscy / 100 : 1) * s,
       pdc = parseDrawingCommands(ct.text),
-      id = 'ASS-' + generateUUID();
+      filterID = 'ASS-' + generateUUID(),
+      symbolID = 'ASS-' + generateUUID(),
+      sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1;
   var svg = document.createElementNS(xmlns, 'svg');
   svg.setAttributeNS(null, 'width', pdc.width * sx);
   svg.setAttributeNS(null, 'height', pdc.height * sy);
-  svg.setAttributeNS(null, 'viewBox', [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '));
   var defs = document.createElementNS(xmlns, 'defs');
-  var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1;
-  defs.appendChild(createFilter(t, id, sbas));
+  defs.appendChild(createFilter(t, filterID, sbas));
+  svg.appendChild(defs);
+  var symbol = document.createElementNS(xmlns, 'symbol');
+  symbol.setAttributeNS(null, 'id', symbolID);
+  symbol.setAttributeNS(null, 'viewBox', [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '));
+  svg.appendChild(symbol);
   var path = document.createElementNS(xmlns, 'path');
   path.setAttributeNS(null, 'd', pdc.d);
   path.setAttributeNS(null, 'fill', toRGBA(t.a1 + t.c1));
-  svg.appendChild(defs);
-  svg.appendChild(path);
-  var ft = 'filter:url(#' + id + ');';
-  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;-webkit-' + ft + ft;
+  symbol.appendChild(path);
+  var use = document.createElementNS(xmlns, 'use');
+  use.setAttributeNS(null, 'width', pdc.width * sx);
+  use.setAttributeNS(null, 'height', pdc.height * sy);
+  use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + symbolID);
+  use.setAttributeNS(null, 'filter', 'url(#' + filterID + ')');
+  svg.appendChild(use);
+  cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;';
   svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
   return svg;
 };
 var createFilter = function(t, id, s) {
+  var hasBorder = t.xbord || t.ybord;
+  var hasShadow = t.xshad || t.yshad;
+  var blur = t.blur || 0;
   var filter = document.createElementNS(xmlns, 'filter');
   filter.setAttributeNS(null, 'id', id);
-  var bord = document.createElementNS(xmlns, 'feMorphology');
-  bord.setAttributeNS(null, 'radius', t.xbord * s + ' ' + t.ybord * s);
-  bord.setAttributeNS(null, 'operator', 'dilate');
-  bord.setAttributeNS(null, 'in', 'SourceGraphic');
-  bord.setAttributeNS(null, 'result', 'bord');
-  filter.appendChild(bord);
-  var c3 = document.createElementNS(xmlns, 'feFlood');
-  c3.setAttributeNS(null, 'flood-color', toRGBA(t.a3 + t.c3));
-  c3.setAttributeNS(null, 'result', 'c3');
-  filter.appendChild(c3);
-  var border = document.createElementNS(xmlns, 'feComposite');
-  border.setAttributeNS(null, 'operator', 'in');
-  border.setAttributeNS(null, 'in', 'c3');
-  border.setAttributeNS(null, 'in2', 'bord');
-  border.setAttributeNS(null, 'result', 'border');
-  filter.appendChild(border);
-  var blur = document.createElementNS(xmlns, 'feGaussianBlur');
-  blur.setAttributeNS(null, 'stdDeviation', (t.blur || 0) * s);
-  blur.setAttributeNS(null, 'in', 'SourceAlpha');
-  blur.setAttributeNS(null, 'result', 'blur');
-  filter.appendChild(blur);
-  var shad = document.createElementNS(xmlns, 'feOffset');
-  shad.setAttributeNS(null, 'dx', (t.xbord + Math.abs(t.xshad)) * (t.xshad > 0 ? s : -s));
-  shad.setAttributeNS(null, 'dy', (t.ybord + Math.abs(t.yshad)) * (t.yshad > 0 ? s : -s));
-  shad.setAttributeNS(null, 'in', 'blur');
-  shad.setAttributeNS(null, 'result', 'shad');
-  filter.appendChild(shad);
-  var c4 = document.createElementNS(xmlns, 'feFlood');
-  c4.setAttributeNS(null, 'flood-color', toRGBA(t.a4 + t.c4));
-  c4.setAttributeNS(null, 'result', 'c4');
-  filter.appendChild(c4);
-  var shadow = document.createElementNS(xmlns, 'feComposite');
-  shadow.setAttributeNS(null, 'operator', 'in');
-  shadow.setAttributeNS(null, 'in', 'c4');
-  shadow.setAttributeNS(null, 'in2', 'shad');
-  shadow.setAttributeNS(null, 'result', 'shadow');
-  filter.appendChild(shadow);
+  if (hasBorder) {
+    var bord = document.createElementNS(xmlns, 'feMorphology');
+    bord.setAttributeNS(null, 'radius', t.xbord * s + ' ' + t.ybord * s);
+    bord.setAttributeNS(null, 'operator', 'dilate');
+    bord.setAttributeNS(null, 'in', 'SourceGraphic');
+    bord.setAttributeNS(null, 'result', 'bord');
+    filter.appendChild(bord);
+    var c3 = document.createElementNS(xmlns, 'feFlood');
+    c3.setAttributeNS(null, 'flood-color', toRGBA(t.a3 + t.c3));
+    c3.setAttributeNS(null, 'result', 'c3');
+    filter.appendChild(c3);
+    var border = document.createElementNS(xmlns, 'feComposite');
+    border.setAttributeNS(null, 'operator', 'in');
+    border.setAttributeNS(null, 'in', 'c3');
+    border.setAttributeNS(null, 'in2', 'bord');
+    border.setAttributeNS(null, 'result', 'border');
+    filter.appendChild(border);
+    var borderBlur = document.createElementNS(xmlns, 'feGaussianBlur');
+    borderBlur.setAttributeNS(null, 'stdDeviation', blur);
+    borderBlur.setAttributeNS(null, 'in', 'border');
+    borderBlur.setAttributeNS(null, 'result', 'borderBlur');
+    filter.appendChild(borderBlur);
+  }
+  if (hasShadow) {
+    var shad = document.createElementNS(xmlns, 'feOffset');
+    shad.setAttributeNS(null, 'dx', t.xshad * s);
+    shad.setAttributeNS(null, 'dy', t.yshad * s);
+    shad.setAttributeNS(null, 'in', hasBorder ? 'border' : 'SourceGraphic');
+    shad.setAttributeNS(null, 'result', 'shad');
+    filter.appendChild(shad);
+    var c4 = document.createElementNS(xmlns, 'feFlood');
+    c4.setAttributeNS(null, 'flood-color', toRGBA(t.a4 + t.c4));
+    c4.setAttributeNS(null, 'result', 'c4');
+    filter.appendChild(c4);
+    var shadow = document.createElementNS(xmlns, 'feComposite');
+    shadow.setAttributeNS(null, 'operator', 'in');
+    shadow.setAttributeNS(null, 'in', 'c4');
+    shadow.setAttributeNS(null, 'in2', 'shad');
+    shadow.setAttributeNS(null, 'result', 'shadow');
+    filter.appendChild(shadow);
+    var shadowBlur = document.createElementNS(xmlns, 'feGaussianBlur');
+    shadowBlur.setAttributeNS(null, 'stdDeviation', blur);
+    shadowBlur.setAttributeNS(null, 'in', 'shadow');
+    shadowBlur.setAttributeNS(null, 'result', 'shadowBlur');
+    filter.appendChild(shadowBlur);
+  }
+  if (!hasBorder) {
+    var SGB = document.createElementNS(xmlns, 'feGaussianBlur');
+    SGB.setAttributeNS(null, 'stdDeviation', blur);
+    SGB.setAttributeNS(null, 'in', 'SourceGraphic');
+    SGB.setAttributeNS(null, 'result', 'SGB');
+    filter.appendChild(SGB);
+  }
   var merge = document.createElementNS(xmlns, 'feMerge');
-  var nodeShadow = document.createElementNS(xmlns, 'feMergeNode');
-  nodeShadow.setAttributeNS(null, 'in', 'shadow');
-  merge.appendChild(nodeShadow);
-  var nodeBorder = document.createElementNS(xmlns, 'feMergeNode');
-  nodeBorder.setAttributeNS(null, 'in', 'border');
-  merge.appendChild(nodeBorder);
+  if (hasShadow) {
+    var nodeShadow = document.createElementNS(xmlns, 'feMergeNode');
+    nodeShadow.setAttributeNS(null, 'in', 'shadowBlur');
+    merge.appendChild(nodeShadow);
+  }
+  if (hasBorder) {
+    var nodeBorder = document.createElementNS(xmlns, 'feMergeNode');
+    nodeBorder.setAttributeNS(null, 'in', 'borderBlur');
+    merge.appendChild(nodeBorder);
+  }
   var nodeSourceGraphic = document.createElementNS(xmlns, 'feMergeNode');
-  nodeSourceGraphic.setAttributeNS(null, 'in', 'SourceGraphic');
+  nodeSourceGraphic.setAttributeNS(null, 'in', hasBorder ? 'SourceGraphic' : 'SGB');
   merge.appendChild(nodeSourceGraphic);
   filter.appendChild(merge);
   return filter;
