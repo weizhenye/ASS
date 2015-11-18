@@ -38,7 +38,7 @@ ASS.prototype.init = function(data, video) {
 
   var styleNode = document.getElementById('ASS-style');
   if (!styleNode) {
-    var CSSstr = '.ASS-container{position:relative;}.ASS-fix-font-size{position:absolute;}.ASS-container video{position:absolute;top:0;left:0;}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute;}.ASS-dialogue{position: absolute;}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important;}.ASS-font-size-element{position:absolute;visibility:hidden;}';
+    var CSSstr = '.ASS-container{position:relative}.ASS-fix-font-size{position:absolute;visibility:hidden}.ASS-container video{position:absolute;top:0;left:0}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute}.ASS-dialogue{position:absolute}.ASS-fix-objectBoundingBox{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-animation-paused *{animation-play-state:paused !important;-webkit-animation-play-state:paused !important}';
     styleNode = document.createElement('style');
     styleNode.type = 'text/css';
     styleNode.id = 'ASS-style';
@@ -165,8 +165,8 @@ ASS.prototype._render = function(data) {
     t: false,
   };
   dia.node.className = 'ASS-dialogue';
-  this.stage.appendChild(dia.node);
   setTagsStyle.call(this, dia);
+  this.stage.appendChild(dia.node);
   var bcr = dia.node.getBoundingClientRect();
   dia.width = bcr.width;
   dia.height = bcr.height;
@@ -778,10 +778,10 @@ var createAnimation = function() {
 
     for (var j = pt.content.length - 1; j >= 0; j--) {
       kf = new KeyFrames();
-      var tags = pt.content[j].tags;
+      var tags = JSON.parse(JSON.stringify(pt.content[j].tags));
       if (tags.t) {
         for (var k = tags.t.length - 1; k >= 0; k--) {
-          var ttags = tags.t[k].tags;
+          var ttags = JSON.parse(JSON.stringify(tags.t[k].tags));
           t[0] = '0.000%';
           t[1] = Math.min(100, tags.t[k].t1 / dur * 100).toFixed(3) + '%';
           t[2] = Math.min(100, tags.t[k].t2 / dur * 100).toFixed(3) + '%';
@@ -821,10 +821,16 @@ var createAnimation = function() {
             kf.set(t[2], 'opacity', tmp2);
             kf.set(t[3], 'opacity', tmp2);
           }
-          if (ttags.c3 || ttags.a3 || ttags.c3 || ttags.a4 || ttags.blur ||
-              ttags.xbord || ttags.ybord || ttags.xshad || ttags.yshad) {
+          var hasTextShadow = function(t) {
+            var p = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur'];
+            for (var i = p.length - 1; i >= 0; i--) {
+              if (t[p[i]] !== undefined) return true;
+            }
+            return false;
+          };
+          if (hasTextShadow(ttags)) {
             ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur'].forEach(function(e) {
-              if (!ttags[e]) ttags[e] = tags[e];
+              if (ttags[e] === undefined) ttags[e] = tags[e];
             });
             var sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1,
                 tmp1 = createShadow(tags, sbas),
@@ -835,10 +841,16 @@ var createAnimation = function() {
             kf.set(t[3], 'text-shadow', tmp2);
           }
           if ((ttags.fscx && ttags.fscx !== 100) || (ttags.fscy && ttags.fscy !== 100) ||
-              ttags.frx || ttags.fry || ttags.frz || ttags.fax || ttags.fay) {
+              ttags.frx !== undefined || ttags.fry !== undefined || ttags.frz !== undefined ||
+              ttags.fax !== undefined || ttags.fay !== undefined) {
             ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'].forEach(function(e) {
-              if (!ttags[e]) ttags[e] = tags[e];
+              if (ttags[e] === undefined) ttags[e] = tags[e];
             });
+            if (tags.p) {
+              ttags.fscx = (ttags.fscx / tags.fscx) * 100;
+              ttags.fscy = (ttags.fscy / tags.fscy) * 100;
+              tags.fscx = tags.fscy = 100;
+            }
             var tmp1 = createTransform(tags),
                 tmp2 = createTransform(ttags);
             kf.set(t[0], 'transform', tmp1);
@@ -884,7 +896,6 @@ var createSVG = function(cn, ct, dia) {
   svg.appendChild(symbol);
   var path = document.createElementNS(xmlns, 'path');
   path.setAttributeNS(null, 'd', pdc.d);
-  path.setAttributeNS(null, 'fill', toRGBA(t.a1 + t.c1));
   symbol.appendChild(path);
   var use = document.createElementNS(xmlns, 'use');
   use.setAttributeNS(null, 'width', pdc.width * sx);
@@ -897,18 +908,45 @@ var createSVG = function(cn, ct, dia) {
   return svg;
 };
 var createFilter = function(t, id, s) {
-  var hasBorder = t.xbord || t.ybord;
-  var hasShadow = t.xshad || t.yshad;
-  var blur = t.blur || 0;
+  var hasBorder = t.xbord || t.ybord,
+      hasShadow = t.xshad || t.yshad,
+      isTrans = (t.a1 === 'FF'),
+      blur = t.blur || 0;
   var filter = document.createElementNS(xmlns, 'filter');
   filter.setAttributeNS(null, 'id', id);
+  var sg_b = document.createElementNS(xmlns, 'feGaussianBlur');
+  sg_b.setAttributeNS(null, 'stdDeviation', blur);
+  sg_b.setAttributeNS(null, 'in', 'SourceGraphic');
+  sg_b.setAttributeNS(null, 'result', 'sg_b');
+  filter.appendChild(sg_b);
+  var c1 = document.createElementNS(xmlns, 'feFlood');
+  c1.setAttributeNS(null, 'flood-color', toRGBA(t.a1 + t.c1));
+  c1.setAttributeNS(null, 'result', 'c1');
+  filter.appendChild(c1);
+  var main = document.createElementNS(xmlns, 'feComposite');
+  main.setAttributeNS(null, 'operator', 'in');
+  main.setAttributeNS(null, 'in', 'c1');
+  main.setAttributeNS(null, 'in2', 'sg_b');
+  main.setAttributeNS(null, 'result', 'main');
+  filter.appendChild(main);
   if (hasBorder) {
-    var bord = document.createElementNS(xmlns, 'feMorphology');
-    bord.setAttributeNS(null, 'radius', t.xbord * s + ' ' + t.ybord * s);
-    bord.setAttributeNS(null, 'operator', 'dilate');
-    bord.setAttributeNS(null, 'in', 'SourceGraphic');
-    bord.setAttributeNS(null, 'result', 'bord');
-    filter.appendChild(bord);
+    var dil = document.createElementNS(xmlns, 'feMorphology');
+    dil.setAttributeNS(null, 'radius', t.xbord * s + ' ' + t.ybord * s);
+    dil.setAttributeNS(null, 'operator', 'dilate');
+    dil.setAttributeNS(null, 'in', 'SourceGraphic');
+    dil.setAttributeNS(null, 'result', 'dil');
+    filter.appendChild(dil);
+    var dil_b = document.createElementNS(xmlns, 'feGaussianBlur');
+    dil_b.setAttributeNS(null, 'stdDeviation', blur);
+    dil_b.setAttributeNS(null, 'in', 'dil');
+    dil_b.setAttributeNS(null, 'result', 'dil_b');
+    filter.appendChild(dil_b);
+    var dil_b_o = document.createElementNS(xmlns, 'feComposite');
+    dil_b_o.setAttributeNS(null, 'operator', 'out');
+    dil_b_o.setAttributeNS(null, 'in', 'dil_b');
+    dil_b_o.setAttributeNS(null, 'in2', 'SourceGraphic');
+    dil_b_o.setAttributeNS(null, 'result', 'dil_b_o');
+    filter.appendChild(dil_b_o);
     var c3 = document.createElementNS(xmlns, 'feFlood');
     c3.setAttributeNS(null, 'flood-color', toRGBA(t.a3 + t.c3));
     c3.setAttributeNS(null, 'result', 'c3');
@@ -916,22 +954,36 @@ var createFilter = function(t, id, s) {
     var border = document.createElementNS(xmlns, 'feComposite');
     border.setAttributeNS(null, 'operator', 'in');
     border.setAttributeNS(null, 'in', 'c3');
-    border.setAttributeNS(null, 'in2', 'bord');
+    border.setAttributeNS(null, 'in2', 'dil_b_o');
     border.setAttributeNS(null, 'result', 'border');
     filter.appendChild(border);
-    var borderBlur = document.createElementNS(xmlns, 'feGaussianBlur');
-    borderBlur.setAttributeNS(null, 'stdDeviation', blur);
-    borderBlur.setAttributeNS(null, 'in', 'border');
-    borderBlur.setAttributeNS(null, 'result', 'borderBlur');
-    filter.appendChild(borderBlur);
   }
-  if (hasShadow) {
-    var shad = document.createElementNS(xmlns, 'feOffset');
-    shad.setAttributeNS(null, 'dx', t.xshad * s);
-    shad.setAttributeNS(null, 'dy', t.yshad * s);
-    shad.setAttributeNS(null, 'in', hasBorder ? 'border' : 'SourceGraphic');
-    shad.setAttributeNS(null, 'result', 'shad');
-    filter.appendChild(shad);
+  if (hasShadow && (hasBorder || !isTrans)) {
+    var off = document.createElementNS(xmlns, 'feOffset');
+    off.setAttributeNS(null, 'dx', t.xshad * s);
+    off.setAttributeNS(null, 'dy', t.yshad * s);
+    off.setAttributeNS(null, 'in', hasBorder ? 'dil' : 'SourceGraphic');
+    off.setAttributeNS(null, 'result', 'off');
+    filter.appendChild(off);
+    var off_b = document.createElementNS(xmlns, 'feGaussianBlur');
+    off_b.setAttributeNS(null, 'stdDeviation', blur);
+    off_b.setAttributeNS(null, 'in', 'off');
+    off_b.setAttributeNS(null, 'result', 'off_b');
+    filter.appendChild(off_b);
+    if (isTrans) {
+      var sg_off = document.createElementNS(xmlns, 'feOffset');
+      sg_off.setAttributeNS(null, 'dx', t.xshad * s);
+      sg_off.setAttributeNS(null, 'dy', t.yshad * s);
+      sg_off.setAttributeNS(null, 'in', 'SourceGraphic');
+      sg_off.setAttributeNS(null, 'result', 'sg_off');
+      filter.appendChild(sg_off);
+      var off_b_o = document.createElementNS(xmlns, 'feComposite');
+      off_b_o.setAttributeNS(null, 'operator', 'out');
+      off_b_o.setAttributeNS(null, 'in', 'off_b');
+      off_b_o.setAttributeNS(null, 'in2', 'sg_off');
+      off_b_o.setAttributeNS(null, 'result', 'off_b_o');
+      filter.appendChild(off_b_o);
+    }
     var c4 = document.createElementNS(xmlns, 'feFlood');
     c4.setAttributeNS(null, 'flood-color', toRGBA(t.a4 + t.c4));
     c4.setAttributeNS(null, 'result', 'c4');
@@ -939,36 +991,24 @@ var createFilter = function(t, id, s) {
     var shadow = document.createElementNS(xmlns, 'feComposite');
     shadow.setAttributeNS(null, 'operator', 'in');
     shadow.setAttributeNS(null, 'in', 'c4');
-    shadow.setAttributeNS(null, 'in2', 'shad');
+    shadow.setAttributeNS(null, 'in2', isTrans ? 'off_b_o' : 'off_b');
     shadow.setAttributeNS(null, 'result', 'shadow');
     filter.appendChild(shadow);
-    var shadowBlur = document.createElementNS(xmlns, 'feGaussianBlur');
-    shadowBlur.setAttributeNS(null, 'stdDeviation', blur);
-    shadowBlur.setAttributeNS(null, 'in', 'shadow');
-    shadowBlur.setAttributeNS(null, 'result', 'shadowBlur');
-    filter.appendChild(shadowBlur);
-  }
-  if (!hasBorder) {
-    var SGB = document.createElementNS(xmlns, 'feGaussianBlur');
-    SGB.setAttributeNS(null, 'stdDeviation', blur);
-    SGB.setAttributeNS(null, 'in', 'SourceGraphic');
-    SGB.setAttributeNS(null, 'result', 'SGB');
-    filter.appendChild(SGB);
   }
   var merge = document.createElementNS(xmlns, 'feMerge');
-  if (hasShadow) {
+  if (hasShadow && (hasBorder || !isTrans)) {
     var nodeShadow = document.createElementNS(xmlns, 'feMergeNode');
-    nodeShadow.setAttributeNS(null, 'in', 'shadowBlur');
+    nodeShadow.setAttributeNS(null, 'in', 'shadow');
     merge.appendChild(nodeShadow);
   }
   if (hasBorder) {
     var nodeBorder = document.createElementNS(xmlns, 'feMergeNode');
-    nodeBorder.setAttributeNS(null, 'in', 'borderBlur');
+    nodeBorder.setAttributeNS(null, 'in', 'border');
     merge.appendChild(nodeBorder);
   }
-  var nodeSourceGraphic = document.createElementNS(xmlns, 'feMergeNode');
-  nodeSourceGraphic.setAttributeNS(null, 'in', hasBorder ? 'SourceGraphic' : 'SGB');
-  merge.appendChild(nodeSourceGraphic);
+  var nodeMain = document.createElementNS(xmlns, 'feMergeNode');
+  nodeMain.setAttributeNS(null, 'in', 'main');
+  merge.appendChild(nodeMain);
   filter.appendChild(merge);
   return filter;
 };
@@ -1021,9 +1061,9 @@ var createShadow = function(t, s) {
       for (var j = -1; j <= 1; j++) {
         for (var x = 1; x < ox; x++) {
           for (var y = 1; y < oy; y++)
-            if (i || j) arr.push(oc + ' ' + i * x + 'px ' + j * y + 'px');
+            if (i || j) arr.push(oc + ' ' + i * x + 'px ' + j * y + 'px ' + blur + 'px');
         }
-        arr.push(oc + ' ' + i * ox + 'px ' + j * oy + 'px');
+        arr.push(oc + ' ' + i * ox + 'px ' + j * oy + 'px ' + blur + 'px');
       }
   }
   if (sx || sy) {
@@ -1043,14 +1083,14 @@ var createBaseTags = function(s) {
   return {
     fn: s.Fontname,
     fs: s.Fontsize,
-    c1: s.PrimaryColour.match(/&H\w\w(\w{6})/)[1],
-    a1: s.PrimaryColour.match(/&H(\w\w)\w{6}/)[1],
-    c2: s.SecondaryColour.match(/&H\w\w(\w{6})/)[1],
-    a2: s.SecondaryColour.match(/&H(\w\w)\w{6}/)[1],
-    c3: s.OutlineColour.match(/&H\w\w(\w{6})/)[1],
-    a3: s.OutlineColour.match(/&H(\w\w)\w{6}/)[1],
-    c4: s.BackColour.match(/&H\w\w(\w{6})/)[1],
-    a4: s.BackColour.match(/&H(\w\w)\w{6}/)[1],
+    c1: s.PrimaryColour.match(/&H(\w\w)?(\w{6})&?/)[2],
+    a1: s.PrimaryColour.match(/&H(\w\w)?(\w{6})&?/)[1] || '00',
+    c2: s.SecondaryColour.match(/&H(\w\w)?(\w{6})&?/)[2],
+    a2: s.SecondaryColour.match(/&H(\w\w)?(\w{6})&?/)[1] || '00',
+    c3: s.OutlineColour.match(/&H(\w\w)?(\w{6})&?/)[2],
+    a3: s.OutlineColour.match(/&H(\w\w)?(\w{6})&?/)[1] || '00',
+    c4: s.BackColour.match(/&H(\w\w)?(\w{6})&?/)[2],
+    a4: s.BackColour.match(/&H(\w\w)?(\w{6})&?/)[1] || '00',
     b: Math.abs(s.Bold),
     i: Math.abs(s.Italic),
     u: Math.abs(s.Underline),
@@ -1227,11 +1267,11 @@ var setTransformOrigin = function(dia) {
 var setClipPath = function(dia) {
   if (dia.clip) {
     var fobb = document.createElement('div');
+    this.stage.insertBefore(fobb, dia.node);
+    fobb.appendChild(dia.node);
+    dia.node = fobb;
     fobb.className = 'ASS-fix-objectBoundingBox';
-    fobb.style.cssText = 'width:' + this.width + 'px;height:' + this.height + 'px;' +
-                        'left:' + (-dia.x) + 'px;top:' + (-dia.y) + 'px;position:absolute;';
-    dia.node.appendChild(fobb);
-    dia.node.style.cssText += 'position:relative;' + createClipPath.call(this, dia);
+    fobb.style.cssText += createClipPath.call(this, dia);
   }
 };
 
