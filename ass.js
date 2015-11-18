@@ -915,7 +915,7 @@ var createFilter = function(t, id, s) {
   var filter = document.createElementNS(xmlns, 'filter');
   filter.setAttributeNS(null, 'id', id);
   var sg_b = document.createElementNS(xmlns, 'feGaussianBlur');
-  sg_b.setAttributeNS(null, 'stdDeviation', blur);
+  sg_b.setAttributeNS(null, 'stdDeviation', hasBorder ? 0 : blur);
   sg_b.setAttributeNS(null, 'in', 'SourceGraphic');
   sg_b.setAttributeNS(null, 'result', 'sg_b');
   filter.appendChild(sg_b);
