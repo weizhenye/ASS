@@ -449,7 +449,7 @@ var parseTags = function(dialogue) {
         else if (tmp > 8) dia.alignment = tmp - 5;
         else dia.alignment = tmp + 2;
       }
-      if (/^pos/.test(cmd[j]) && !dia.pos) {
+      if (/^pos/.test(cmd[j]) && !dia.pos && !dia.move) {
         tmp = cmd[j].match(/^pos\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
         dia.pos = {x: tmp[1] * 1, y: tmp[2] * 1};
       }
@@ -457,9 +457,10 @@ var parseTags = function(dialogue) {
         tmp = cmd[j].match(/^org\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
         dia.org = {x: tmp[1] * 1, y: tmp[2] * 1};
       }
-      if (/^move/.test(cmd[j]) && !dia.move) {
+      if (/^move/.test(cmd[j]) && !dia.move && !dia.pos) {
         tmp = cmd[j].match(/^move\s*\((.*)\)/)[1].split(/\s*,\s*/);
         for (var k = tmp.length - 1; k >= 0; k--) tmp[k] *= 1;
+        dia.pos = {x: tmp[0] * 1, y: tmp[1] * 1};
         if (tmp.length === 4) {
           tmp.push(0);
           tmp.push((dialogue.End - dialogue.Start) * 1000);
@@ -1190,6 +1191,7 @@ var setTagsStyle = function(dia) {
         cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
         cssText += v + 'animation-timing-function:linear;';
         cssText += v + 'animation-iteration-count:1;';
+        cssText += v + 'animation-fill-mode:forwards;';
       });
       dia.t = true;
     }
@@ -1222,6 +1224,7 @@ var setDialogueStyle = function(dia) {
       cssText += v + 'animation-delay:' + Math.min(0, dia.Start - vct) + 's;';
       cssText += v + 'animation-timing-function:linear;';
       cssText += v + 'animation-iteration-count:1;';
+      cssText += v + 'animation-fill-mode:forwards;';
     });
   }
   if (dia.Alignment % 3 === 1) cssText += 'text-align:left;';
