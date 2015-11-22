@@ -885,9 +885,14 @@ var createSVG = function(cn, ct, dia) {
       filterID = 'ASS-' + generateUUID(),
       symbolID = 'ASS-' + generateUUID(),
       sbas = /Yes/i.test(this.tree.ScriptInfo['ScaledBorderAndShadow']) ? this.scale : 1;
+  var vbx = t.xbord + (t.xshad < 0 ? -t.xshad : 0) + (t.blur || 0),
+      vby = t.ybord + (t.yshad < 0 ? -t.yshad : 0) + (t.blur || 0),
+      vbw = pdc.width * sx + 2 * t.xbord + Math.abs(t.xshad) + 2 * (t.blur || 0),
+      vbh = pdc.height * sx + 2 * t.ybord + Math.abs(t.yshad) + 2 * (t.blur || 0);
   var svg = document.createElementNS(xmlns, 'svg');
-  svg.setAttributeNS(null, 'width', pdc.width * sx);
-  svg.setAttributeNS(null, 'height', pdc.height * sy);
+  svg.setAttributeNS(null, 'width', vbw);
+  svg.setAttributeNS(null, 'height', vbh);
+  svg.setAttributeNS(null, 'viewBox', [-vbx, -vby, vbw, vbh].join(' '));
   var defs = document.createElementNS(xmlns, 'defs');
   defs.appendChild(createFilter(t, filterID, sbas));
   svg.appendChild(defs);
@@ -905,7 +910,7 @@ var createSVG = function(cn, ct, dia) {
   use.setAttributeNS(null, 'filter', 'url(#' + filterID + ')');
   svg.appendChild(use);
   cn.style.cssText += 'position:relative;width:' + pdc.width * sx + 'px;height:' + pdc.height * sy + 'px;';
-  svg.style.cssText = 'position:absolute;left:' + pdc.minX * sx + 'px;top:' + pdc.minY * sy + 'px;';
+  svg.style.cssText = 'position:absolute;left:' + (pdc.minX * sx - vbx) + 'px;top:' + (pdc.minY * sy - vby) + 'px;';
   return svg;
 };
 var createFilter = function(t, id, s) {
