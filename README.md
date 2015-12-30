@@ -1,6 +1,8 @@
 ASS.js
 ======
 
+[![Join the chat at https://gitter.im/weizhenye/ASS](https://badges.gitter.im/weizhenye/ASS.svg)](https://gitter.im/weizhenye/ASS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 video.
 
 [Demo](https://ass.js.org/)
