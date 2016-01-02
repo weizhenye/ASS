@@ -1,4 +1,12 @@
-(function(window) {
+(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.ASS = factory();
+  }
+}(this, function() {
 'use strict';
 
 function ASS() {
@@ -1285,5 +1293,5 @@ var setClipPath = function(dia) {
   }
 };
 
-window.ASS = ASS;
-})(window);
+return ASS;
+}));
