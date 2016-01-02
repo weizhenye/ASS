@@ -587,10 +587,8 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
   normalizeX = normalizeX || 1;
   normalizeY = normalizeY || 1;
   var rawCommands = text.split(/\s(?=[mnlbspc])/),
-      commands = [],
-      prevCommand,
-      nextCommand;
-  var s2b = function(points) {
+      commands = [];
+  var s2b = function(points, prevType, nextType) {
     // D3.js, d3_svg_lineBasisOpen()
     var bb1 = [0, 2/3, 1/3, 0],
         bb2 = [0, 1/3, 2/3, 0],
@@ -601,7 +599,7 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
     var px = [points[points.length - 1].x, points[0].x, points[1].x, points[2].x],
         py = [points[points.length - 1].y, points[0].y, points[1].y, points[2].y];
     var path = ['L', new Point(dot4(bb3, px), dot4(bb3, py))];
-    if (prevCommand.type === 'M') path[0] = 'M';
+    if (prevType === 'M') path[0] = 'M';
     for (var i = 3; i < points.length; i++) {
       px = [points[i - 3].x, points[i - 2].x, points[i - 1].x, points[i].x];
       py = [points[i - 3].y, points[i - 2].y, points[i - 1].y, points[i].y];
@@ -609,7 +607,7 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
                 ',' + new Point(dot4(bb2, px), dot4(bb2, py)),
                 ',' + new Point(dot4(bb3, px), dot4(bb3, py)));
     }
-    if (nextCommand.type === 'L' || nextCommand.type === 'C') {
+    if (nextType === 'L' || nextType === 'C') {
       path.push('L', points[points.length - 1]);
     }
     return path.join('');
@@ -624,6 +622,8 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
   function DrawingCommand(type) {
     this.points = [];
     this.type = null;
+    this.prevType = null;
+    this.nextType = null;
     if (/m/.test(type)) this.type = 'M';
     if (/n|l/.test(type)) this.type = 'L';
     if (/b/.test(type)) this.type = 'C';
@@ -634,14 +634,16 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
       return true;
     };
     this.toString = function() {
-      if (this.type === '_S') return s2b(this.points);
+      if (this.type === '_S') {
+        return s2b(this.points, this.prevType, this.nextType);
+      }
       return this.type + this.points.join();
     };
   }
-  var minX = 2147483647,
-      minY = 2147483647,
-      maxX = -2147483648,
-      maxY = -2147483648;
+  var minX = Number.MAX_VALUE,
+      minY = Number.MAX_VALUE,
+      maxX = Number.MIN_VALUE,
+      maxY = Number.MIN_VALUE;
   var i = 0;
   while (i < rawCommands.length) {
     var p = rawCommands[i].split(' '),
@@ -677,8 +679,8 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
   }
   var arr = [];
   for (var len = commands.length, i = 0; i < len; i++) {
-    prevCommand = commands[Math.max(i - 1, 0)];
-    nextCommand = commands[Math.min(i + 1, len - 1)];
+    commands[i].prevType = (i === 0 ? null : commands[i - 1].type);
+    commands[i].nextType = (i === len - 1 ? null : commands[i + 1].type);
     arr.push(commands[i].toString());
   }
   return {
