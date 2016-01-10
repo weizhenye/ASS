@@ -1,0 +1,33 @@
+{
+  "name": "ass.js",
+  "description": "A JavaScript renderer for ASS subtitle format.",
+  "main": "./dist/ass.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weizhenye/ASS.git"
+  },
+  "keywords": [
+    "ASS",
+    "subtitle"
+  ],
+  "author": "weizhenye",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/weizhenye/ASS/issues"
+  },
+  "homepage": "https://ass.js.org/",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-file-insert": "^1.0.2",
+    "gulp-minify-css": "^1.2.3",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.5.1",
+    "gulp-umd": "^0.2.0",
+    "mocha": "^2.3.4",
+    "rewire": "^2.5.1"
+  }
+}

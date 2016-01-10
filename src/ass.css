@@ -1,0 +1,32 @@
+.ASS-container {
+  position: relative;
+}
+.ASS-fix-font-size {
+  position: absolute;
+  visibility: hidden;
+}
+.ASS-container video {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.ASS-stage {
+  overflow: hidden;
+  z-index: 2147483647;
+  pointer-events: none;
+  position: absolute;
+}
+.ASS-dialogue {
+  position: absolute;
+}
+.ASS-fix-objectBoundingBox {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.ASS-animation-paused * {
+  -webkit-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+}

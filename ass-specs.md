@@ -42,7 +42,7 @@ Sub Station Alpha 本身是一个 Windows 平台下制作 SSA 格式字幕的软
 
 ### [v4 Styles]
 
-这一部分包含了所有样式的定义。每一个被脚本使用的样式都应该在这里定义。ASS 使用 `[v4 Styles+]`。
+这一部分包含了所有样式的定义。每一个被脚本使用的样式都应该在这里定义。ASS 使用 `[v4+ Styles]`。
 
 ### [Events]
 
