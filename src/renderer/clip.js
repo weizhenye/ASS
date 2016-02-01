@@ -18,7 +18,7 @@ var createClipPath = function(dia) {
       d += 'L' + [n[0], n[3], n[2], n[3], n[2], n[1]].join() + 'Z';
     }
     if (dia.clip.commands !== null) {
-      d = parseDrawingCommands(dia.clip.commands, prx, pry).d;
+      d = getDrawingAttributes(dia.clip.commands, prx, pry).d;
     }
     if (dia.clip.inverse) {
       d += 'M0,0L' + [0, s, s, s, s, 0, 0, 0].join() + 'Z';

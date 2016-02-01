@@ -1,10 +1,8 @@
-var parseDrawingCommands = function(text, normalizeX, normalizeY) {
+var parseDrawing = function(text) {
   text = text.replace(/([mnlbspc])/gi, ' $1 ')
              .replace(/^\s*|\s*$/g, '')
              .replace(/\s+/g, ' ')
              .toLowerCase();
-  normalizeX = normalizeX || 1;
-  normalizeY = normalizeY || 1;
   var rawCommands = text.split(/\s(?=[mnlbspc])/),
       commands = [];
   var s2b = function(ps, prevType, nextType) {
@@ -32,8 +30,8 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
     return path.join('');
   };
   function Point(x, y) {
-    this.x = x / normalizeX;
-    this.y = y / normalizeY;
+    this.x = x;
+    this.y = y;
     this.toString = function() {
       return this.x + ',' + this.y;
     };
@@ -59,20 +57,13 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
       return this.type + this.points.join();
     };
   }
-  var minX = Number.MAX_VALUE,
-      minY = Number.MAX_VALUE,
-      maxX = Number.MIN_VALUE,
-      maxY = Number.MIN_VALUE;
+
   var i = 0;
   while (i < rawCommands.length) {
     var p = rawCommands[i].split(' '),
         command = new DrawingCommand(p[0]);
     for (var lenj = p.length - !(p.length & 1), j = 1; j < lenj; j += 2) {
       command.points.push(new Point(p[j], p[j + 1]));
-      minX = Math.min(minX, p[j]);
-      minY = Math.min(minY, p[j + 1]);
-      maxX = Math.max(maxX, p[j]);
-      maxY = Math.max(maxY, p[j + 1]);
     }
     if (/p|c/.test(p[0])) {
       if (commands[i - 1].type === '_S') {
@@ -97,17 +88,6 @@ var parseDrawingCommands = function(text, normalizeX, normalizeY) {
       i++;
     }
   }
-  var arr = [];
-  for (var len = commands.length, i = 0; i < len; i++) {
-    commands[i].prevType = (i === 0 ? null : commands[i - 1].type);
-    commands[i].nextType = (i === len - 1 ? null : commands[i + 1].type);
-    arr.push(commands[i].toString());
-  }
-  return {
-    d: arr.join('') + 'Z',
-    width: maxX - minX,
-    height: maxY - minY,
-    minX: minX,
-    minY: minY,
-  };
+
+  return commands;
 };

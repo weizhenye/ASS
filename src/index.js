@@ -36,13 +36,13 @@ ASS.prototype.init = function(data, video) {
   var vb = [0, 0, this.tree.ScriptInfo.PlayResX, this.tree.ScriptInfo.PlayResY];
   $clipPath.setAttributeNS(null, 'viewBox', vb.join(' '));
 
-  var styleNode = document.getElementById('ASS-style');
-  if (!styleNode) {
-    styleNode = document.createElement('style');
-    styleNode.type = 'text/css';
-    styleNode.id = 'ASS-style';
-    styleNode.appendChild(document.createTextNode(ASS_CSS));
-    document.head.appendChild(styleNode);
+  var $style = document.getElementById('ASS-style');
+  if (!$style) {
+    $style = document.createElement('style');
+    $style.type = 'text/css';
+    $style.id = 'ASS-style';
+    $style.appendChild(document.createTextNode(ASS_CSS));
+    document.head.appendChild($style);
   }
 
   this.resize();

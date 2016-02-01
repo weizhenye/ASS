@@ -3,8 +3,8 @@ var createDrawing = function(cn, ct, dia) {
       s = this.scale / (1 << (t.p - 1)),
       sx = (t.fscx ? t.fscx / 100 : 1) * s,
       sy = (t.fscy ? t.fscy / 100 : 1) * s,
-      pdc = parseDrawingCommands(ct.text),
-      vb = [pdc.minX, pdc.minY, pdc.width, pdc.height].join(' '),
+      gda = getDrawingAttributes(ct.commands),
+      vb = [gda.minX, gda.minY, gda.width, gda.height].join(' '),
       filterID = 'ASS-' + generateUUID(),
       symbolID = 'ASS-' + generateUUID(),
       sisbas = this.tree.ScriptInfo['ScaledBorderAndShadow'],
@@ -13,8 +13,8 @@ var createDrawing = function(cn, ct, dia) {
   var blur = t.blur || 0,
       vbx = t.xbord + (t.xshad < 0 ? -t.xshad : 0) + blur,
       vby = t.ybord + (t.yshad < 0 ? -t.yshad : 0) + blur,
-      vbw = pdc.width * sx + 2 * t.xbord + Math.abs(t.xshad) + 2 * blur,
-      vbh = pdc.height * sx + 2 * t.ybord + Math.abs(t.yshad) + 2 * blur;
+      vbw = gda.width * sx + 2 * t.xbord + Math.abs(t.xshad) + 2 * blur,
+      vbh = gda.height * sx + 2 * t.ybord + Math.abs(t.yshad) + 2 * blur;
   var svg = document.createElementNS(xmlns, 'svg');
   svg.setAttributeNS(null, 'width', vbw);
   svg.setAttributeNS(null, 'height', vbh);
@@ -27,19 +27,49 @@ var createDrawing = function(cn, ct, dia) {
   symbol.setAttributeNS(null, 'viewBox', vb);
   svg.appendChild(symbol);
   var path = document.createElementNS(xmlns, 'path');
-  path.setAttributeNS(null, 'd', pdc.d);
+  path.setAttributeNS(null, 'd', gda.d);
   symbol.appendChild(path);
   var use = document.createElementNS(xmlns, 'use');
-  use.setAttributeNS(null, 'width', pdc.width * sx);
-  use.setAttributeNS(null, 'height', pdc.height * sy);
+  use.setAttributeNS(null, 'width', gda.width * sx);
+  use.setAttributeNS(null, 'height', gda.height * sy);
   use.setAttributeNS(xlink, 'xlink:href', '#' + symbolID);
   use.setAttributeNS(null, 'filter', 'url(#' + filterID + ')');
   svg.appendChild(use);
   cn.style.cssText += 'position:relative;' +
-                      'width:' + pdc.width * sx + 'px;' +
-                      'height:' + pdc.height * sy + 'px;';
+                      'width:' + gda.width * sx + 'px;' +
+                      'height:' + gda.height * sy + 'px;';
   svg.style.cssText = 'position:absolute;' +
-                      'left:' + (pdc.minX * sx - vbx) + 'px;' +
-                      'top:' + (pdc.minY * sy - vby) + 'px;';
+                      'left:' + (gda.minX * sx - vbx) + 'px;' +
+                      'top:' + (gda.minY * sy - vby) + 'px;';
   return svg;
+};
+var getDrawingAttributes = function(commands, normalizeX, normalizeY) {
+  normalizeX = normalizeX || 1;
+  normalizeY = normalizeY || 1;
+  var minX = Number.MAX_VALUE,
+      minY = Number.MAX_VALUE,
+      maxX = Number.MIN_VALUE,
+      maxY = Number.MIN_VALUE;
+  var arr = [];
+  for (var len = commands.length, i = 0; i < len; i++) {
+    commands[i].points.forEach(function(p) {
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+      p.x /= normalizeX;
+      p.y /= normalizeY;
+    });
+    commands[i].prevType = (i === 0 ? null : commands[i - 1].type);
+    commands[i].nextType = (i === len - 1 ? null : commands[i + 1].type);
+    arr.push(commands[i].toString());
+  }
+
+  return {
+    d: arr.join('') + 'Z',
+    minX: minX,
+    minY: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
 };

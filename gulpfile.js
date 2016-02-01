@@ -6,18 +6,20 @@ var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
 var umd = require('gulp-umd');
 
-var fileList = [
+var srcFiles = [
   './src/index.js',
   './tmp/global.js',
   './src/uuid.js',
   './src/parser/ass.js',
+  './src/parser/dialogue.js',
   './src/parser/drawing.js',
   './src/parser/effect.js',
+  './src/parser/format.js',
+  './src/parser/style.js',
   './src/parser/tags.js',
   './src/parser/time.js',
   './src/renderer/renderer.js',
   './src/renderer/animation.js',
-  './src/renderer/base-tags.js',
   './src/renderer/border-and-shadow.js',
   './src/renderer/clip.js',
   './src/renderer/collision.js',
@@ -43,7 +45,7 @@ gulp.task('insert-css', ['minify-css'], function() {
 });
 
 gulp.task('build', ['insert-css'], function() {
-  return gulp.src(fileList)
+  return gulp.src(srcFiles)
     .pipe(concat('ass.js'))
     .pipe(umd({
       exports: function() {

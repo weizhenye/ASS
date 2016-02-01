@@ -1,5 +1,5 @@
 var renderer = function(dialogue) {
-  var pt = dialogue.parsedText,
+  var pt = dialogue._parsedText,
       s = this.tree.V4Styles.Style[dialogue.Style];
   var dia = {
     node: document.createElement('div'),
@@ -12,9 +12,8 @@ var renderer = function(dialogue) {
     MarginR: dialogue.MarginR || s.MarginR,
     MarginV: dialogue.MarginV || s.MarginV,
     Effect: dialogue.Effect,
-    parsedText: dialogue.parsedText,
-    _index: dialogue._index,
-    animationName: dialogue.animationName,
+    parsedText: pt,
+    animationName: pt.animationName,
     move: pt.move,
     fad: pt.fad,
     fade: pt.fade,
@@ -27,6 +26,7 @@ var renderer = function(dialogue) {
   dia.node.className = 'ASS-dialogue';
   setTagsStyle.call(this, dia);
   this.stage.appendChild(dia.node);
+
   var bcr = dia.node.getBoundingClientRect();
   dia.width = bcr.width;
   dia.height = bcr.height;

@@ -1,5 +1,12 @@
-var createBaseTags = function(s) {
-  return {
+var parseStyle = function(data, tree) {
+  var fields = data.match(/Style:(.*)/)[1].split(','),
+      s = {};
+  for (var j = fields.length - 1; j >= 0; --j) {
+    var field = tree.V4Styles.Format[j];
+    s[field] = fields[j].replace(/^\s*/, '');
+    if (!isNaN(s[field] * 1)) s[field] *= 1;
+  }
+  s._tags = {
     fn: s.Fontname,
     fs: s.Fontsize,
     c1: s.PrimaryColour.match(/&H(\w\w)?(\w{6})&?/)[2],
@@ -14,6 +21,7 @@ var createBaseTags = function(s) {
     i: Math.abs(s.Italic),
     u: Math.abs(s.Underline),
     s: Math.abs(s.StrikeOut),
+    q: tree.ScriptInfo.WrapStyle || 1,
     fscx: s.ScaleX,
     fscy: s.ScaleY,
     fsp: s.Spacing,
@@ -23,4 +31,5 @@ var createBaseTags = function(s) {
     xshad: s.Shadow,
     yshad: s.Shadow,
   };
+  return s;
 };

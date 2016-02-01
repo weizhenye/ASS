@@ -33,7 +33,7 @@ var createAnimation = function() {
   };
   for (var i = this.tree.Events.Dialogue.length - 1; i >= 0; i--) {
     var dia = this.tree.Events.Dialogue[i],
-        pt = dia.parsedText,
+        pt = dia._parsedText,
         dur = (dia.End - dia.Start) * 1000,
         kf = new KeyFrames(),
         kfStr = '',
@@ -97,7 +97,7 @@ var createAnimation = function() {
       name = 'ASS-' + generateUUID();
       kfObj[name] = kfStr;
     }
-    dia.animationName = name;
+    pt.animationName = name;
 
     for (var j = pt.content.length - 1; j >= 0; j--) {
       kf = new KeyFrames();

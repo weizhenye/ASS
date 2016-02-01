@@ -1,110 +1,121 @@
-var parseTags = function(dialogue) {
+var parseTags = function(dialogue, styles) {
   var text = dialogue.Text.replace(/\\N/g, '<br>').replace(/\\h/g, '&nbsp;'),
+      prevTags = JSON.parse(JSON.stringify(styles[dialogue.Style]._tags)),
       kv = text.split(/{([^{}]*?)}/),
-      prevTags = JSON.parse(JSON.stringify(baseTags[dialogue.Style])),
       dia = {content: []};
-  if (kv[0].length) dia.content.push({tags: prevTags, text: kv[0]});
+  if (kv[0].length) {
+    dia.content.push({
+      text: kv[0],
+      tags: prevTags
+    });
+  }
   for (var i = 1; i < kv.length; i += 2) {
-    var ct = {text: kv[i + 1], tags: {}},
-        cmd = kv[i].split('\\'); // split(/(?<!\(.*?)\\(?!.*?\))/)
-    for (var j = 0; j < cmd.length; ++j) {
-      if (/^t\(/.test(cmd[j])) {
-        while (!/\)$/.test(cmd[j + 1])) {
-          cmd[j] += '\\' + cmd[j + 1];
-          cmd.splice(j + 1, 1);
+    var ct = {
+      text: kv[i + 1],
+      tags: JSON.parse(JSON.stringify(prevTags))
+    };
+
+    /* JavaScript doesn't support split(/(?<!\(.*?)\\(?!.*?\))/) */
+    var cmds = kv[i].split('\\');
+    for (var j = 0; j < cmds.length; ++j) {
+      if (/^t\(/.test(cmds[j]) && !/\)$/.test(cmds[j])) {
+        while (!/\)$/.test(cmds[j + 1])) {
+          cmds[j] += '\\' + cmds[j + 1];
+          cmds.splice(j + 1, 1);
         }
-        cmd[j] += '\\' + cmd[j + 1];
-        cmd.splice(j + 1, 1);
+        cmds[j] += '\\' + cmds[j + 1];
+        cmds.splice(j + 1, 1);
       }
     }
-    for (var j in prevTags) {
-      if (j !== 't') ct.tags[j] = prevTags[j];
-      else ct.tags[j] = JSON.parse(JSON.stringify(prevTags[j]));
-    }
-    for (var j = 0; j < cmd.length; ++j) {
-      var tmp;
-      parseAnimatableTags.call(ct, cmd[j]);
+
+    for (var j = 0; j < cmds.length; ++j) {
+      var cmd = cmds[j];
+      parseAnimatableTags.call(ct, cmd);
       if (ct.tags.clip) dia.clip = ct.tags.clip;
-      if (/^b\d/.test(cmd[j])) ct.tags.b = cmd[j].match(/^b(\d+)/)[1] * 1;
-      if (/^i\d/.test(cmd[j])) ct.tags.i = cmd[j][1] * 1;
-      if (/^u\d/.test(cmd[j])) ct.tags.u = cmd[j][1] * 1;
-      if (/^s\d/.test(cmd[j])) ct.tags.s = cmd[j][1] * 1;
-      if (/^fn/.test(cmd[j])) ct.tags.fn = cmd[j].match(/^fn(.*)/)[1];
-      if (/^fe/.test(cmd[j])) ct.tags.fe = cmd[j].match(/^fe(.*)/)[1] * 1;
-      if (/^k\d/.test(cmd[j])) ct.tags.k = cmd[j].match(/^k(\d+)/)[1] * 1;
-      if (/^K\d/.test(cmd[j])) ct.tags.kf = cmd[j].match(/^K(\d+)/)[1] * 1;
-      if (/^kf\d/.test(cmd[j])) ct.tags.kf = cmd[j].match(/^kf(\d+)/)[1] * 1;
-      if (/^ko\d/.test(cmd[j])) ct.tags.ko = cmd[j].match(/^ko(\d+)/)[1] * 1;
-      if (/^kt\d/.test(cmd[j])) ct.tags.kt = cmd[j].match(/^kt(\d+)/)[1] * 1;
-      if (/^q\d/.test(cmd[j])) ct.tags.q = cmd[j][1] * 1;
-      if (/^p\d/.test(cmd[j])) ct.tags.p = cmd[j].match(/^p(\d+)/)[1] * 1;
-      if (/^pbo/.test(cmd[j])) ct.tags.pbo = cmd[j].match(/^pbo(.*)/)[1] * 1;
-      if (/^an\d/.test(cmd[j]) && !dia.alignment) dia.alignment = cmd[j][2] * 1;
-      if (/^a\d/.test(cmd[j]) && !dia.alignment) {
-        tmp = cmd[j].match(/^a(\d+)/)[1] * 1;
-        if (tmp < 4) dia.alignment = tmp;
-        else if (tmp > 8) dia.alignment = tmp - 5;
-        else dia.alignment = tmp + 2;
+      if (/^b\d/.test(cmd)) ct.tags.b = cmd.match(/^b(\d+)/)[1] * 1;
+      if (/^i\d/.test(cmd)) ct.tags.i = cmd[1] * 1;
+      if (/^u\d/.test(cmd)) ct.tags.u = cmd[1] * 1;
+      if (/^s\d/.test(cmd)) ct.tags.s = cmd[1] * 1;
+      if (/^fn/.test(cmd)) ct.tags.fn = cmd.match(/^fn(.*)/)[1];
+      if (/^fe/.test(cmd)) ct.tags.fe = cmd.match(/^fe(.*)/)[1] * 1;
+      if (/^k\d/.test(cmd)) ct.tags.k = cmd.match(/^k(\d+)/)[1] * 1;
+      if (/^K\d/.test(cmd)) ct.tags.kf = cmd.match(/^K(\d+)/)[1] * 1;
+      if (/^kf\d/.test(cmd)) ct.tags.kf = cmd.match(/^kf(\d+)/)[1] * 1;
+      if (/^ko\d/.test(cmd)) ct.tags.ko = cmd.match(/^ko(\d+)/)[1] * 1;
+      if (/^kt\d/.test(cmd)) ct.tags.kt = cmd.match(/^kt(\d+)/)[1] * 1;
+      if (/^q\d/.test(cmd)) ct.tags.q = cmd[1] * 1;
+      if (/^p\d/.test(cmd)) ct.tags.p = cmd.match(/^p(\d+)/)[1] * 1;
+      if (/^pbo/.test(cmd)) ct.tags.pbo = cmd.match(/^pbo(.*)/)[1] * 1;
+      if (/^an\d/.test(cmd) && !dia.alignment) dia.alignment = cmd[2] * 1;
+      if (/^a\d/.test(cmd) && !dia.alignment) {
+        var val = cmd.match(/^a(\d+)/)[1] * 1;
+        if (val < 4) dia.alignment = val;
+        else if (val > 8) dia.alignment = val - 5;
+        else dia.alignment = val + 2;
       }
-      if (/^pos/.test(cmd[j]) && !dia.pos && !dia.move) {
-        tmp = cmd[j].match(/^pos\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
-        dia.pos = {x: tmp[1] * 1, y: tmp[2] * 1};
+      if (/^pos/.test(cmd) && !dia.pos && !dia.move) {
+        var p = cmd.replace(/\s/g, '').match(/^pos\((.*?)\)?$/)[1].split(',');
+        dia.pos = {x: p[0] * 1, y: p[1] * 1};
       }
-      if (/^org/.test(cmd[j]) && !dia.org) {
-        tmp = cmd[j].match(/^org\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)*$/);
-        dia.org = {x: tmp[1] * 1, y: tmp[2] * 1};
+      if (/^org/.test(cmd) && !dia.org) {
+        var p = cmd.replace(/\s/g, '').match(/^org\((.*?)\)?$/)[1].split(',');
+        dia.org = {x: p[0] * 1, y: p[1] * 1};
       }
-      if (/^move/.test(cmd[j]) && !dia.move && !dia.pos) {
-        tmp = cmd[j].match(/^move\s*\((.*)\)/)[1].split(/\s*,\s*/);
-        for (var k = tmp.length - 1; k >= 0; k--) tmp[k] *= 1;
-        dia.pos = {x: tmp[0] * 1, y: tmp[1] * 1};
-        if (tmp.length === 4) {
-          tmp.push(0);
-          tmp.push((dialogue.End - dialogue.Start) * 1000);
+      if (/^move/.test(cmd) && !dia.move && !dia.pos) {
+        var p = cmd.replace(/\s/g, '')
+                   .match(/^move\((.*?)\)?$/)[1]
+                   .split(',')
+                   .map(function(x) { return x * 1; });
+        dia.pos = {x: p[0] * 1, y: p[1] * 1};
+        if (p.length === 4) {
+          p.push(0);
+          p.push((dialogue.End - dialogue.Start) * 1000);
         }
-        dia.move = tmp;
+        dia.move = p;
       }
-      if (/^fad\s*\(/.test(cmd[j]) && !dia.fad) {
-        tmp = cmd[j].match(/^fad\s*\((.*)\)/)[1].split(/\s*,\s*/);
-        for (var k = tmp.length - 1; k >= 0; k--) tmp[k] *= 1;
-        dia.fad = tmp;
+      if (/^fad\s*\(/.test(cmd) && !dia.fad) {
+        dia.fad = cmd.replace(/\s/g, '')
+                     .match(/^fad\((.*?)\)?$/)[1]
+                     .split(',')
+                     .map(function(x) { return x * 1; });
       }
-      if (/^fade/.test(cmd[j]) && !dia.fade) {
-        tmp = cmd[j].match(/^fade\s*\((.*)\)/)[1].split(/\s*,\s*/);
-        for (var k = tmp.length - 1; k >= 0; k--) tmp[k] *= 1;
-        dia.fade = tmp;
+      if (/^fade/.test(cmd) && !dia.fade) {
+        dia.fade = cmd.replace(/\s/g, '')
+                      .match(/^fade\((.*?)\)?$/)[1]
+                      .split(',')
+                      .map(function(x) { return x * 1; });
       }
-      if (/^r/.test(cmd[j])) {
-        tmp = cmd[j].match(/^r(.*)/)[1];
-        var bt = baseTags[tmp] || baseTags[dialogue.Style];
-        ct.tags = JSON.parse(JSON.stringify(bt));
+      if (/^r/.test(cmd)) {
+        var name = cmd.match(/^r(.*)/)[1];
+        var rStyle = styles[name] || styles[dialogue.Style];
+        ct.tags = JSON.parse(JSON.stringify(rStyle._tags));
       }
-      if (/^t\(/.test(cmd[j])) {
-        if (!ct.tags.t) ct.tags.t = [];
-        tmp = cmd[j].replace(/\s/g, '').match(/^t\((.*)\)/)[1].split(',');
-        if (!tmp[0]) continue;
-        var tcmd = tmp[tmp.length - 1].split('\\');
+      if (/^t\(/.test(cmd)) {
+        var args = cmd.replace(/\s/g, '').match(/^t\((.*)\)/)[1].split(',');
+        if (!args[0]) continue;
+        var tcmds = args[args.length - 1].split('\\');
         var tct = {
           t1: 0,
           t2: (dialogue.End - dialogue.Start) * 1000,
           accel: 1,
           tags: {}
         };
-        for (var k = tcmd.length - 1; k >= 0; k--) {
-          parseAnimatableTags.call(tct, tcmd[k]);
+        for (var k = tcmds.length - 1; k >= 0; k--) {
+          parseAnimatableTags.call(tct, tcmds[k]);
         }
-        if (tmp.length === 2) {
-          tct.accel = tmp[0] * 1;
+        if (args.length === 2) {
+          tct.accel = args[0] * 1;
         }
-        if (tmp.length === 3) {
-          tct.t1 = tmp[0] * 1;
-          tct.t2 = tmp[1] * 1;
+        if (args.length === 3) {
+          tct.t1 = args[0] * 1;
+          tct.t2 = args[1] * 1;
         }
-        if (tmp.length === 4) {
-          tct.t1 = tmp[0] * 1;
-          tct.t2 = tmp[1] * 1;
-          tct.accel = tmp[2] * 1;
+        if (args.length === 4) {
+          tct.t1 = args[0] * 1;
+          tct.t2 = args[1] * 1;
+          tct.accel = args[2] * 1;
         }
+        if (!ct.tags.t) ct.tags.t = [];
         ct.tags.t.push(tct);
       }
     }
@@ -123,6 +134,7 @@ var parseTags = function(dialogue) {
     }
     if (dialogue.Effect && dialogue.Effect.name === 'banner') ct.tags.q = 2;
     if (!ct.tags.p) ct.text = ct.text.replace(/\s/g, '&nbsp;');
+    else ct.commands = parseDrawing(ct.text);
     ct.text = ct.text.replace(/\\n/g, (ct.tags.q === 2) ? '<br>' : '&nbsp;');
     prevTags = ct.tags;
     dia.content.push(ct);
@@ -130,12 +142,11 @@ var parseTags = function(dialogue) {
   return dia;
 };
 var parseAnimatableTags = function(cmd) {
-  var tmp;
   if (/^fs[\d\+\-]/.test(cmd)) {
-    tmp = cmd.match(/^fs(.*)/)[1];
-    if (/^\d/.test(tmp)) this.tags.fs = tmp * 1;
-    if (/^\+|-/.test(tmp)) {
-      this.tags.fs *= (tmp * 1 > -10 ? (10 + tmp * 1) / 10 : 1);
+    var val = cmd.match(/^fs(.*)/)[1];
+    if (/^\d/.test(val)) this.tags.fs = val * 1;
+    if (/^\+|-/.test(val)) {
+      this.tags.fs *= (val * 1 > -10 ? (10 + val * 1) / 10 : 1);
     }
   }
   if (/^fsp/.test(cmd)) this.tags.fsp = cmd.match(/^fsp(.*)/)[1] * 1;
@@ -156,14 +167,14 @@ var parseAnimatableTags = function(cmd) {
   if (/^x*shad/.test(cmd)) this.tags.xshad = cmd.match(/^x*shad(.*)/)[1] * 1;
   if (/^y*shad/.test(cmd)) this.tags.yshad = cmd.match(/^y*shad(.*)/)[1] * 1;
   if (/^\d?c&?H?[0-9a-f]+/i.test(cmd)) {
-    tmp = cmd.match(/^(\d?)c&?H?(\w+)/);
-    if (!tmp[1]) tmp[1] = '1';
-    while (tmp[2].length < 6) tmp[2] = '0' + tmp[2];
-    this.tags['c' + tmp[1]] = tmp[2];
+    var args = cmd.match(/^(\d?)c&?H?(\w+)/);
+    if (!args[1]) args[1] = '1';
+    while (args[2].length < 6) args[2] = '0' + args[2];
+    this.tags['c' + args[1]] = args[2];
   }
   if (/^\da&?H?[0-9a-f]+/i.test(cmd)) {
-    tmp = cmd.match(/^(\d)a&?H?(\w\w)/);
-    this.tags['a' + tmp[1]] = tmp[2];
+    var args = cmd.match(/^(\d)a&?H?(\w\w)/);
+    this.tags['a' + args[1]] = args[2];
   }
   if (/^alpha&?H?[0-9a-f]+/i.test(cmd)) {
     for (var i = 1; i <= 4; i++) {
@@ -171,22 +182,22 @@ var parseAnimatableTags = function(cmd) {
     }
   }
   if (/^i?clip/.test(cmd)) {
-    tmp = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
+    var p = cmd.match(/^i?clip\s*\((.*)\)/)[1].split(/\s*,\s*/);
     this.tags.clip = {
       inverse: /iclip/.test(cmd),
       scale: 1,
       commands: null,
       dots: null,
     };
-    if (tmp.length === 1) {
-      this.tags.clip.commands = tmp[0];
+    if (p.length === 1) {
+      this.tags.clip.commands = parseDrawing(p[0]);
     }
-    if (tmp.length === 2) {
-      this.tags.clip.scale = tmp[0] * 1;
-      this.tags.clip.commands = tmp[1];
+    if (p.length === 2) {
+      this.tags.clip.scale = p[0] * 1;
+      this.tags.clip.commands = parseDrawing(p[1]);
     }
-    if (tmp.length === 4) {
-      this.tags.clip.dots = [tmp[0] * 1, tmp[1] * 1, tmp[2] * 1, tmp[3] * 1];
+    if (p.length === 4) {
+      this.tags.clip.dots = [p[0] * 1, p[1] * 1, p[2] * 1, p[3] * 1];
     }
   }
 };
