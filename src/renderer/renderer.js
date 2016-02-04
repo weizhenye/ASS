@@ -24,55 +24,15 @@ var renderer = function(dialogue) {
     t: false,
   };
   dia.node.className = 'ASS-dialogue';
+
   setTagsStyle.call(this, dia);
   this.stage.appendChild(dia.node);
 
   var bcr = dia.node.getBoundingClientRect();
   dia.width = bcr.width;
   dia.height = bcr.height;
-  if (dia.Effect) {
-    if (dia.Effect.name === 'banner') {
-      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-        dia.y = (this.height - dia.height) / 2;
-      }
-      if (dia.Alignment >= 7) dia.y = dia.MarginV;
-      if (dia.Effect.lefttoright) dia.x = -dia.width;
-      else dia.x = this.width;
-    }
-    if (/^scroll/.test(dia.Effect.name)) {
-      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
-      if (dia.Alignment % 3 === 1) dia.x = 0;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
-    }
-  } else {
-    if (dia.pos) {
-      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
-      if (dia.Alignment % 3 === 2) {
-        dia.x = this.scale * dia.pos.x - dia.width / 2;
-      }
-      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
-      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-        dia.y = this.scale * dia.pos.y - dia.height / 2;
-      }
-      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
-    } else {
-      if (dia.Alignment % 3 === 1) dia.x = 0;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
-      if (dia.Alignment % 3 === 0) {
-        dia.x = this.width - dia.width - this.scale * dia.MarginR;
-      }
-      if (dia.t) {
-        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
-        if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-          dia.y = (this.height - dia.height) / 2;
-        }
-        if (dia.Alignment >= 7) dia.y = dia.MarginV;
-      } else dia.y = getChannel.call(this, dia);
-    }
-  }
+
+  setDialoguePosition.call(this, dia);
   setDialogueStyle.call(this, dia);
   setTransformOrigin(dia);
   setClipPath.call(this, dia);
@@ -123,9 +83,9 @@ var setTagsStyle = function(dia) {
     if (t.fax || t.fay ||
         t.frx || t.fry || t.frz ||
         t.fscx !== 100 || t.fscy !== 100) {
-      var tmp = createTransform(t);
+      var tf = createTransform(t);
       ['', '-webkit-'].forEach(function(v) {
-        cssText.push(v + 'transform:' + tmp);
+        cssText.push(v + 'transform:' + tf);
       });
       if (!t.p) {
         cssText.push('transform-style:preserve-3d');
@@ -162,6 +122,51 @@ var setTagsStyle = function(dia) {
     }
   }
   dia.node.appendChild(df);
+};
+var setDialoguePosition = function(dia) {
+  if (dia.Effect) {
+    if (dia.Effect.name === 'banner') {
+      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+        dia.y = (this.height - dia.height) / 2;
+      }
+      if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      if (dia.Effect.lefttoright) dia.x = -dia.width;
+      else dia.x = this.width;
+    }
+    if (/^scroll/.test(dia.Effect.name)) {
+      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
+    }
+  } else {
+    if (dia.pos) {
+      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
+      if (dia.Alignment % 3 === 2) {
+        dia.x = this.scale * dia.pos.x - dia.width / 2;
+      }
+      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
+      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+        dia.y = this.scale * dia.pos.y - dia.height / 2;
+      }
+      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
+    } else {
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) {
+        dia.x = this.width - dia.width - this.scale * dia.MarginR;
+      }
+      if (dia.t) {
+        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+        if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+          dia.y = (this.height - dia.height) / 2;
+        }
+        if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      } else dia.y = getChannel.call(this, dia);
+    }
+  }
 };
 var setDialogueStyle = function(dia) {
   var cssText = [],

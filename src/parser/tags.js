@@ -146,7 +146,7 @@ var parseAnimatableTags = function(cmd) {
     var val = cmd.match(/^fs(.*)/)[1];
     if (/^\d/.test(val)) this.tags.fs = val * 1;
     if (/^\+|-/.test(val)) {
-      this.tags.fs *= (val * 1 > -10 ? (10 + val * 1) / 10 : 1);
+      this.tags.fs *= (val * 1 > -10 ? (1 + val / 10) : 1);
     }
   }
   if (/^fsp/.test(cmd)) this.tags.fsp = cmd.match(/^fsp(.*)/)[1] * 1;
@@ -158,6 +158,7 @@ var parseAnimatableTags = function(cmd) {
   if (/^fr[z\d\-]/.test(cmd)) this.tags.frz = cmd.match(/^frz?(.*)/)[1] * 1;
   if (/^blur\d/.test(cmd)) this.tags.blur = cmd.match(/^blur(.*)/)[1] * 1;
   if (/^be\d/.test(cmd)) this.tags.blur = cmd.match(/^be(.*)/)[1] * 1;
+  if (this.tags.blur < 0) this.tags.blur = 0;
   if (/^fax/.test(cmd)) this.tags.fax = cmd.match(/^fax(.*)/)[1] * 1;
   if (/^fay/.test(cmd)) this.tags.fay = cmd.match(/^fay(.*)/)[1] * 1;
   if (/^x*bord/.test(cmd)) this.tags.xbord = cmd.match(/^x*bord(.*)/)[1] * 1;

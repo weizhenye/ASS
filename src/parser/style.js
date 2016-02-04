@@ -1,9 +1,9 @@
 var parseStyle = function(data, tree) {
   var fields = data.match(/Style:(.*)/)[1].split(','),
       s = {};
-  for (var j = fields.length - 1; j >= 0; --j) {
-    var field = tree.V4Styles.Format[j];
-    s[field] = fields[j].replace(/^\s*/, '');
+  for (var i = fields.length - 1; i >= 0; --i) {
+    var field = tree.V4Styles.Format[i];
+    s[field] = fields[i].replace(/^\s*/, '');
     if (!isNaN(s[field] * 1)) s[field] *= 1;
   }
   s._tags = {

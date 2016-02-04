@@ -4,5 +4,5 @@ var toRGBA = function(c) {
       b = +('0x' + t[2]),
       g = +('0x' + t[3]),
       r = +('0x' + t[4]);
-  return ['rgba(', [r, g, b, a].join(), ')'].join('');
+  return 'rgba(' + [r, g, b, a].join() + ')';
 };

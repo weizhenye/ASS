@@ -60,9 +60,11 @@ var getDrawingAttributes = function(commands, normalizeX, normalizeY) {
       p.x /= normalizeX;
       p.y /= normalizeY;
     });
-    commands[i].prevType = (i === 0 ? null : commands[i - 1].type);
-    commands[i].nextType = (i === len - 1 ? null : commands[i + 1].type);
     arr.push(commands[i].toString());
+    commands[i].points.forEach(function(p) {
+      p.x *= normalizeX;
+      p.y *= normalizeY;
+    });
   }
 
   return {

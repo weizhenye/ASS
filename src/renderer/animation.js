@@ -47,13 +47,13 @@ var createAnimation = function() {
       }
       if (/^scroll/.test(eff.name)) {
         var updown = /up/.test(eff.name) ? -1 : 1,
-            tmp1 = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
-            tmp2 = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
+            tFrom = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
+            tTo = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
             dp = (eff.y2 - eff.y1) / (dur / eff.delay) * 100;
         t[1] = Math.min(100, dp).toFixed(3) + '%';
-        kf.set('0.000%', 'transform', tmp1);
-        kf.set(t[1], 'transform', tmp2);
-        kf.set('100.000%', 'transform', tmp2);
+        kf.set('0.000%', 'transform', tFrom);
+        kf.set(t[1], 'transform', tTo);
+        kf.set('100.000%', 'transform', tTo);
       }
     }
     if (!pt.fad && pt.fade && pt.fade.length === 2) pt.fad = pt.fade;
@@ -110,41 +110,41 @@ var createAnimation = function() {
           t[2] = Math.min(100, tags.t[k].t2 / dur * 100).toFixed(3) + '%';
           t[3] = '100.000%';
           if (ttags.fs) {
-            var tmp1 = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px',
-                tmp2 = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
-            kf.set(t[0], 'font-size', tmp1);
-            kf.set(t[1], 'font-size', tmp1);
-            kf.set(t[2], 'font-size', tmp2);
-            kf.set(t[3], 'font-size', tmp2);
+            var fsFrom = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px',
+                fsTo = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf.set(t[0], 'font-size', fsFrom);
+            kf.set(t[1], 'font-size', fsFrom);
+            kf.set(t[2], 'font-size', fsTo);
+            kf.set(t[3], 'font-size', fsTo);
           }
           if (ttags.fsp) {
-            var tmp1 = this.scale * tags.fsp + 'px',
-                tmp2 = this.scale * ttags.fsp + 'px';
-            kf.set(t[0], 'letter-spacing', tmp1);
-            kf.set(t[1], 'letter-spacing', tmp1);
-            kf.set(t[2], 'letter-spacing', tmp2);
-            kf.set(t[3], 'letter-spacing', tmp2);
+            var fspFrom = this.scale * tags.fsp + 'px',
+                fspTo = this.scale * ttags.fsp + 'px';
+            kf.set(t[0], 'letter-spacing', fspFrom);
+            kf.set(t[1], 'letter-spacing', fspFrom);
+            kf.set(t[2], 'letter-spacing', fspTo);
+            kf.set(t[3], 'letter-spacing', fspTo);
           }
           if (ttags.c1 || ttags.a1) {
             ttags.c1 = ttags.c1 || tags.c1;
             ttags.a1 = ttags.a1 || tags.a1;
-            var tmp1 = toRGBA(tags.a1 + tags.c1),
-                tmp2 = toRGBA(ttags.a1 + ttags.c1);
-            kf.set(t[0], 'color', tmp1);
-            kf.set(t[1], 'color', tmp1);
-            kf.set(t[2], 'color', tmp2);
-            kf.set(t[3], 'color', tmp2);
+            var cFrom = toRGBA(tags.a1 + tags.c1),
+                cTo = toRGBA(ttags.a1 + ttags.c1);
+            kf.set(t[0], 'color', cFrom);
+            kf.set(t[1], 'color', cFrom);
+            kf.set(t[2], 'color', cTo);
+            kf.set(t[3], 'color', cTo);
           }
           if (ttags.a1 &&
               ttags.a1 === ttags.a2 &&
               ttags.a2 === ttags.a3 &&
               ttags.a3 === ttags.a4) {
-            var tmp1 = 1 - parseInt(tags.a1, 16) / 255,
-                tmp2 = 1 - parseInt(ttags.a1, 16) / 255;
-            kf.set(t[0], 'opacity', tmp1);
-            kf.set(t[1], 'opacity', tmp1);
-            kf.set(t[2], 'opacity', tmp2);
-            kf.set(t[3], 'opacity', tmp2);
+            var aFrom = 1 - parseInt(tags.a1, 16) / 255,
+                aTo = 1 - parseInt(ttags.a1, 16) / 255;
+            kf.set(t[0], 'opacity', aFrom);
+            kf.set(t[1], 'opacity', aFrom);
+            kf.set(t[2], 'opacity', aTo);
+            kf.set(t[3], 'opacity', aTo);
           }
           var bsTags = ['c3', 'a3', 'c4', 'a4',
                         'xbord', 'ybord', 'xshad', 'yshad', 'blur'];
@@ -160,12 +160,12 @@ var createAnimation = function() {
             });
             var sisbas = this.tree.ScriptInfo['ScaledBorderAndShadow'],
                 sbas = /Yes/i.test(sisbas) ? this.scale : 1,
-                tmp1 = createCSSBS(tags, sbas),
-                tmp2 = createCSSBS(ttags, sbas);
-            kf.set(t[0], 'text-shadow', tmp1);
-            kf.set(t[1], 'text-shadow', tmp1);
-            kf.set(t[2], 'text-shadow', tmp2);
-            kf.set(t[3], 'text-shadow', tmp2);
+                bsFrom = createCSSBS(tags, sbas),
+                bsTo = createCSSBS(ttags, sbas);
+            kf.set(t[0], 'text-shadow', bsFrom);
+            kf.set(t[1], 'text-shadow', bsFrom);
+            kf.set(t[2], 'text-shadow', bsTo);
+            kf.set(t[3], 'text-shadow', bsTo);
           }
           if ((ttags.fscx && ttags.fscx !== 100) ||
               (ttags.fscy && ttags.fscy !== 100) ||
@@ -183,12 +183,12 @@ var createAnimation = function() {
               ttags.fscy = (ttags.fscy / tags.fscy) * 100;
               tags.fscx = tags.fscy = 100;
             }
-            var tmp1 = createTransform(tags),
-                tmp2 = createTransform(ttags);
-            kf.set(t[0], 'transform', tmp1);
-            kf.set(t[1], 'transform', tmp1);
-            kf.set(t[2], 'transform', tmp2);
-            kf.set(t[3], 'transform', tmp2);
+            var tFrom = createTransform(tags),
+                tTo = createTransform(ttags);
+            kf.set(t[0], 'transform', tFrom);
+            kf.set(t[1], 'transform', tFrom);
+            kf.set(t[2], 'transform', tTo);
+            kf.set(t[3], 'transform', tTo);
           }
         }
       }

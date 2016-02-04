@@ -7,13 +7,14 @@ var parseDialogue = function(data, tree) {
     fields.push(textField);
   }
 
+  var timer = (tree.ScriptInfo['Timer'] / 100) || 1;
   var dia = {};
   for (var i = 0; i < len; ++i) {
     dia[tree.Events.Format[i]] = fields[i].replace(/^\s+/, '');
   }
   dia.Layer *= 1;
-  dia.Start = parseTime(dia.Start);
-  dia.End = parseTime(dia.End);
+  dia.Start = parseTime(dia.Start) / timer;
+  dia.End = parseTime(dia.End) / timer;
   dia.Style = tree.V4Styles.Style[dia.Style] ? dia.Style : 'Default';
   dia.MarginL *= 1;
   dia.MarginR *= 1;

@@ -72,10 +72,10 @@ var parseDrawing = function(text) {
           commands[i - 1].points = prev;
         }
         if (p[0] === 'c') {
-          var tmp = commands[i - 1].points;
-          commands[i - 1].points.push(new Point(tmp[0].x, tmp[0].y),
-                                      new Point(tmp[1].x, tmp[1].y),
-                                      new Point(tmp[2].x, tmp[2].y));
+          var ps = commands[i - 1].points;
+          commands[i - 1].points.push(new Point(ps[0].x, ps[0].y),
+                                      new Point(ps[1].x, ps[1].y),
+                                      new Point(ps[2].x, ps[2].y));
         }
       }
       rawCommands.splice(i, 1);
@@ -84,7 +84,13 @@ var parseDrawing = function(text) {
         var prev = commands[i - 1].points[commands[i - 1].points.length - 1];
         command.points.unshift(new Point(prev.x, prev.y));
       }
-      if (command.isValid()) commands.push(command);
+      if (command.isValid()) {
+        if (i) {
+          command.prevType = commands[i - 1].type;
+          commands[i - 1].nextType = command.type;
+        }
+        commands.push(command);
+      }
       i++;
     }
   }

@@ -22,9 +22,9 @@ var parseASS = function(data) {
     if (state === 0) continue;
     if (state === 1) {
       if (/:/.test(line)) {
-        var kv = line.split(/\s*:\s*/);
-        if (!isNaN(kv[1] * 1)) kv[1] *= 1;
-        tree.ScriptInfo[kv[0]] = kv[1];
+        var kv = line.match(/(.*?)\s*:\s*(.*)/);
+        if (!isNaN(kv[2] * 1)) kv[2] *= 1;
+        tree.ScriptInfo[kv[1]] = kv[2];
       }
     }
     if (state === 2) {

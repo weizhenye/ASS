@@ -201,9 +201,9 @@ var parseASS = function(data) {
     if (state === 0) continue;
     if (state === 1) {
       if (/:/.test(line)) {
-        var kv = line.split(/\s*:\s*/);
-        if (!isNaN(kv[1] * 1)) kv[1] *= 1;
-        tree.ScriptInfo[kv[0]] = kv[1];
+        var kv = line.match(/(.*?)\s*:\s*(.*)/);
+        if (!isNaN(kv[2] * 1)) kv[2] *= 1;
+        tree.ScriptInfo[kv[1]] = kv[2];
       }
     }
     if (state === 2) {
@@ -244,13 +244,14 @@ var parseDialogue = function(data, tree) {
     fields.push(textField);
   }
 
+  var timer = (tree.ScriptInfo['Timer'] / 100) || 1;
   var dia = {};
   for (var i = 0; i < len; ++i) {
     dia[tree.Events.Format[i]] = fields[i].replace(/^\s+/, '');
   }
   dia.Layer *= 1;
-  dia.Start = parseTime(dia.Start);
-  dia.End = parseTime(dia.End);
+  dia.Start = parseTime(dia.Start) / timer;
+  dia.End = parseTime(dia.End) / timer;
   dia.Style = tree.V4Styles.Style[dia.Style] ? dia.Style : 'Default';
   dia.MarginL *= 1;
   dia.MarginR *= 1;
@@ -335,10 +336,10 @@ var parseDrawing = function(text) {
           commands[i - 1].points = prev;
         }
         if (p[0] === 'c') {
-          var tmp = commands[i - 1].points;
-          commands[i - 1].points.push(new Point(tmp[0].x, tmp[0].y),
-                                      new Point(tmp[1].x, tmp[1].y),
-                                      new Point(tmp[2].x, tmp[2].y));
+          var ps = commands[i - 1].points;
+          commands[i - 1].points.push(new Point(ps[0].x, ps[0].y),
+                                      new Point(ps[1].x, ps[1].y),
+                                      new Point(ps[2].x, ps[2].y));
         }
       }
       rawCommands.splice(i, 1);
@@ -347,7 +348,13 @@ var parseDrawing = function(text) {
         var prev = commands[i - 1].points[commands[i - 1].points.length - 1];
         command.points.unshift(new Point(prev.x, prev.y));
       }
-      if (command.isValid()) commands.push(command);
+      if (command.isValid()) {
+        if (i) {
+          command.prevType = commands[i - 1].type;
+          commands[i - 1].nextType = command.type;
+        }
+        commands.push(command);
+      }
       i++;
     }
   }
@@ -384,9 +391,9 @@ var parseFormat = function(data) {
 var parseStyle = function(data, tree) {
   var fields = data.match(/Style:(.*)/)[1].split(','),
       s = {};
-  for (var j = fields.length - 1; j >= 0; --j) {
-    var field = tree.V4Styles.Format[j];
-    s[field] = fields[j].replace(/^\s*/, '');
+  for (var i = fields.length - 1; i >= 0; --i) {
+    var field = tree.V4Styles.Format[i];
+    s[field] = fields[i].replace(/^\s*/, '');
     if (!isNaN(s[field] * 1)) s[field] *= 1;
   }
   s._tags = {
@@ -565,7 +572,7 @@ var parseAnimatableTags = function(cmd) {
     var val = cmd.match(/^fs(.*)/)[1];
     if (/^\d/.test(val)) this.tags.fs = val * 1;
     if (/^\+|-/.test(val)) {
-      this.tags.fs *= (val * 1 > -10 ? (10 + val * 1) / 10 : 1);
+      this.tags.fs *= (val * 1 > -10 ? (1 + val / 10) : 1);
     }
   }
   if (/^fsp/.test(cmd)) this.tags.fsp = cmd.match(/^fsp(.*)/)[1] * 1;
@@ -577,6 +584,7 @@ var parseAnimatableTags = function(cmd) {
   if (/^fr[z\d\-]/.test(cmd)) this.tags.frz = cmd.match(/^frz?(.*)/)[1] * 1;
   if (/^blur\d/.test(cmd)) this.tags.blur = cmd.match(/^blur(.*)/)[1] * 1;
   if (/^be\d/.test(cmd)) this.tags.blur = cmd.match(/^be(.*)/)[1] * 1;
+  if (this.tags.blur < 0) this.tags.blur = 0;
   if (/^fax/.test(cmd)) this.tags.fax = cmd.match(/^fax(.*)/)[1] * 1;
   if (/^fay/.test(cmd)) this.tags.fay = cmd.match(/^fay(.*)/)[1] * 1;
   if (/^x*bord/.test(cmd)) this.tags.xbord = cmd.match(/^x*bord(.*)/)[1] * 1;
@@ -652,55 +660,15 @@ var renderer = function(dialogue) {
     t: false,
   };
   dia.node.className = 'ASS-dialogue';
+
   setTagsStyle.call(this, dia);
   this.stage.appendChild(dia.node);
 
   var bcr = dia.node.getBoundingClientRect();
   dia.width = bcr.width;
   dia.height = bcr.height;
-  if (dia.Effect) {
-    if (dia.Effect.name === 'banner') {
-      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-        dia.y = (this.height - dia.height) / 2;
-      }
-      if (dia.Alignment >= 7) dia.y = dia.MarginV;
-      if (dia.Effect.lefttoright) dia.x = -dia.width;
-      else dia.x = this.width;
-    }
-    if (/^scroll/.test(dia.Effect.name)) {
-      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
-      if (dia.Alignment % 3 === 1) dia.x = 0;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
-      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
-    }
-  } else {
-    if (dia.pos) {
-      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
-      if (dia.Alignment % 3 === 2) {
-        dia.x = this.scale * dia.pos.x - dia.width / 2;
-      }
-      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
-      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
-      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-        dia.y = this.scale * dia.pos.y - dia.height / 2;
-      }
-      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
-    } else {
-      if (dia.Alignment % 3 === 1) dia.x = 0;
-      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
-      if (dia.Alignment % 3 === 0) {
-        dia.x = this.width - dia.width - this.scale * dia.MarginR;
-      }
-      if (dia.t) {
-        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
-        if (dia.Alignment >= 4 && dia.Alignment <= 6) {
-          dia.y = (this.height - dia.height) / 2;
-        }
-        if (dia.Alignment >= 7) dia.y = dia.MarginV;
-      } else dia.y = getChannel.call(this, dia);
-    }
-  }
+
+  setDialoguePosition.call(this, dia);
   setDialogueStyle.call(this, dia);
   setTransformOrigin(dia);
   setClipPath.call(this, dia);
@@ -751,9 +719,9 @@ var setTagsStyle = function(dia) {
     if (t.fax || t.fay ||
         t.frx || t.fry || t.frz ||
         t.fscx !== 100 || t.fscy !== 100) {
-      var tmp = createTransform(t);
+      var tf = createTransform(t);
       ['', '-webkit-'].forEach(function(v) {
-        cssText.push(v + 'transform:' + tmp);
+        cssText.push(v + 'transform:' + tf);
       });
       if (!t.p) {
         cssText.push('transform-style:preserve-3d');
@@ -790,6 +758,51 @@ var setTagsStyle = function(dia) {
     }
   }
   dia.node.appendChild(df);
+};
+var setDialoguePosition = function(dia) {
+  if (dia.Effect) {
+    if (dia.Effect.name === 'banner') {
+      if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+        dia.y = (this.height - dia.height) / 2;
+      }
+      if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      if (dia.Effect.lefttoright) dia.x = -dia.width;
+      else dia.x = this.width;
+    }
+    if (/^scroll/.test(dia.Effect.name)) {
+      dia.y = /up/.test(dia.Effect.name) ? this.height : -dia.height;
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) dia.x = this.width - dia.width;
+    }
+  } else {
+    if (dia.pos) {
+      if (dia.Alignment % 3 === 1) dia.x = this.scale * dia.pos.x;
+      if (dia.Alignment % 3 === 2) {
+        dia.x = this.scale * dia.pos.x - dia.width / 2;
+      }
+      if (dia.Alignment % 3 === 0) dia.x = this.scale * dia.pos.x - dia.width;
+      if (dia.Alignment <= 3) dia.y = this.scale * dia.pos.y - dia.height;
+      if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+        dia.y = this.scale * dia.pos.y - dia.height / 2;
+      }
+      if (dia.Alignment >= 7) dia.y = this.scale * dia.pos.y;
+    } else {
+      if (dia.Alignment % 3 === 1) dia.x = 0;
+      if (dia.Alignment % 3 === 2) dia.x = (this.width - dia.width) / 2;
+      if (dia.Alignment % 3 === 0) {
+        dia.x = this.width - dia.width - this.scale * dia.MarginR;
+      }
+      if (dia.t) {
+        if (dia.Alignment <= 3) dia.y = this.height - dia.height - dia.MarginV;
+        if (dia.Alignment >= 4 && dia.Alignment <= 6) {
+          dia.y = (this.height - dia.height) / 2;
+        }
+        if (dia.Alignment >= 7) dia.y = dia.MarginV;
+      } else dia.y = getChannel.call(this, dia);
+    }
+  }
 };
 var setDialogueStyle = function(dia) {
   var cssText = [],
@@ -914,13 +927,13 @@ var createAnimation = function() {
       }
       if (/^scroll/.test(eff.name)) {
         var updown = /up/.test(eff.name) ? -1 : 1,
-            tmp1 = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
-            tmp2 = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
+            tFrom = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
+            tTo = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
             dp = (eff.y2 - eff.y1) / (dur / eff.delay) * 100;
         t[1] = Math.min(100, dp).toFixed(3) + '%';
-        kf.set('0.000%', 'transform', tmp1);
-        kf.set(t[1], 'transform', tmp2);
-        kf.set('100.000%', 'transform', tmp2);
+        kf.set('0.000%', 'transform', tFrom);
+        kf.set(t[1], 'transform', tTo);
+        kf.set('100.000%', 'transform', tTo);
       }
     }
     if (!pt.fad && pt.fade && pt.fade.length === 2) pt.fad = pt.fade;
@@ -977,41 +990,41 @@ var createAnimation = function() {
           t[2] = Math.min(100, tags.t[k].t2 / dur * 100).toFixed(3) + '%';
           t[3] = '100.000%';
           if (ttags.fs) {
-            var tmp1 = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px',
-                tmp2 = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
-            kf.set(t[0], 'font-size', tmp1);
-            kf.set(t[1], 'font-size', tmp1);
-            kf.set(t[2], 'font-size', tmp2);
-            kf.set(t[3], 'font-size', tmp2);
+            var fsFrom = this.scale * getRealFontSize(tags.fs, tags.fn) + 'px',
+                fsTo = this.scale * getRealFontSize(ttags.fs, tags.fn) + 'px';
+            kf.set(t[0], 'font-size', fsFrom);
+            kf.set(t[1], 'font-size', fsFrom);
+            kf.set(t[2], 'font-size', fsTo);
+            kf.set(t[3], 'font-size', fsTo);
           }
           if (ttags.fsp) {
-            var tmp1 = this.scale * tags.fsp + 'px',
-                tmp2 = this.scale * ttags.fsp + 'px';
-            kf.set(t[0], 'letter-spacing', tmp1);
-            kf.set(t[1], 'letter-spacing', tmp1);
-            kf.set(t[2], 'letter-spacing', tmp2);
-            kf.set(t[3], 'letter-spacing', tmp2);
+            var fspFrom = this.scale * tags.fsp + 'px',
+                fspTo = this.scale * ttags.fsp + 'px';
+            kf.set(t[0], 'letter-spacing', fspFrom);
+            kf.set(t[1], 'letter-spacing', fspFrom);
+            kf.set(t[2], 'letter-spacing', fspTo);
+            kf.set(t[3], 'letter-spacing', fspTo);
           }
           if (ttags.c1 || ttags.a1) {
             ttags.c1 = ttags.c1 || tags.c1;
             ttags.a1 = ttags.a1 || tags.a1;
-            var tmp1 = toRGBA(tags.a1 + tags.c1),
-                tmp2 = toRGBA(ttags.a1 + ttags.c1);
-            kf.set(t[0], 'color', tmp1);
-            kf.set(t[1], 'color', tmp1);
-            kf.set(t[2], 'color', tmp2);
-            kf.set(t[3], 'color', tmp2);
+            var cFrom = toRGBA(tags.a1 + tags.c1),
+                cTo = toRGBA(ttags.a1 + ttags.c1);
+            kf.set(t[0], 'color', cFrom);
+            kf.set(t[1], 'color', cFrom);
+            kf.set(t[2], 'color', cTo);
+            kf.set(t[3], 'color', cTo);
           }
           if (ttags.a1 &&
               ttags.a1 === ttags.a2 &&
               ttags.a2 === ttags.a3 &&
               ttags.a3 === ttags.a4) {
-            var tmp1 = 1 - parseInt(tags.a1, 16) / 255,
-                tmp2 = 1 - parseInt(ttags.a1, 16) / 255;
-            kf.set(t[0], 'opacity', tmp1);
-            kf.set(t[1], 'opacity', tmp1);
-            kf.set(t[2], 'opacity', tmp2);
-            kf.set(t[3], 'opacity', tmp2);
+            var aFrom = 1 - parseInt(tags.a1, 16) / 255,
+                aTo = 1 - parseInt(ttags.a1, 16) / 255;
+            kf.set(t[0], 'opacity', aFrom);
+            kf.set(t[1], 'opacity', aFrom);
+            kf.set(t[2], 'opacity', aTo);
+            kf.set(t[3], 'opacity', aTo);
           }
           var bsTags = ['c3', 'a3', 'c4', 'a4',
                         'xbord', 'ybord', 'xshad', 'yshad', 'blur'];
@@ -1027,12 +1040,12 @@ var createAnimation = function() {
             });
             var sisbas = this.tree.ScriptInfo['ScaledBorderAndShadow'],
                 sbas = /Yes/i.test(sisbas) ? this.scale : 1,
-                tmp1 = createCSSBS(tags, sbas),
-                tmp2 = createCSSBS(ttags, sbas);
-            kf.set(t[0], 'text-shadow', tmp1);
-            kf.set(t[1], 'text-shadow', tmp1);
-            kf.set(t[2], 'text-shadow', tmp2);
-            kf.set(t[3], 'text-shadow', tmp2);
+                bsFrom = createCSSBS(tags, sbas),
+                bsTo = createCSSBS(ttags, sbas);
+            kf.set(t[0], 'text-shadow', bsFrom);
+            kf.set(t[1], 'text-shadow', bsFrom);
+            kf.set(t[2], 'text-shadow', bsTo);
+            kf.set(t[3], 'text-shadow', bsTo);
           }
           if ((ttags.fscx && ttags.fscx !== 100) ||
               (ttags.fscy && ttags.fscy !== 100) ||
@@ -1050,12 +1063,12 @@ var createAnimation = function() {
               ttags.fscy = (ttags.fscy / tags.fscy) * 100;
               tags.fscx = tags.fscy = 100;
             }
-            var tmp1 = createTransform(tags),
-                tmp2 = createTransform(ttags);
-            kf.set(t[0], 'transform', tmp1);
-            kf.set(t[1], 'transform', tmp1);
-            kf.set(t[2], 'transform', tmp2);
-            kf.set(t[3], 'transform', tmp2);
+            var tFrom = createTransform(tags),
+                tTo = createTransform(ttags);
+            kf.set(t[0], 'transform', tFrom);
+            kf.set(t[1], 'transform', tFrom);
+            kf.set(t[2], 'transform', tTo);
+            kf.set(t[3], 'transform', tTo);
           }
         }
       }
@@ -1392,9 +1405,11 @@ var getDrawingAttributes = function(commands, normalizeX, normalizeY) {
       p.x /= normalizeX;
       p.y /= normalizeY;
     });
-    commands[i].prevType = (i === 0 ? null : commands[i - 1].type);
-    commands[i].nextType = (i === len - 1 ? null : commands[i + 1].type);
     arr.push(commands[i].toString());
+    commands[i].points.forEach(function(p) {
+      p.x *= normalizeX;
+      p.y *= normalizeY;
+    });
   }
 
   return {
@@ -1426,7 +1441,7 @@ var toRGBA = function(c) {
       b = +('0x' + t[2]),
       g = +('0x' + t[3]),
       r = +('0x' + t[4]);
-  return ['rgba(', [r, g, b, a].join(), ')'].join('');
+  return 'rgba(' + [r, g, b, a].join() + ')';
 };
 
 var createTransform = function(t) {
