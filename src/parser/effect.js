@@ -1,4 +1,4 @@
-var parseEffect = function(text, resY) {
+var parseEffect = function(text) {
   var param = text.toLowerCase().split(';');
   if (param[0] === 'banner') {
     return {
@@ -12,7 +12,7 @@ var parseEffect = function(text, resY) {
     return {
       name: param[0],
       y1: Math.min(param[1], param[2]),
-      y2: Math.max(param[1], param[2]) || resY,
+      y2: Math.max(param[1], param[2]),
       delay: param[3] * 1 || 1,
       fadeawayheight: param[4] * 1 || 0,
     };

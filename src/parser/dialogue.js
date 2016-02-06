@@ -19,7 +19,7 @@ var parseDialogue = function(data, tree) {
   dia.MarginL *= 1;
   dia.MarginR *= 1;
   dia.MarginV *= 1;
-  dia.Effect = parseEffect(dia.Effect, tree.ScriptInfo.PlayResY);
+  dia.Effect = parseEffect(dia.Effect);
   dia._parsedText = parseTags(dia, tree.V4Styles.Style);
 
   return dia;

@@ -1,5 +1,6 @@
 .ASS-container {
   position: relative;
+  overflow: hidden;
 }
 .ASS-fix-font-size {
   position: absolute;

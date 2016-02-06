@@ -14,6 +14,8 @@ function ASS() {
   this.position = 0;
   this.runline = [];
   this.scale = 1;
+  this._resample = 'video_height';
+  this.resolution = {x: null, y: null};
   this.container = document.createElement('div');
   this.container.className = 'ASS-container';
   this.container.appendChild($ffs);
@@ -21,7 +23,7 @@ function ASS() {
   this.stage = document.createElement('div');
   this.stage.className = 'ASS-stage ASS-animation-paused';
 }
-ASS.prototype.init = function(data, video) {
+ASS.prototype.init = function(data, video, opt) {
   if (!data || video.nodeName !== 'VIDEO') return;
 
   var that = this;
@@ -42,8 +44,8 @@ ASS.prototype.init = function(data, video) {
     this.tree.ScriptInfo.PlayResX = this.video.videoWidth;
     this.tree.ScriptInfo.PlayResY = this.video.videoHeight;
   }
-  var vb = [0, 0, this.tree.ScriptInfo.PlayResX, this.tree.ScriptInfo.PlayResY];
-  $clipPath.setAttributeNS(null, 'viewBox', vb.join(' '));
+
+  if (opt && opt.resample) this._resample = opt.resample;
 
   var $style = document.getElementById('ASS-style');
   if (!$style) {
@@ -61,23 +63,39 @@ ASS.prototype.resize = function() {
   if (!this.video) return;
   var cw = this.video.clientWidth,
       ch = this.video.clientHeight,
-      cp = cw / ch,
       vw = this.video.videoWidth,
       vh = this.video.videoHeight,
-      vp = vw / vh,
-      w = (cp > vp) ? vp * ch : cw,
-      h = (cp > vp) ? ch : cw / vp,
-      t = (cp > vp) ? 0 : (ch - h) / 2,
-      l = (cp > vp) ? (cw - w) / 2 : 0;
-  this.width = w;
-  this.height = h;
-  var arr = ['width:', w, 'px;height:', h, 'px;'];
-  this.container.style.cssText = arr.join('');
-  arr.push('top:', t, 'px;left:', l, 'px;');
-  this.stage.style.cssText = arr.join('');
-  $clipPath.style.cssText = arr.join('');
-  this.scale = Math.min(w / this.tree.ScriptInfo.PlayResX,
-                        h / this.tree.ScriptInfo.PlayResY);
+      sw = this.tree.ScriptInfo.PlayResX,
+      sh = this.tree.ScriptInfo.PlayResY,
+      videoScale = Math.min(cw / vw, ch / vh);
+  this.resolution.x = sw;
+  this.resolution.y = sh;
+  if (this.resample === 'video_width') {
+    this.resolution.y = sw / vw * vh;
+  }
+  if (this.resample === 'video_height') {
+    this.resolution.x = sh / vh * vw;
+  }
+  this.scale = Math.min(cw / this.resolution.x, ch / this.resolution.y);
+  if (this.resample === 'script_width') {
+    this.scale = videoScale * (vw / this.resolution.x);
+  }
+  if (this.resample === 'script_height') {
+    this.scale = videoScale * (vh / this.resolution.y);
+  }
+  this.width = this.scale * this.resolution.x;
+  this.height = this.scale * this.resolution.y;
+
+  var cssText = 'width:' + cw + 'px;height:' + ch + 'px;'
+  this.container.style.cssText = cssText;
+  cssText = 'width:' + this.width + 'px;' +
+            'height:' + this.height + 'px;' +
+            'top:' + (ch - this.height) / 2 + 'px;' +
+            'left:' + (cw - this.width) / 2 + 'px;';
+  this.stage.style.cssText = cssText;
+  $clipPath.style.cssText = cssText;
+  $clipPath.setAttributeNS(null, 'viewBox', [0, 0, sw, sh].join(' '));
+
   createAnimation.call(this);
   this._seek();
   return this;
@@ -90,6 +108,27 @@ ASS.prototype.hide = function() {
   this.stage.style.visibility = 'hidden';
   return this;
 };
+Object.defineProperty(ASS.prototype, 'resample', {
+  get: function() {
+    var r = this._resample;
+    if (r === 'video_width' ||
+        r === 'video_height' ||
+        r === 'script_width' ||
+        r === 'script_height') {
+      return r;
+    } else return 'video_height';
+  },
+  set: function(r) {
+    if (r === this._resample) return r;
+    if (r === 'video_width' ||
+        r === 'video_height' ||
+        r === 'script_width' ||
+        r === 'script_height') {
+      this._resample = r;
+      this.resize();
+    }
+  }
+});
 ASS.prototype._play = function() {
   var that = this;
   var frame = function() {
@@ -167,7 +206,7 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var channel = [];
 var xmlns = 'http://www.w3.org/2000/svg';
-var ASS_CSS = '.ASS-container{position:relative}.ASS-container video,.ASS-dialogue,.ASS-fix-font-size,.ASS-stage{position:absolute}.ASS-fix-font-size{visibility:hidden}.ASS-container video{top:0;left:0}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none}.ASS-fix-objectBoundingBox{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-animation-paused *{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}';
+var ASS_CSS = '.ASS-container{position:relative;overflow:hidden}.ASS-container video,.ASS-dialogue,.ASS-fix-font-size,.ASS-stage{position:absolute}.ASS-fix-font-size{visibility:hidden}.ASS-container video{top:0;left:0}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none}.ASS-fix-objectBoundingBox{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-animation-paused *{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}';
 
 var generateUUID = function() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -256,7 +295,7 @@ var parseDialogue = function(data, tree) {
   dia.MarginL *= 1;
   dia.MarginR *= 1;
   dia.MarginV *= 1;
-  dia.Effect = parseEffect(dia.Effect, tree.ScriptInfo.PlayResY);
+  dia.Effect = parseEffect(dia.Effect);
   dia._parsedText = parseTags(dia, tree.V4Styles.Style);
 
   return dia;
@@ -362,7 +401,7 @@ var parseDrawing = function(text) {
   return commands;
 };
 
-var parseEffect = function(text, resY) {
+var parseEffect = function(text) {
   var param = text.toLowerCase().split(';');
   if (param[0] === 'banner') {
     return {
@@ -376,7 +415,7 @@ var parseEffect = function(text, resY) {
     return {
       name: param[0],
       y1: Math.min(param[1], param[2]),
-      y2: Math.max(param[1], param[2]) || resY,
+      y2: Math.max(param[1], param[2]),
       delay: param[3] * 1 || 1,
       fadeawayheight: param[4] * 1 || 0,
     };
@@ -927,9 +966,11 @@ var createAnimation = function() {
       }
       if (/^scroll/.test(eff.name)) {
         var updown = /up/.test(eff.name) ? -1 : 1,
-            tFrom = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
-            tTo = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
-            dp = (eff.y2 - eff.y1) / (dur / eff.delay) * 100;
+            y1 = eff.y1,
+            y2 = eff.y2 || this.resolution.y,
+            tFrom = 'translateY(' + this.scale * y1 * updown + 'px)',
+            tTo = 'translateY(' + this.scale * y2 * updown + 'px)',
+            dp = (y2 - y1) / (dur / eff.delay) * 100;
         t[1] = Math.min(100, dp).toFixed(3) + '%';
         kf.set('0.000%', 'transform', tFrom);
         kf.set(t[1], 'transform', tTo);

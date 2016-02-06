@@ -47,9 +47,11 @@ var createAnimation = function() {
       }
       if (/^scroll/.test(eff.name)) {
         var updown = /up/.test(eff.name) ? -1 : 1,
-            tFrom = 'translateY(' + this.scale * eff.y1 * updown + 'px)',
-            tTo = 'translateY(' + this.scale * eff.y2 * updown + 'px)',
-            dp = (eff.y2 - eff.y1) / (dur / eff.delay) * 100;
+            y1 = eff.y1,
+            y2 = eff.y2 || this.resolution.y,
+            tFrom = 'translateY(' + this.scale * y1 * updown + 'px)',
+            tTo = 'translateY(' + this.scale * y2 * updown + 'px)',
+            dp = (y2 - y1) / (dur / eff.delay) * 100;
         t[1] = Math.min(100, dp).toFixed(3) + '%';
         kf.set('0.000%', 'transform', tFrom);
         kf.set(t[1], 'transform', tTo);

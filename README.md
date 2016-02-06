@@ -10,35 +10,70 @@ ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 vide
 [TODO list](https://github.com/weizhenye/ASS#todo)
 
 ## Usage
-	<video id="video" src="example.mp4"></video>
 
-	<script src="ass.js"></script>
-	<script>
-	  var x = new XMLHttpRequest();
-	  x.open('GET', 'example.ass', 1);
-	  x.onreadystatechange = function() {
-	    if (x.readyState === 4 && x.status === 200) {
-	      var ass = new ASS();
-	      ass.init(x.responseText, document.getElementById('video'));
-	    }
-	  }
-	  x.send(null);
-	</script>
+```
+<video id="video" src="example.mp4"></video>
 
+<script src="dist/ass.min.js"></script>
+<script>
+  var x = new XMLHttpRequest();
+  x.open('GET', 'example.ass', 1);
+  x.onreadystatechange = function() {
+    if (x.readyState === 4 && x.status === 200) {
+      var ass = new ASS();
+      ass.init(x.responseText, document.getElementById('video'));
+    }
+  }
+  x.send(null);
+</script>
+```
 
 ## API
 
 #### Initialization
-	var ass = new ASS();
-	ass.init(content, video);
-#### Resize
-	// If you change video's width or height, you should do
-	ass.resize();
-#### Show
-	ass.show();
-#### Hide
-	ass.hide();
 
+```
+var ass = new ASS();
+ass.init(content, video, {/* options */});
+```
+
+#### Resize
+If you change video's width or height, you should do
+
+```
+ass.resize();
+```
+
+#### Show
+
+```
+ass.show();
+```
+
+#### Hide
+
+```
+ass.hide();
+```
+
+#### Resample
+
+When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves. However, drawings and clips will be always depending on script origin resolution.
+
+There are four valid values, we suppose video resolution is 1280x720 and script resolution is 640x480 in following situations:
+* `video_width`: Script resolution will set to video resolution based on video width. Script resolution will set to 640x360, and scale = 1280 / 640 = 2.
+* `video_height`(__default__): Script resolution will set to video resolution based on video height. Script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.
+* `script_width`: Script resolution will not change but scale is based on script width. So scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.
+* `script_height`: Script resolution will not change but scale is based on script height. So scale = 720 / 480 = 1.5. Script area will be centered in video area.
+
+```
+ass.resample = 'video_width';
+
+// You can also set it when initializing.
+ass.init(content, video, {
+  resample: 'video_width'
+});
+```
 
 ## TODO
 
@@ -82,6 +117,7 @@ There is no outline for text in CSS, `text-stroke` is webkit only and has poor p
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
 * For I'm using the `clip-path` CSS property to implement `\clip`, [IE and Edge are not supported yet](http://caniuse.com/#feat=css-clip-path).
+* `\be` is just treated as `\blur`.
 
 ## License
 
