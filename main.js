@@ -88,6 +88,12 @@ $('#controls-show')[0].onclick = function() {
 $('#controls-hide')[0].onclick = function() {
   ass.hide();
 };
+var $rs = Array.prototype.slice.apply($('input[name="resample"]'));
+$rs.forEach(function($r) {
+  $r.onclick = function() {
+    ass.resample = this.id.match(/resample-(.*)/)[1];
+  };
+});
 var loadASS = function(file) {
   var reader = new FileReader(file);
   if (!/\.ass$/i.test(file.name)) {

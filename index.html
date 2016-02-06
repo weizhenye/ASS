@@ -14,23 +14,36 @@
 </head>
 <body>
 <header id="site-header">
-  <h1 id="site-title">ASS.js</h1>
-  <h2 id="site-subtitle">A JavaScript renderer for ASS subtitle format</h2>
-  <iframe src="https://ghbtns.com/github-btn.html?user=weizhenye&repo=ASS&type=star&count=true&size=large" frameborder="0" scrolling="0" width="120" height="30"></iframe>
+  <div class="wrapper">
+    <div class="pull-right">
+      <fieldset class="pull-right">
+        <legend title="When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves.">Resample</legend>
+        <input type="radio" name="resample" id="resample-video_width" autocomplete="off">
+        <label for="resample-video_width" title="Script resolution will set to video resolution based on video width. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 640x360, and scale = 1280 / 640 = 2.">video_width</label><br>
+        <input type="radio" name="resample" id="resample-video_height" autocomplete="off" checked>
+        <label for="resample-video_height" title="Script resolution will set to video resolution based on video height. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.">video_height</label><br>
+        <input type="radio" name="resample" id="resample-script_width" autocomplete="off">
+        <label for="resample-script_width" title="Script resolution will not change but scale is based on script width. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.">script_width</label><br>
+        <input type="radio" name="resample" id="resample-script_height" autocomplete="off">
+        <label for="resample-script_height" title="Script resolution will not change but scale is based on script height. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 720 / 480 = 1.5. Script area will be centered in video area.">script_height</label>
+      </fieldset>
+      <fieldset>
+        <legend>Initialization</legend>
+        <button id="init-video" autocomplete="off">load sample video</button>
+        <button id="init-ass" autocomplete="off">load sample ASS</button>
+      </fieldset><br>
+      <fieldset>
+        <legend>Controls</legend>
+        <button id="controls-resize" autocomplete="off" disabled>resize</button>
+        <button id="controls-show" autocomplete="off" disabled>show</button>
+        <button id="controls-hide" autocomplete="off" disabled>hide</button>
+      </fieldset>
+    </div>
+    <h1 id="site-title">ASS.js</h1>
+    <h2 id="site-subtitle">A JavaScript renderer for ASS subtitle format</h2>
+    <iframe src="https://ghbtns.com/github-btn.html?user=weizhenye&repo=ASS&type=star&count=true&size=large" frameborder="0" scrolling="0" width="120" height="30"></iframe>
+  </div>
 </header>
-<div class="wrapper">
-  <fieldset>
-    <legend>Initialization</legend>
-    <button id="init-video" autocomplete="off">Load test video</button>
-    <button id="init-ass" autocomplete="off">Load test ASS</button>
-  </fieldset>
-  <fieldset>
-    <legend>Controls</legend>
-    <button id="controls-resize" autocomplete="off" disabled>Resize</button>
-    <button id="controls-show" autocomplete="off" disabled>Show</button>
-    <button id="controls-hide" autocomplete="off" disabled>Hide</button>
-  </fieldset>
-</div>
 <div id="demo" class="wrapper">
   <div id="drop-video" class="drop-area">
     <div class="drop-text">Select or drag a video file here</div>
