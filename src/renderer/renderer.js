@@ -115,7 +115,10 @@ var setTagsStyle = function(dia) {
       cn.dataset.hasRotate = dia.hasRotate;
       if (t.p) {
         cn.appendChild(createDrawing.call(this, cn, ct, dia));
-        if (t.pbo) cssText.push('vertical-align:' + (-t.pbo) + 'px');
+        if (t.pbo) {
+          var pbo = this.scale * -t.pbo * (t.fscy || 100) / 100;
+          cssText.push('vertical-align:' + pbo + 'px');
+        }
       } else cn.innerHTML = parts[j];
       cn.style.cssText += cssText.join(';');
       df.appendChild(cn);

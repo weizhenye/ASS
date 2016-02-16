@@ -206,7 +206,7 @@ var CAF = window.cancelAnimationFrame ||
 var RAFID = 0;
 var channel = [];
 var xmlns = 'http://www.w3.org/2000/svg';
-var ASS_CSS = '.ASS-container{position:relative;overflow:hidden}.ASS-container video,.ASS-dialogue,.ASS-fix-font-size,.ASS-stage{position:absolute}.ASS-fix-font-size{visibility:hidden}.ASS-container video{top:0;left:0}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none}.ASS-fix-objectBoundingBox{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-animation-paused *{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}';
+var ASS_CSS = '.ASS-container{position:relative;overflow:hidden}.ASS-fix-font-size{position:absolute;visibility:hidden}.ASS-container video{position:absolute;top:0;left:0}.ASS-stage{overflow:hidden;z-index:2147483647;pointer-events:none;position:absolute}.ASS-dialogue{font-size:0;position:absolute}.ASS-fix-objectBoundingBox{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-animation-paused *{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}';
 
 var generateUUID = function() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -790,7 +790,10 @@ var setTagsStyle = function(dia) {
       cn.dataset.hasRotate = dia.hasRotate;
       if (t.p) {
         cn.appendChild(createDrawing.call(this, cn, ct, dia));
-        if (t.pbo) cssText.push('vertical-align:' + (-t.pbo) + 'px');
+        if (t.pbo) {
+          var pbo = this.scale * -t.pbo * (t.fscy || 100) / 100;
+          cssText.push('vertical-align:' + pbo + 'px');
+        }
       } else cn.innerHTML = parts[j];
       cn.style.cssText += cssText.join(';');
       df.appendChild(cn);
