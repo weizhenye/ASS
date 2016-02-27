@@ -1,2 +1,4 @@
-node_modules
-tmp
+npm-debug.log
+/node_modules
+/coverage
+/tmp
