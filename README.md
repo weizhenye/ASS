@@ -1,5 +1,6 @@
 ASS.js
 ======
+[![Build Status](https://travis-ci.org/weizhenye/ASS.svg?branch=master)](https://travis-ci.org/weizhenye/ASS)
 
 ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 video.
 
