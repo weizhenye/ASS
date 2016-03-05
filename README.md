@@ -13,7 +13,7 @@ ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 vide
 
 ## Usage
 
-```
+```html
 <video id="video" src="example.mp4"></video>
 
 <script src="dist/ass.min.js"></script>
@@ -34,7 +34,7 @@ ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 vide
 
 #### Initialization
 
-```
+```javascript
 var ass = new ASS();
 ass.init(content, video, {/* options */});
 ```
@@ -42,19 +42,19 @@ ass.init(content, video, {/* options */});
 #### Resize
 If you change video's width or height, you should do
 
-```
+```javascript
 ass.resize();
 ```
 
 #### Show
 
-```
+```javascript
 ass.show();
 ```
 
 #### Hide
 
-```
+```javascript
 ass.hide();
 ```
 
@@ -68,7 +68,7 @@ There are four valid values, we suppose video resolution is 1280x720 and script 
 * `script_width`: Script resolution will not change but scale is based on script width. So scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.
 * `script_height`: Script resolution will not change but scale is based on script height. So scale = 720 / 480 = 1.5. Script area will be centered in video area.
 
-```
+```javascript
 ass.resample = 'video_width';
 
 // You can also set it when initializing.
