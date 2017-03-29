@@ -3,6 +3,8 @@ ASS.js
 [![Build Status](https://travis-ci.org/weizhenye/ASS.svg?branch=master)](https://travis-ci.org/weizhenye/ASS)
 [![Coverage Status](https://coveralls.io/repos/github/weizhenye/ASS/badge.svg?branch=master)](https://coveralls.io/github/weizhenye/ASS?branch=master)
 
+[![Join the chat at https://gitter.im/weizhenye/ASS](https://badges.gitter.im/weizhenye/ASS.svg)](https://gitter.im/weizhenye/ASS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ASS.js parses ASS subtitle file format, and then renders subtitles on HTML5 video.
 
 [Demo](https://ass.js.org/)
