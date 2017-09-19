@@ -32,6 +32,11 @@ var parseTags = function(dialogue, styles) {
       var cmd = cmds[j];
       parseAnimatableTags.call(ct, cmd);
       if (ct.tags.clip) dia.clip = ct.tags.clip;
+      if (/^c\d?$/.test(cmd)) {
+        // reset color to style default when {\c} is used
+        var colorId = cmd.match(/^(\d?)c$/)[1] || "1";
+        ct.tags["c" + colorId] = styles[dialogue.Style]._tags["c" + colorId];
+      }
       if (/^b\d/.test(cmd)) ct.tags.b = cmd.match(/^b(\d+)/)[1] * 1;
       if (/^i\d/.test(cmd)) ct.tags.i = cmd[1] * 1;
       if (/^u\d/.test(cmd)) ct.tags.u = cmd[1] * 1;
