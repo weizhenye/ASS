@@ -465,7 +465,8 @@ var parseStyle = function(data, tree) {
 
 var parseTags = function(dialogue, styles) {
   var text = dialogue.Text.replace(/\\N/g, '<br>').replace(/\\h/g, '&nbsp;'),
-      prevTags = JSON.parse(JSON.stringify(styles[dialogue.Style]._tags)),
+      dialogueStyle = styles[dialogue.Style],
+      prevTags = JSON.parse(JSON.stringify(dialogueStyle._tags)),
       kv = text.split(/{([^{}]*?)}/),
       dia = {content: []};
   if (kv[0].length) {
@@ -495,13 +496,8 @@ var parseTags = function(dialogue, styles) {
 
     for (var j = 0; j < cmds.length; ++j) {
       var cmd = cmds[j];
-      parseAnimatableTags.call(ct, cmd);
+      parseAnimatableTags.call(ct, cmd, dialogueStyle);
       if (ct.tags.clip) dia.clip = ct.tags.clip;
-      if (/^c\d?$/.test(cmd)) {
-        // reset color to style default when {\c} is used
-        var colorId = cmd.match(/^(\d?)c$/)[1] || "1";
-        ct.tags["c" + colorId] = styles[dialogue.Style]._tags["c" + colorId];
-      }
       if (/^b\d/.test(cmd)) ct.tags.b = cmd.match(/^b(\d+)/)[1] * 1;
       if (/^i\d/.test(cmd)) ct.tags.i = cmd[1] * 1;
       if (/^u\d/.test(cmd)) ct.tags.u = cmd[1] * 1;
@@ -557,7 +553,7 @@ var parseTags = function(dialogue, styles) {
       }
       if (/^r/.test(cmd)) {
         var name = cmd.match(/^r(.*)/)[1];
-        var rStyle = styles[name] || styles[dialogue.Style];
+        var rStyle = styles[name] || dialogueStyle;
         ct.tags = JSON.parse(JSON.stringify(rStyle._tags));
       }
       if (/^t\(/.test(cmd)) {
@@ -571,7 +567,7 @@ var parseTags = function(dialogue, styles) {
           tags: {}
         };
         for (var k = tcmds.length - 1; k >= 0; k--) {
-          parseAnimatableTags.call(tct, tcmds[k]);
+          parseAnimatableTags.call(tct, tcmds[k], dialogueStyle);
         }
         if (args.length === 2) {
           tct.accel = args[0] * 1;
@@ -611,7 +607,7 @@ var parseTags = function(dialogue, styles) {
   }
   return dia;
 };
-var parseAnimatableTags = function(cmd) {
+var parseAnimatableTags = function(cmd, dialogueStyle) {
   if (/^fs[\d\+\-]/.test(cmd)) {
     var val = cmd.match(/^fs(.*)/)[1];
     if (/^\d/.test(val)) this.tags.fs = val * 1;
@@ -637,10 +633,15 @@ var parseAnimatableTags = function(cmd) {
   if (this.tags.ybord < 0) this.tags.ybord = 0;
   if (/^x*shad/.test(cmd)) this.tags.xshad = cmd.match(/^x*shad(.*)/)[1] * 1;
   if (/^y*shad/.test(cmd)) this.tags.yshad = cmd.match(/^y*shad(.*)/)[1] * 1;
-  if (/^\d?c&?H?[0-9a-f]+/i.test(cmd)) {
+  if (/^\d?c&?H?[0-9a-f]*/i.test(cmd)) {
     var args = cmd.match(/^(\d?)c&?H?(\w+)/);
+    if (!args) args = [];
     if (!args[1]) args[1] = '1';
-    while (args[2].length < 6) args[2] = '0' + args[2];
+    if (!args[2]) {
+      // reset color to style default
+      args[2] = dialogueStyle._tags["c" + args[1]];
+    }
+    else while (args[2].length < 6) args[2] = '0' + args[2];
     this.tags['c' + args[1]] = args[2];
   }
   if (/^\da&?H?[0-9a-f]+/i.test(cmd)) {
