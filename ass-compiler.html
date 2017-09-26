@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ass-compiler</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldgutter.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldgutter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/brace-fold.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ass-compiler/dist/ass-compiler.min.js"></script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+}
+#header {
+  width: 100%;
+  height: 32px;
+  line-height: 32px;
+  background-color: #f7f7f7;
+}
+#header h1 {
+  font-size: 24px;
+  display: inline-block;
+  margin: 0;
+  padding: 0 8px;
+}
+#header div {
+  display: inline-block;
+  float: right;
+  padding: 0 8px;
+}
+#input {
+  position: absolute;
+  top: 32px;
+  bottom: 0;
+  left: 0;
+  right: 50%;
+}
+#output {
+  position: absolute;
+  top: 32px;
+  bottom: 0;
+  left: 50%;
+  right: 0;
+}
+.CodeMirror {
+  height: 100%;
+}
+</style>
+</head>
+<body>
+<header id="header">
+  <h1>ass-compiler</h1>
+  <div>
+    <label><input type="radio" name="api" onclick="onModeChange('parse')">parse</label>
+    <label><input type="radio" name="api" onclick="onModeChange('compile')" checked>compile</label>
+    <button id="load">load sample ASS file</button>
+  </div>
+</header>
+<div id="input"></div>
+<div id="output"></div>
+<script>
+var inputCodeMirror = CodeMirror(document.getElementById('input'), {
+  value: '',
+  mode: 'text',
+  lineNumbers: true,
+});
+var outputCodeMirror = CodeMirror(document.getElementById('output'), {
+  value: '',
+  mode: { name: 'javascript', json: true },
+  readOnly: true,
+  lineNumbers: true,
+  foldGutter: true,
+  gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+});
+
+var mode = 'compile';
+
+var $tip = document.getElementById('tip');
+
+function onChange() {
+  try {
+    var obj = assCompiler[mode](inputCodeMirror.getValue());
+    outputCodeMirror.setValue(JSON.stringify(obj, null, 2));
+  } catch (err) {
+    outputCodeMirror.setValue(mode + ' failed');
+    console.log(err);
+  }
+}
+
+function onModeChange(m) {
+  mode = m;
+  onChange();
+}
+
+inputCodeMirror.on('change', onChange);
+
+var ASS_FILE_URL = 'https://raw.githubusercontent.com/Aegisub/Aegisub/master/docs/specs/ass-format-tests.ass';
+
+document.getElementById('load').addEventListener('click', function () {
+  var that = this;
+  this.disabled = true;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', ASS_FILE_URL, true);
+  xhr.send(null);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        inputCodeMirror.setValue(xhr.responseText);
+      } else {
+        that.disabled = false;
+      }
+    }
+  }
+});
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-34447075-2', 'auto');
+  ga('send', 'pageview');
+</script>
+</body>
+</html>
