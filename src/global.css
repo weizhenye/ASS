@@ -2,10 +2,6 @@
   position: relative;
   overflow: hidden;
 }
-.ASS-fix-font-size {
-  position: absolute;
-  visibility: hidden;
-}
 .ASS-container video {
   position: absolute;
   top: 0;
@@ -13,13 +9,16 @@
 }
 .ASS-stage {
   overflow: hidden;
-  z-index: 2147483647;
   pointer-events: none;
   position: absolute;
 }
 .ASS-dialogue {
   font-size: 0;
   position: absolute;
+}
+.ASS-fix-font-size {
+  position: absolute;
+  visibility: hidden;
 }
 .ASS-fix-objectBoundingBox {
   width: 100%;

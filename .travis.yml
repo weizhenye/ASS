@@ -1,9 +1,16 @@
 language: node_js
 node_js:
-  - "0.12"
-  - "4"
-  - "5"
+  - "8"
+before_install:
+  - |
+    if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)|(^(docs|examples))/'
+    then
+      echo "Only docs were updated, stopping build process."
+      exit
+    fi
 after_success:
-  - npm install -g istanbul
-  - npm install coveralls
-  - istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage
+  - |
+    if [ $TRAVIS_PULL_REQUEST = "false" ]; then
+      npm install codecov
+      cat ./coverage/lcov.info | ./node_modules/.bin/codecov
+    fi

@@ -1,9 +1,3 @@
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.ASS = factory());
-}(this, (function () { 'use strict';
-
 function parseEffect(text) {
   var param = text
     .toLowerCase()
@@ -1957,6 +1951,4 @@ prototypeAccessors.resampling.set = function (r) {
 
 Object.defineProperties( ASS.prototype, prototypeAccessors );
 
-return ASS;
-
-})));
+export default ASS;

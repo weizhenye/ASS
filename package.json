@@ -1,11 +1,23 @@
 {
   "name": "ass.js",
   "description": "A JavaScript renderer for ASS subtitle format.",
-  "main": "./dist/ass.js",
+  "main": "dist/ass.js",
+  "module": "dist/ass.esm.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "build": "gulp build",
-    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha",
-    "test": "mocha"
+    "dev": "rollup -c -w",
+    "lint": "eslint src test",
+    "unit": "karma start",
+    "test": "npm run lint",
+    "bundle": "rollup -c",
+    "minify": "uglifyjs dist/ass.js -m -o dist/ass.min.js",
+    "build": "npm run bundle && npm run minify",
+    "preversion": "npm test",
+    "version": "npm run build && git add -A ./dist",
+    "postversion": "git push && git push --tags && npm publish"
   },
   "repository": {
     "type": "git",
@@ -13,24 +25,25 @@
   },
   "keywords": [
     "ASS",
-    "subtitle"
+    "subtitle",
+    "renderer"
   ],
-  "author": "weizhenye",
+  "author": "Zhenye Wei",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/weizhenye/ASS/issues"
   },
   "homepage": "https://ass.js.org/",
   "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-file-insert": "^1.0.2",
-    "gulp-minify-css": "^1.2.3",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^1.5.1",
-    "gulp-umd": "^0.2.0",
-    "istanbul": "^0.4.2",
-    "mocha": "^2.3.4",
-    "rewire": "^2.5.1"
+    "ass-compiler": "^0.0.1",
+    "csso": "^3.2.0",
+    "eslint": "^4.8.0",
+    "eslint-config-airbnb-base": "^12.0.1",
+    "eslint-plugin-import": "^2.7.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-buble": "^0.16.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-replace": "^2.0.0",
+    "uglify-js": "^3.1.3"
   }
 }

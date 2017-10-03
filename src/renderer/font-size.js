@@ -1,13 +1,14 @@
-var fontSizeCache = {};
-var $ffs = document.createElement('div');
-$ffs.className = 'ASS-fix-font-size';
-$ffs.textContent = 'M';
-var getRealFontSize = function(fs, fn) {
-  var key = fn + '-' + fs;
-  if (!fontSizeCache[key]) {
-    var cssText = 'font-size:' + fs + 'px;font-family:\'' + fn + '\',Arial;';
-    $ffs.style.cssText = cssText;
-    fontSizeCache[key] = fs * fs / $ffs.clientHeight;
+export const $fixFontSize = document.createElement('div');
+$fixFontSize.className = 'ASS-fix-font-size';
+$fixFontSize.textContent = 'M';
+
+const cache = Object.create(null);
+
+export function getRealFontSize(fn, fs) {
+  const key = `${fn}-${fs}`;
+  if (!cache[key]) {
+    $fixFontSize.style.cssText = `font-size:${fs}px;font-family:"${fn}",Arial;`;
+    cache[key] = fs * fs / $fixFontSize.clientHeight;
   }
-  return fontSizeCache[key];
-};
+  return cache[key];
+}

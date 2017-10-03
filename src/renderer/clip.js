@@ -1,39 +1,54 @@
-var $clipPath = document.createElementNS(xmlns, 'svg');
-$clipPath.setAttributeNS(null, 'class', 'ASS-clip-path');
-var $clipPathDefs = document.createElementNS(xmlns, 'defs');
-$clipPath.appendChild($clipPathDefs);
-var createClipPath = function(dia) {
-  if (dia.clip) {
-    var d = '',
-        id = 'ASS-' + generateUUID(),
-        s = 1 / (1 << (dia.clip.scale - 1));
-    var prx = this.tree.ScriptInfo.PlayResX,
-        pry = this.tree.ScriptInfo.PlayResY;
-    if (dia.clip.dots !== null) {
-      var n = dia.clip.dots.map(function(d, i) {
-        if (i & 1) return d / pry;
-        else return d / prx;
-      });
-      d += 'M' + [n[0], n[1]].join();
-      d += 'L' + [n[0], n[3], n[2], n[3], n[2], n[1]].join() + 'Z';
-    }
-    if (dia.clip.commands !== null) {
-      d = getDrawingAttributes(dia.clip.commands, prx, pry).d;
-    }
-    if (dia.clip.inverse) {
-      d += 'M0,0L' + [0, s, s, s, s, 0, 0, 0].join() + 'Z';
-    }
-    dia.clipPath = document.createElementNS(xmlns, 'clipPath');
-    dia.clipPath.setAttributeNS(null, 'id', id);
-    dia.clipPath.setAttributeNS(null, 'clipPathUnits', 'objectBoundingBox');
-    var path = document.createElementNS(xmlns, 'path');
-    path.setAttributeNS(null, 'd', d);
-    path.setAttributeNS(null, 'transform', 'scale(' + s + ')');
-    path.setAttributeNS(null, 'clip-rule', 'evenodd');
-    dia.clipPath.appendChild(path);
-    $clipPathDefs.appendChild(dia.clipPath);
-    var cp = 'clip-path:url(#' + id + ');';
-    return '-webkit-' + cp + cp;
+import { assign } from 'ass-compiler/src/utils.js';
+import { createSVGEl, uuid, vendor } from '../utils.js';
+
+export function createClipPath(clip) {
+  const sw = this._.scriptRes.width;
+  const sh = this._.scriptRes.height;
+  let d = '';
+  if (clip.dots !== null) {
+    let { x1, y1, x2, y2 } = clip.dots;
+    x1 /= sw;
+    y1 /= sh;
+    x2 /= sw;
+    y2 /= sh;
+    d = `M${x1},${y1}L${x1},${y2},${x2},${y2},${x2},${y1}Z`;
   }
-  return '';
-};
+  if (clip.drawing !== null) {
+    d = clip.drawing.instructions.map(({ type, points }) => (
+      type + points.map(({ x, y }) => `${x / sw},${y / sh}`).join(',')
+    )).join('');
+  }
+  const scale = 1 / (1 << (clip.scale - 1));
+  if (clip.inverse) {
+    d += `M0,0L0,${scale},${scale},${scale},${scale},0,0,0Z`;
+  }
+  const id = `ASS-${uuid()}`;
+  const $clipPath = createSVGEl('clipPath', [
+    ['id', id],
+    ['clipPathUnits', 'objectBoundingBox'],
+  ]);
+  $clipPath.appendChild(createSVGEl('path', [
+    ['d', d],
+    ['transform', `scale(${scale})`],
+    ['clip-rule', 'evenodd'],
+  ]));
+  this._.$defs.appendChild($clipPath);
+  return {
+    $clipPath,
+    cssText: `${vendor.clipPath}clip-path:url(#${id});`,
+  };
+}
+
+export function setClipPath(dialogue) {
+  if (!dialogue.clip) {
+    return;
+  }
+  const $fobb = document.createElement('div');
+  this._.$stage.insertBefore($fobb, dialogue.$div);
+  $fobb.appendChild(dialogue.$div);
+  $fobb.className = 'ASS-fix-objectBoundingBox';
+  const { cssText, $clipPath } = createClipPath.call(this, dialogue.clip);
+  this._.$defs.appendChild($clipPath);
+  $fobb.style.cssText = cssText;
+  assign(dialogue, { $div: $fobb, $clipPath });
+}
