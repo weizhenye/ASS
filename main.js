@@ -1,12 +1,14 @@
 'use strict';
-var TEST_VIDEO_FILE = '/test.mp4';
+var TEST_VIDEO_FILE = './test.mp4';
 var TEST_ASS_FILE = 'https://raw.githubusercontent.com/Aegisub/Aegisub/master/docs/specs/ass-format-tests.ass';
 var $ = function(s) {return document.querySelectorAll(s)};
-var courl = (window.URL && window.URL.createObjectURL) ||
-            (window.webkitURL && window.webkitURL.createObjectURL) ||
-            window.createObjectURL ||
-            window.createBlobURL;
-var ass = new ASS();
+var courl = (
+  (window.URL && window.URL.createObjectURL) ||
+  (window.webkitURL && window.webkitURL.createObjectURL) ||
+  window.createObjectURL ||
+  window.createBlobURL
+);
+var ass;
 var content = '';
 var video = document.createElement('video');
 video.controls = true;
@@ -88,10 +90,13 @@ $('#controls-show')[0].onclick = function() {
 $('#controls-hide')[0].onclick = function() {
   ass.hide();
 };
-var $rs = Array.prototype.slice.apply($('input[name="resample"]'));
+$('#controls-destroy')[0].onclick = function() {
+  ass.destroy();
+};
+var $rs = Array.prototype.slice.apply($('input[name="resampling"]'));
 $rs.forEach(function($r) {
   $r.onclick = function() {
-    ass.resample = this.id.match(/resample-(.*)/)[1];
+    ass.resampling = this.id.match(/resampling-(.*)/)[1];
   };
 });
 var loadASS = function(file) {
@@ -115,20 +120,21 @@ var assOnLoaded = function(data) {
   if (videoReady && ASSReady) init();
 };
 var init = function() {
-  ass.init(content, video);
+  ass = new ASS(content, video);
   dropASS.style.display = 'none';
   $('#controls-resize')[0].disabled = false;
   $('#controls-show')[0].disabled = false;
   $('#controls-hide')[0].disabled = false;
+  $('#controls-destroy')[0].disabled = false;
   var info = document.createElement('div'),
       dl = document.createElement('dl'),
       dt = document.createElement('dt');
   info.id = 'info';
   dt.textContent = '[Script Info]';
   dl.appendChild(dt);
-  for (var i in ass.tree.ScriptInfo) {
+  for (var i in ass.info) {
     var dd = document.createElement('dd');
-    dd.innerHTML = i + ': <strong>' + ass.tree.ScriptInfo[i] + '</strong>';
+    dd.innerHTML = i + ': <strong>' + ass.info[i] + '</strong>';
     dl.appendChild(dd);
   }
   info.appendChild(dl);

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- ASS♂We♂Can -->
 <html>
 <head>
   <meta charset="utf-8">
@@ -7,25 +6,31 @@
   <meta name="renderer" content="webkit">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="description" content="A JavaScript renderer for ASS subtitle format">
-  <meta name="keywords" content="ASS, subtitle, JavaScript">
-  <meta name="author" content="weizhenye">
   <title>ASS.js - A JavaScript renderer for ASS subtitle format</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <header id="site-header">
   <div class="wrapper">
     <div class="pull-right">
       <fieldset class="pull-right">
-        <legend title="When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves.">Resample</legend>
-        <input type="radio" name="resample" id="resample-video_width" autocomplete="off">
-        <label for="resample-video_width" title="Script resolution will set to video resolution based on video width. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 640x360, and scale = 1280 / 640 = 2.">video_width</label><br>
-        <input type="radio" name="resample" id="resample-video_height" autocomplete="off" checked>
-        <label for="resample-video_height" title="Script resolution will set to video resolution based on video height. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.">video_height</label><br>
-        <input type="radio" name="resample" id="resample-script_width" autocomplete="off">
-        <label for="resample-script_width" title="Script resolution will not change but scale is based on script width. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.">script_width</label><br>
-        <input type="radio" name="resample" id="resample-script_height" autocomplete="off">
-        <label for="resample-script_height" title="Script resolution will not change but scale is based on script height. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 720 / 480 = 1.5. Script area will be centered in video area.">script_height</label>
+        <legend title="When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves.">Resampling</legend>
+        <label title="Script resolution will set to video resolution based on video width. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 640x360, and scale = 1280 / 640 = 2.">
+          <input type="radio" name="resampling" id="resampling-video_width" autocomplete="off">
+          video_width
+        </label><br>
+        <label title="Script resolution will set to video resolution based on video height. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.">
+          <input type="radio" name="resampling" id="resampling-video_height" autocomplete="off" checked>
+          video_height
+        </label><br>
+        <label title="Script resolution will not change but scale is based on script width. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.">
+          <input type="radio" name="resampling" id="resampling-script_width" autocomplete="off">
+          script_width
+        </label><br>
+        <label title="Script resolution will not change but scale is based on script height. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 720 / 480 = 1.5. Script area will be centered in video area.">
+          <input type="radio" name="resampling" id="resampling-script_height" autocomplete="off">
+          script_height
+        </label>
       </fieldset>
       <fieldset>
         <legend>Initialization</legend>
@@ -37,6 +42,7 @@
         <button id="controls-resize" autocomplete="off" disabled>resize</button>
         <button id="controls-show" autocomplete="off" disabled>show</button>
         <button id="controls-hide" autocomplete="off" disabled>hide</button>
+        <button id="controls-destroy" autocomplete="off" disabled>destroy</button>
       </fieldset>
     </div>
     <h1 id="site-title">ASS.js</h1>
@@ -56,7 +62,7 @@
 <div id="message"></div>
 
 <script src="//rawgit.com/weizhenye/ASS/master/dist/ass.min.js"></script>
-<script src="main.js"></script>
+<script src="./main.js"></script>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
