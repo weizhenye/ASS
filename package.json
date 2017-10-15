@@ -1,5 +1,5 @@
 {
-  "name": "ass-renderer",
+  "name": "assjs",
   "version": "0.0.0",
   "description": "A JavaScript ASS subtitle format renderer",
   "main": "dist/ass.js",

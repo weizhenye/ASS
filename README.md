@@ -3,9 +3,11 @@
 [![Build status](https://img.shields.io/travis/weizhenye/ASS.svg)](https://travis-ci.org/weizhenye/ASS)
 [![Coverage](https://img.shields.io/codecov/c/github/weizhenye/ASS.svg)](https://codecov.io/gh/weizhenye/ASS)
 [![Dependencies](https://img.shields.io/david/weizhenye/ASS.svg)](https://david-dm.org/weizhenye/ASS)
-[![NPM version](https://img.shields.io/npm/v/ass-renderer.svg)](https://www.npmjs.com/package/ass-renderer)
-[![License](https://img.shields.io/npm/l/ass-renderer.svg)](https://github.com/weizhenye/ass-renderer/blob/master/LICENSE)
+[![NPM version](https://img.shields.io/npm/v/assjs.svg)](https://www.npmjs.com/package/assjs)
+[![License](https://img.shields.io/npm/l/assjs.svg)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
 [![File size](https://badge-size.herokuapp.com/weizhenye/ASS/master/dist/ass.min.js?compression=gzip&color=blue&label=min%2Bgzip)](https://unpkg.com/asa-renderer/dist/ass.min.js)
+
+[![Browser compatibility](https://saucelabs.com/browser-matrix/assjs.svg)](https://saucelabs.com/u/assjs)
 
 ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renders subtitles on HTML5 video.
 
@@ -16,7 +18,7 @@ ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse A
 ## Installation
 
 ```bash
-npm install ass-renderer
+npm install assjs
 ```
 
 ## Usage
