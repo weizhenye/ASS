@@ -1805,6 +1805,7 @@ function init(source, video, options) {
 
   this.scale = 1;
 
+  // private variables
   this._ = {
     index: 0,
     stagings: [],
@@ -1862,8 +1863,6 @@ function init(source, video, options) {
     document.head.appendChild($style);
   }
 
-  this._.inited = true;
-
   resize.call(this);
 
   return this;
@@ -1882,9 +1881,6 @@ function hide() {
 function destroy() {
   var this$1 = this;
 
-  if (!this._ || !this._.inited) {
-    return this;
-  }
   pause.call(this);
   clear.call(this);
   unbindEvents.call(this, this._.listener);
@@ -1923,7 +1919,7 @@ function setter(r) {
 }
 
 var ASS = function ASS(source, video, options) {
-  if ((this._ && this._.inited) || !video || video.nodeName !== 'VIDEO') {
+  if (typeof source !== 'string' || !video || video.nodeName !== 'VIDEO') {
     return this;
   }
   return init.call(this, source, video, options);
