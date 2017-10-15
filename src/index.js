@@ -7,7 +7,7 @@ import { getter, setter } from './internal/resampling.js';
 
 export default class ASS {
   constructor(source, video, options) {
-    if ((this._ && this._.inited) || !video || video.nodeName !== 'VIDEO') {
+    if (typeof source !== 'string' || !video || video.nodeName !== 'VIDEO') {
       return this;
     }
     return init.call(this, source, video, options);

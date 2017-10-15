@@ -7,19 +7,17 @@
 [![License](https://img.shields.io/npm/l/ass-renderer.svg)](https://github.com/weizhenye/ass-renderer/blob/master/LICENSE)
 [![File size](https://badge-size.herokuapp.com/weizhenye/ASS/master/dist/ass.min.js?compression=gzip&color=blue&label=min%2Bgzip)](https://unpkg.com/asa-renderer/dist/ass.min.js)
 
-ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renderers subtitles on HTML5 video.
+ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renders subtitles on HTML5 video.
 
 [Demo](https://ass.js.org/)
 
 [ASS specs](https://github.com/weizhenye/ASS/wiki/ASS-%E5%AD%97%E5%B9%95%E6%A0%BC%E5%BC%8F%E8%A7%84%E8%8C%83)(zh-Hans)
 
-<!--
 ## Installation
 
 ```bash
 npm install ass-renderer
 ```
--->
 
 ## Usage
 
@@ -53,7 +51,7 @@ const ass = new ASS(text, video, {
 
 #### Resize
 
-If you change video's width or height, you should call it.
+If you change the size of video, you should call it.
 
 ```js
 ass.resize();

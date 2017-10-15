@@ -9,6 +9,7 @@ const GLOBAL_CSS = '__GLOBAL_CSS__';
 export function init(source, video, options = {}) {
   this.scale = 1;
 
+  // private variables
   this._ = {
     index: 0,
     stagings: [],
@@ -61,8 +62,6 @@ export function init(source, video, options = {}) {
     $style.appendChild(document.createTextNode(GLOBAL_CSS));
     document.head.appendChild($style);
   }
-
-  this._.inited = true;
 
   resize.call(this);
 

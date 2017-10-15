@@ -3,9 +3,6 @@ import { clear } from './clear.js';
 import { pause } from './pause.js';
 
 export function destroy() {
-  if (!this._ || !this._.inited) {
-    return this;
-  }
   pause.call(this);
   clear.call(this);
   unbindEvents.call(this, this._.listener);
