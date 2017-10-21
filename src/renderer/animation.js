@@ -55,7 +55,7 @@ class KeyframeBlockList {
 
 // TODO: multi \t can't be merged directly
 function mergeT(ts) {
-  return ts.reduce((results, t) => {
+  return ts.reduceRight((results, t) => {
     let merged = false;
     return results
       .map((r) => {
@@ -109,11 +109,9 @@ export function getKeyframes() {
         if (t1 < duration) {
           diaKbl.set(`${(t1 / duration * 100).toFixed(3)}%`, 'opacity', 1);
           if (t1 + t2 < duration) {
-            diaKbl.set(`${((t1 + t2) / duration * 100).toFixed(3)}%`, 'opacity', 0);
-            diaKbl.set('100.000%', 'opacity', 0);
-          } else {
-            diaKbl.set('100.000%', 'opacity', (t1 + t2 - duration) / t2);
+            diaKbl.set(`${((duration - t2) / duration * 100).toFixed(3)}%`, 'opacity', 1);
           }
+          diaKbl.set('100.000%', 'opacity', 0);
         } else {
           diaKbl.set('100.000%', 'opacity', duration / t1);
         }
@@ -140,9 +138,9 @@ export function getKeyframes() {
           return;
         }
         const kbl = new KeyframeBlockList();
+        const fromTag = assign({}, slice.tag, fragment.tag);
         // TODO: accel is not implemented yet
         mergeT(fragment.tag.t).forEach(({ t1, t2, tag }) => {
-          const fromTag = assign({}, slice.tag, fragment.tag);
           if (tag.fs) {
             const from = `${this.scale * getRealFontSize(fromTag.fn, fromTag.fs)}px`;
             const to = `${this.scale * getRealFontSize(tag.fn, fromTag.fs)}px`;
@@ -187,11 +185,12 @@ export function getKeyframes() {
             const toTag = assign({}, fromTag, tag);
             if (fragment.drawing) {
               // scales will be handled inside svg
-              assign(fromTag, {
+              assign(toTag, {
+                p: 0,
                 fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
                 fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
               });
-              assign(toTag, { fscx: 100, fscy: 100 });
+              assign(fromTag, { fscx: 100, fscy: 100 });
             }
             const from = createTransform(fromTag);
             const to = createTransform(toTag);
