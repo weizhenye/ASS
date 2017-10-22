@@ -43,4 +43,18 @@ describe('init API', () => {
     expect(ass.resampling).to.equal('script_height');
     ass.destroy();
   });
+
+  it('should autoplay if video is playing', (done) => {
+    const $video = document.createElement('video');
+    $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
+    document.body.appendChild($video);
+    $video.play();
+    const ass = new ASS('', $video);
+    setTimeout(() => {
+      expect(ass._.requestId).to.be.above(0);
+      ass.destroy();
+      document.body.removeChild($video);
+      done();
+    }, 100);
+  });
 });

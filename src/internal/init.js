@@ -1,6 +1,8 @@
 import { compile } from 'ass-compiler';
 import { bindEvents } from './events.js';
+import { play } from './play.js';
 import { resize } from './resize.js';
+import { seek } from './seek.js';
 import { $fixFontSize } from '../renderer/font-size.js';
 import { createSVGEl } from '../utils.js';
 
@@ -64,6 +66,11 @@ export function init(source, video, options = {}) {
   }
 
   resize.call(this);
+
+  if (!this.video.paused) {
+    seek.call(this);
+    play.call(this);
+  }
 
   return this;
 }

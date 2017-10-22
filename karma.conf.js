@@ -11,6 +11,7 @@ module.exports = (config) => {
     frameworks: ['mocha', 'chai'],
     browsers: ['ChromeHeadless'],
     files: [
+      { pattern: 'test/fixtures/**/*.*', included: false, served: true },
       'test/test.js',
     ],
     preprocessors: {
