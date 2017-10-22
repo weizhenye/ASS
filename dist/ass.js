@@ -641,7 +641,15 @@ function compileText(ref) {
       slices.push(slice);
       slice = createSlice(reset || name, styles);
     }
-    slice.fragments.push(fragment);
+    if (fragment.text || fragment.drawing) {
+      var prev = slice.fragments[slice.fragments.length - 1] || {};
+      if (prev.text && fragment.text && !Object.keys(fragment.tag).length) {
+        // merge fragment to previous if its tag is empty
+        prev.text += fragment.text;
+      } else {
+        slice.fragments.push(fragment);
+      }
+    }
   }
   slices.push(slice);
 
@@ -653,6 +661,7 @@ function compileDialogues(ref) {
   var styles = ref.styles;
   var dialogues = ref.dialogues;
 
+  var minLayer = Infinity;
   var results = [];
   for (var i = 0; i < dialogues.length; i++) {
     var dia = dialogues[i];
@@ -669,6 +678,7 @@ function compileDialogues(ref) {
       end: dia.End,
     });
     var alignment = compiledText.alignment || stl.Alignment;
+    minLayer = Math.min(minLayer, dia.Layer);
     results.push(assign({
       layer: dia.Layer,
       start: dia.Start / timer,
@@ -681,6 +691,9 @@ function compileDialogues(ref) {
       },
       effect: dia.Effect,
     }, compiledText, { alignment: alignment }));
+  }
+  for (var i$1 = 0; i$1 < results.length; i$1++) {
+    results[i$1].layer -= minLayer;
   }
   return results.sort(function (a, b) { return a.start - b.start || a.end - b.end; });
 }
@@ -1131,7 +1144,7 @@ KeyframeBlockList.prototype.toString = function toString () {
 
 // TODO: multi \t can't be merged directly
 function mergeT(ts) {
-  return ts.reduce(function (results, t) {
+  return ts.reduceRight(function (results, t) {
     var merged = false;
     return results
       .map(function (r) {
@@ -1205,11 +1218,9 @@ function getKeyframes() {
         if (t1$1 < duration) {
           diaKbl.set((((t1$1 / duration * 100).toFixed(3)) + "%"), 'opacity', 1);
           if (t1$1 + t2$1 < duration) {
-            diaKbl.set(((((t1$1 + t2$1) / duration * 100).toFixed(3)) + "%"), 'opacity', 0);
-            diaKbl.set('100.000%', 'opacity', 0);
-          } else {
-            diaKbl.set('100.000%', 'opacity', (t1$1 + t2$1 - duration) / t2$1);
+            diaKbl.set(((((duration - t2$1) / duration * 100).toFixed(3)) + "%"), 'opacity', 1);
           }
+          diaKbl.set('100.000%', 'opacity', 0);
         } else {
           diaKbl.set('100.000%', 'opacity', duration / t1$1);
         }
@@ -1242,13 +1253,13 @@ function getKeyframes() {
           return;
         }
         var kbl = new KeyframeBlockList();
+        var fromTag = assign({}, slice.tag, fragment.tag);
         // TODO: accel is not implemented yet
         mergeT(fragment.tag.t).forEach(function (ref) {
           var t1 = ref.t1;
           var t2 = ref.t2;
           var tag = ref.tag;
 
-          var fromTag = assign({}, slice.tag, fragment.tag);
           if (tag.fs) {
             var from = (this$1.scale * getRealFontSize(fromTag.fn, fromTag.fs)) + "px";
             var to = (this$1.scale * getRealFontSize(tag.fn, fromTag.fs)) + "px";
@@ -1293,11 +1304,12 @@ function getKeyframes() {
             var toTag = assign({}, fromTag, tag);
             if (fragment.drawing) {
               // scales will be handled inside svg
-              assign(fromTag, {
+              assign(toTag, {
+                p: 0,
                 fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
                 fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
               });
-              assign(toTag, { fscx: 100, fscy: 100 });
+              assign(fromTag, { fscx: 100, fscy: 100 });
             }
             var from$5 = createTransform(fromTag);
             var to$5 = createTransform(toTag);
@@ -1870,6 +1882,11 @@ function init(source, video, options) {
   }
 
   resize.call(this);
+
+  if (!this.video.paused) {
+    seek.call(this);
+    play.call(this);
+  }
 
   return this;
 }
