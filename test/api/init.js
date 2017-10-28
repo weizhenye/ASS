@@ -1,4 +1,5 @@
 import ASS from '../../src/index.js';
+import { playVideo } from '../helpers.js';
 
 describe('init API', () => {
   it('shoud initialize an ass instance', () => {
@@ -44,17 +45,20 @@ describe('init API', () => {
     ass.destroy();
   });
 
-  it('should autoplay if video is playing', (done) => {
+  it('should autoplay if video is playing', function (done) {
     const $video = document.createElement('video');
     $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
     document.body.appendChild($video);
-    $video.play();
-    const ass = new ASS('', $video);
-    setTimeout(() => {
-      expect(ass._.requestId).to.be.above(0);
-      ass.destroy();
-      document.body.removeChild($video);
-      done();
-    }, 100);
+    playVideo.call(this, $video).then(() => {
+      const ass = new ASS('', $video);
+      const handler = () => {
+        expect(ass._.requestId).to.not.equal(0);
+        ass.destroy();
+        $video.removeEventListener('timeupdate', handler);
+        document.body.removeChild($video);
+        done();
+      };
+      $video.addEventListener('timeupdate', handler);
+    });
   });
 });

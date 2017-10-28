@@ -17,4 +17,5 @@ after_success:
     if [ $TRAVIS_PULL_REQUEST = "false" ]; then
       npm install codecov
       cat ./coverage/lcov.info | ./node_modules/.bin/codecov
+      npm run sauce
     fi

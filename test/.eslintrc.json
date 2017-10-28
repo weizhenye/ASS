@@ -6,5 +6,8 @@
     "assert": true,
     "expect": true,
     "should": true
+  },
+  "rules": {
+    "func-names": 0
   }
 }
