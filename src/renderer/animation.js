@@ -4,20 +4,6 @@ import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
 
-const cache = Object.create(null);
-
-function getName(list) {
-  const names = Object.keys(cache);
-  for (let i = 0; i < names.length; i++) {
-    if (cache[names[i]] === list) {
-      return names[i];
-    }
-  }
-  const name = `ASS-${uuid()}`;
-  cache[name] = list;
-  return name;
-}
-
 function getKeyframeString(name, list) {
   return `@${vendor.animation}keyframes ${name} {${list}}\n`;
 }
@@ -129,7 +115,7 @@ export function getKeyframes() {
     }
     const diaList = diaKbl.toString();
     if (diaList) {
-      assign(dialogue, { animationName: getName(diaList) });
+      assign(dialogue, { animationName: `ASS-${uuid()}` });
       keyframes += getKeyframeString(dialogue.animationName, diaList);
     }
     slices.forEach((slice) => {
@@ -198,7 +184,7 @@ export function getKeyframes() {
           }
         });
         const list = kbl.toString();
-        assign(fragment, { animationName: getName(list) });
+        assign(fragment, { animationName: `ASS-${uuid()}` });
         keyframes += getKeyframeString(fragment.animationName, list);
       });
     });
