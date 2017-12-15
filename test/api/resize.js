@@ -34,8 +34,4 @@ describe('resize API', () => {
 
     ass.destroy();
   });
-
-  it.skip('should calculate scale by resampling');
-
-  it.skip('should update renders after resizing');
 });
