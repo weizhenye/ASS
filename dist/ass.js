@@ -46,46 +46,49 @@ var numTags = [
   'fscx', 'fscy', 'fax', 'fay', 'frx', 'fry', 'frz', 'fr',
   'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad' ];
 
+var numRegexs = numTags.map(function (nt) { return ({ name: nt, regex: new RegExp(("^" + nt + "-?\\d")) }); });
+
 function parseTag(text) {
   var tag = {};
-  for (var i = 0; i < numTags.length; i++) {
-    var nt = numTags[i];
-    var regex = new RegExp(("^" + nt + "-?\\d"));
+  for (var i = 0; i < numRegexs.length; i++) {
+    var ref = numRegexs[i];
+    var name = ref.name;
+    var regex = ref.regex;
     if (regex.test(text)) {
-      tag[nt] = text.slice(nt.length) * 1;
+      tag[name] = text.slice(name.length) * 1;
+      return tag;
     }
   }
-  if (/^fn/.test(text)) { tag.fn = text.slice(2); }
-  if (/^r/.test(text)) { tag.r = text.slice(1); }
-  if (/^fs[\d+-]/.test(text)) { tag.fs = text.slice(2); }
-  if (/^\d?c&?H?[0-9a-f]+|^\d?c$/i.test(text)) {
-    var ref = text.match(/^(\d?)c&?H?(\w*)/);
-    var num = ref[1];
-    var color = ref[2];
+  if (/^fn/.test(text)) {
+    tag.fn = text.slice(2);
+  } else if (/^r/.test(text)) {
+    tag.r = text.slice(1);
+  } else if (/^fs[\d+-]/.test(text)) {
+    tag.fs = text.slice(2);
+  } else if (/^\d?c&?H?[0-9a-f]+|^\d?c$/i.test(text)) {
+    var ref$1 = text.match(/^(\d?)c&?H?(\w*)/);
+    var num = ref$1[1];
+    var color = ref$1[2];
     tag[("c" + (num || 1))] = color && ("000000" + color).slice(-6);
-  }
-  if (/^\da&?H?[0-9a-f]+/i.test(text)) {
-    var ref$1 = text.match(/^(\d)a&?H?(\w\w)/);
-    var num$1 = ref$1[1];
-    var alpha = ref$1[2];
+  } else if (/^\da&?H?[0-9a-f]+/i.test(text)) {
+    var ref$2 = text.match(/^(\d)a&?H?(\w\w)/);
+    var num$1 = ref$2[1];
+    var alpha = ref$2[2];
     tag[("a" + num$1)] = alpha;
-  }
-  if (/^alpha&?H?[0-9a-f]+/i.test(text)) {
+  } else if (/^alpha&?H?[0-9a-f]+/i.test(text)) {
     var assign;
     (assign = text.match(/^alpha&?H?(\w\w)/), tag.alpha = assign[1]);
-  }
-  if (/^(?:pos|org|move|fad|fade)\(/.test(text)) {
-    var ref$2 = text.match(/^(\w+)\((.*?)\)/);
-    var key = ref$2[1];
-    var value = ref$2[2];
+  } else if (/^(?:pos|org|move|fad|fade)\(/.test(text)) {
+    var ref$3 = text.match(/^(\w+)\((.*?)\)?$/);
+    var key = ref$3[1];
+    var value = ref$3[2];
     tag[key] = value
       .trim()
       .split(/\s*,\s*/)
       .map(Number);
-  }
-  if (/^i?clip/.test(text)) {
+  } else if (/^i?clip/.test(text)) {
     var p = text
-      .match(/^i?clip\((.*)\)/)[1]
+      .match(/^i?clip\((.*?)\)?$/)[1]
       .trim()
       .split(/\s*,\s*/);
     tag.clip = {
@@ -104,10 +107,9 @@ function parseTag(text) {
     if (p.length === 4) {
       tag.clip.dots = p.map(Number);
     }
-  }
-  if (/^t\(/.test(text)) {
+  } else if (/^t\(/.test(text)) {
     var p$1 = text
-      .match(/^t\((.*)\)/)[1]
+      .match(/^t\((.*?)\)?$/)[1]
       .trim()
       .replace(/\\.*/, function (x) { return x.replace(/,/g, '\n'); })
       .split(/\s*,\s*/);
@@ -140,12 +142,25 @@ function parseTag(text) {
 }
 
 function parseTags(text) {
-  return text
-    .replace(/\((?:[^()]+|\([^()]*\))*\)/g, function (x) { return x.replace(/\\/g, '\n'); })
-    .split(/\\/)
-    .slice(1)
-    .map(function (x) { return x.replace(/\n/g, '\\'); })
-    .map(parseTag);
+  var tags = [];
+  var depth = 0;
+  var str = '';
+  for (var i = 0; i < text.length; i++) {
+    var x = text[i];
+    if (x === '(') { depth++; }
+    if (x === ')') { depth--; }
+    if (depth < 0) { depth = 0; }
+    if (!depth && x === '\\') {
+      if (str) {
+        tags.push(str);
+      }
+      str = '';
+    } else {
+      str += x;
+    }
+  }
+  tags.push(str);
+  return tags.map(parseTag);
 }
 
 function parseText(text) {
@@ -270,23 +285,23 @@ function parse(text) {
   return tree;
 }
 
-function assign(target) {
-  var sources = [], len = arguments.length - 1;
-  while ( len-- > 0 ) sources[ len ] = arguments[ len + 1 ];
+var assign = Object.assign || (
+  /* istanbul ignore next */
+  function assign(target) {
+    var sources = [], len = arguments.length - 1;
+    while ( len-- > 0 ) sources[ len ] = arguments[ len + 1 ];
 
-  if (Object.assign) {
-    return Object.assign.apply(Object, [ target ].concat( sources ));
-  }
-  for (var i = 0; i < sources.length; i++) {
-    if (!sources[i]) { continue; }
-    var keys = Object.keys(sources[i]);
-    for (var j = 0; j < keys.length; j++) {
-      // eslint-disable-next-line no-param-reassign
-      target[keys[j]] = sources[i][keys[j]];
+    for (var i = 0; i < sources.length; i++) {
+      if (!sources[i]) { continue; }
+      var keys = Object.keys(sources[i]);
+      for (var j = 0; j < keys.length; j++) {
+        // eslint-disable-next-line no-param-reassign
+        target[keys[j]] = sources[i][keys[j]];
+      }
     }
+    return target;
   }
-  return target;
-}
+);
 
 function createCommand(arr) {
   var cmd = {
@@ -463,15 +478,15 @@ var tTags = [
   'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad' ];
 
 function compileTag(tag, key, presets) {
-  if ( presets === void 0 ) presets = {};
+  var obj, obj$1, obj$2;
 
+  if ( presets === void 0 ) presets = {};
   var value = tag[key];
   if (value === undefined) {
     return null;
   }
   if (key === 'pos' || key === 'org') {
-    return value.length === 2 ? ( obj = {}, obj[key] = { x: value[0], y: value[1] }, obj ) : null;
-    var obj;
+    return value.length === 2 ? ( obj = {}, obj[key] = { x: value[0], y: value[1] }, obj) : null;
   }
   if (key === 'move') {
     var x1 = value[0];
@@ -529,8 +544,7 @@ function compileTag(tag, key, presets) {
     return { xshad: value, yshad: value };
   }
   if (/^c\d$/.test(key)) {
-    return ( obj$1 = {}, obj$1[key] = value || presets[key], obj$1 );
-    var obj$1;
+    return ( obj$1 = {}, obj$1[key] = value || presets[key], obj$1);
   }
   if (key === 'alpha') {
     return { a1: value, a2: value, a3: value, a4: value };
@@ -559,8 +573,7 @@ function compileTag(tag, key, presets) {
     });
     return { t: { t1: t1$3, t2: t2$3, accel: accel, tag: compiledTag } };
   }
-  return ( obj$2 = {}, obj$2[key] = value, obj$2 );
-  var obj$2;
+  return ( obj$2 = {}, obj$2[key] = value, obj$2);
 }
 
 var a2an = [
@@ -914,15 +927,15 @@ var $fixFontSize = document.createElement('div');
 $fixFontSize.className = 'ASS-fix-font-size';
 $fixFontSize.textContent = 'M';
 
-var cache$1 = Object.create(null);
+var cache = Object.create(null);
 
 function getRealFontSize(fn, fs) {
   var key = fn + "-" + fs;
-  if (!cache$1[key]) {
+  if (!cache[key]) {
     $fixFontSize.style.cssText = "font-size:" + fs + "px;font-family:\"" + fn + "\",Arial;";
-    cache$1[key] = fs * fs / $fixFontSize.clientHeight;
+    cache[key] = fs * fs / $fixFontSize.clientHeight;
   }
-  return cache$1[key];
+  return cache[key];
 }
 
 function createSVGStroke(tag, id, scale) {
@@ -1088,20 +1101,6 @@ function setTransformOrigin(dialogue) {
   }
 }
 
-var cache = Object.create(null);
-
-function getName(list) {
-  var names = Object.keys(cache);
-  for (var i = 0; i < names.length; i++) {
-    if (cache[names[i]] === list) {
-      return names[i];
-    }
-  }
-  var name = "ASS-" + (uuid());
-  cache[name] = list;
-  return name;
-}
-
 function getKeyframeString(name, list) {
   return ("@" + (vendor.animation) + "keyframes " + name + " {" + list + "}\n");
 }
@@ -1244,7 +1243,7 @@ function getKeyframes() {
     }
     var diaList = diaKbl.toString();
     if (diaList) {
-      assign(dialogue, { animationName: getName(diaList) });
+      assign(dialogue, { animationName: ("ASS-" + (uuid())) });
       keyframes += getKeyframeString(dialogue.animationName, diaList);
     }
     slices.forEach(function (slice) {
@@ -1317,7 +1316,7 @@ function getKeyframes() {
           }
         });
         var list = kbl.toString();
-        assign(fragment, { animationName: getName(list) });
+        assign(fragment, { animationName: ("ASS-" + (uuid())) });
         keyframes += getKeyframeString(fragment.animationName, list);
       });
     });
