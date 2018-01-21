@@ -1,19 +1,7 @@
 import ASS from '../../src/index.js';
+import { $video } from '../index.js';
 
 describe('resampling API', () => {
-  const $video = document.createElement('video');
-  $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
-  $video.style.width = '640px';
-  $video.style.height = '360px';
-
-  before(() => {
-    document.body.appendChild($video);
-  });
-
-  after(() => {
-    document.body.removeChild($video);
-  });
-
   it('should handle `video_width`', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',

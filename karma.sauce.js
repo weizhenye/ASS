@@ -45,7 +45,7 @@ const customLaunchers = {
   },
   SL_Edge: {
     base: 'SauceLabs',
-    browserName: 'microsoftedge',
+    browserName: 'MicrosoftEdge',
     platform: 'Windows 10',
   },
   SL_IE_11: {
@@ -79,7 +79,9 @@ module.exports = (config) => {
       'test/test.js': ['rollup'],
     },
     rollupPreprocessor: {
-      format: 'iife',
+      output: {
+        format: 'iife',
+      },
       plugins: [
         replace({
           __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,

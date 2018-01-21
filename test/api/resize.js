@@ -1,23 +1,10 @@
 import ASS from '../../src/index.js';
+import { $video } from '../index.js';
 
 describe('resize API', () => {
-  const $video = document.createElement('video');
-  $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
-  $video.style.width = '640px';
-  $video.style.height = '360px';
-  const $container = document.createElement('div');
-
-  before(() => {
-    document.body.appendChild($video);
-    document.body.appendChild($container);
-  });
-
-  after(() => {
-    document.body.removeChild($video);
-    document.body.removeChild($container);
-  });
-
   it('should resize container to video\'s size', () => {
+    const $container = document.createElement('div');
+    document.body.appendChild($container);
     const ass = new ASS(
       '[Script Info]\nPlayResX: 640\nPlayResY: 360',
       $video,
@@ -33,5 +20,6 @@ describe('resize API', () => {
     expect(ass.container.clientHeight).to.equal(720);
 
     ass.destroy();
+    document.body.removeChild($container);
   });
 });

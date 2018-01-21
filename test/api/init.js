@@ -1,10 +1,8 @@
 import ASS from '../../src/index.js';
-import { playVideo } from '../helpers.js';
+import { $video, playVideo } from '../index.js';
 
 describe('init API', () => {
   it('shoud initialize an ass instance', () => {
-    const $video = document.createElement('video');
-    document.body.appendChild($video);
     const ass = new ASS('', $video);
     expect(ass._).to.be.an('object');
     expect(ass.container.classList.contains('ASS-container')).to.equal(true);
@@ -12,7 +10,6 @@ describe('init API', () => {
     expect($video.parentNode).to.equal(ass.container);
     expect(ass.scale).to.be.an('number');
     ass.destroy();
-    document.body.removeChild($video);
   });
 
   it('requires source and video', () => {
@@ -29,7 +26,7 @@ describe('init API', () => {
 
   it('should support options.container', () => {
     const $container = document.createElement('div');
-    const ass = new ASS('', document.createElement('video'), {
+    const ass = new ASS('', $video, {
       container: $container,
     });
     expect(ass.container).to.equal($container);
@@ -37,7 +34,7 @@ describe('init API', () => {
   });
 
   it('should support options.resampling', () => {
-    const ass = new ASS('', document.createElement('video'), {
+    const ass = new ASS('', $video, {
       container: document.createElement('div'),
       resampling: 'script_height',
     });
@@ -46,16 +43,12 @@ describe('init API', () => {
   });
 
   it('should autoplay if video is playing', function (done) {
-    const $video = document.createElement('video');
-    $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
-    document.body.appendChild($video);
     playVideo.call(this, $video).then(() => {
       const ass = new ASS('', $video);
       const handler = () => {
         expect(ass._.requestId).to.not.equal(0);
         ass.destroy();
         $video.removeEventListener('timeupdate', handler);
-        document.body.removeChild($video);
         done();
       };
       $video.addEventListener('timeupdate', handler);

@@ -18,7 +18,9 @@ module.exports = (config) => {
       'test/test.js': ['rollup'],
     },
     rollupPreprocessor: {
-      format: 'iife',
+      output: {
+        format: 'iife',
+      },
       plugins: [
         replace({
           __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,
