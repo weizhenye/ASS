@@ -71,7 +71,8 @@ function parseTag(text) {
     tag[("a" + num$1)] = alpha;
   } else if (/^alpha&?H?[0-9a-f]+/i.test(text)) {
     var assign;
-    (assign = text.match(/^alpha&?H?(\w\w)/), tag.alpha = assign[1]);
+    (assign = text.match(/^alpha&?H?([0-9a-f]+)/i), tag.alpha = assign[1]);
+    tag.alpha = ("00" + (tag.alpha)).slice(-2);
   } else if (/^(?:pos|org|move|fad|fade)\(/.test(text)) {
     var ref$3 = text.match(/^(\w+)\((.*?)\)?$/);
     var key = ref$3[1];
@@ -578,7 +579,6 @@ var a2an = [
 var globalTags = ['r', 'a', 'an', 'pos', 'org', 'move', 'fade', 'fad', 'clip'];
 
 function createSlice(name, styles) {
-  // TODO: if (styles[name] === undefined) {}
   return {
     name: name,
     borderStyle: styles[name].style.BorderStyle,
@@ -646,7 +646,7 @@ function compileText(ref) {
     prevTag = fragment.tag;
     if (reset !== undefined) {
       slices.push(slice);
-      slice = createSlice(reset || name, styles);
+      slice = createSlice(styles[reset] ? reset : name, styles);
     }
     if (fragment.text || fragment.drawing) {
       var prev = slice.fragments[slice.fragments.length - 1] || {};
@@ -674,6 +674,9 @@ function compileDialogues(ref) {
     var dia = dialogues[i];
     if (dia.Start >= dia.End) {
       continue;
+    }
+    if (!styles[dia.Style]) {
+      dia.Style = 'Default';
     }
     var stl = styles[dia.Style].style;
     var timer = info.Timer / 100 || 1;
@@ -705,6 +708,34 @@ function compileDialogues(ref) {
   return results.sort(function (a, b) { return a.start - b.start || a.end - b.end; });
 }
 
+// same as Aegisub
+// https://github.com/Aegisub/Aegisub/blob/master/src/ass_style.h
+var DEFAULT_STYLE = {
+  Name: 'Default',
+  Fontname: 'Arial',
+  Fontsize: '20',
+  PrimaryColour: '&H00FFFFFF&',
+  SecondaryColour: '&H000000FF&',
+  OutlineColour: '&H00000000&',
+  BackColour: '&H00000000&',
+  Bold: '0',
+  Italic: '0',
+  Underline: '0',
+  StrikeOut: '0',
+  ScaleX: '100',
+  ScaleY: '100',
+  Spacing: '0',
+  Angle: '0',
+  BorderStyle: '1',
+  Outline: '2',
+  Shadow: '2',
+  Alignment: '2',
+  MarginL: '10',
+  MarginR: '10',
+  MarginV: '10',
+  Encoding: '1',
+};
+
 function parseStyleColor(color) {
   var ref = color.match(/&H(\w\w)?(\w{6})&?/);
   var a = ref[1];
@@ -716,15 +747,28 @@ function compileStyles(ref) {
   var info = ref.info;
   var style = ref.style;
   var format = ref.format;
+  var defaultStyle = ref.defaultStyle;
 
   var result = {};
-  for (var i = 0; i < style.length; i++) {
-    var stl = style[i];
-    var s = {};
-    for (var j = 0; j < format.length; j++) {
-      var fmt = format[j];
-      s[fmt] = (fmt === 'Name' || fmt === 'Fontname' || /Colour/.test(fmt)) ? stl[j] : stl[j] * 1;
+  var styles = [
+    assign({}, DEFAULT_STYLE, defaultStyle, { Name: 'Default' }) ].concat( style.map(function (stl) {
+      var s = {};
+      for (var i = 0; i < format.length; i++) {
+        s[format[i]] = stl[i];
+      }
+      return s;
+    }) );
+  var loop = function ( i ) {
+    var s = styles[i];
+    // this behavior is same as Aegisub by black-box testing
+    if (/^(\*+)Default$/.test(s.Name)) {
+      s.Name = 'Default';
     }
+    Object.keys(s).forEach(function (key) {
+      if (key !== 'Name' && key !== 'Fontname' && !/Colour/.test(key)) {
+        s[key] *= 1;
+      }
+    });
     var ref$1 = parseStyleColor(s.PrimaryColour);
     var a1 = ref$1[0];
     var c1 = ref$1[1];
@@ -763,16 +807,21 @@ function compileStyles(ref) {
       q: /^[0-3]$/.test(info.WrapStyle) ? info.WrapStyle * 1 : 2,
     };
     result[s.Name] = { style: s, tag: tag };
-  }
+  };
+
+  for (var i = 0; i < styles.length; i++) loop( i );
   return result;
 }
 
-function compile(text) {
+function compile(text, options) {
+  if ( options === void 0 ) options = {};
+
   var tree = parse(text);
   var styles = compileStyles({
     info: tree.info,
     style: tree.styles.style,
     format: tree.styles.format,
+    defaultStyle: options.defaultStyle || {},
   });
   return {
     info: tree.info,
@@ -1935,7 +1984,7 @@ function setter(r) {
 }
 
 var ASS = function ASS(source, video, options) {
-  if (typeof source !== 'string' || !video || video.nodeName !== 'VIDEO') {
+  if (typeof source !== 'string' || !(video instanceof HTMLVideoElement)) {
     return this;
   }
   return init.call(this, source, video, options);
