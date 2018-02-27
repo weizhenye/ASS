@@ -43,6 +43,8 @@ var numTags = [
 var numRegexs = numTags.map(function (nt) { return ({ name: nt, regex: new RegExp(("^" + nt + "-?\\d")) }); });
 
 function parseTag(text) {
+  var assign;
+
   var tag = {};
   for (var i = 0; i < numRegexs.length; i++) {
     var ref = numRegexs[i];
@@ -70,7 +72,6 @@ function parseTag(text) {
     var alpha = ref$2[2];
     tag[("a" + num$1)] = alpha;
   } else if (/^alpha&?H?[0-9a-f]+/i.test(text)) {
-    var assign;
     (assign = text.match(/^alpha&?H?([0-9a-f]+)/i), tag.alpha = assign[1]);
     tag.alpha = ("00" + (tag.alpha)).slice(-2);
   } else if (/^(?:pos|org|move|fad|fade)\(/.test(text)) {
@@ -328,6 +329,8 @@ function isValid(cmd) {
 }
 
 function getViewBox(commands) {
+  var ref;
+
   var minX = Infinity;
   var minY = Infinity;
   var maxX = -Infinity;
@@ -351,7 +354,6 @@ function getViewBox(commands) {
     width: maxX - minX,
     height: maxY - minY,
   };
-  var ref;
 }
 
 /**
@@ -409,6 +411,8 @@ function toSVGPath(instructions) {
 }
 
 function compileDrawing(rawCommands) {
+  var ref$1;
+
   var commands = [];
   var i = 0;
   while (i < rawCommands.length) {
@@ -463,7 +467,6 @@ function compileDrawing(rawCommands) {
   );
 
   return assign({ instructions: instructions, d: toSVGPath(instructions) }, getViewBox(commands));
-  var ref$1;
 }
 
 var tTags = [
@@ -664,7 +667,6 @@ function compileText(ref) {
 }
 
 function compileDialogues(ref) {
-  var info = ref.info;
   var styles = ref.styles;
   var dialogues = ref.dialogues;
 
@@ -679,7 +681,6 @@ function compileDialogues(ref) {
       dia.Style = 'Default';
     }
     var stl = styles[dia.Style].style;
-    var timer = info.Timer / 100 || 1;
     var compiledText = compileText({
       styles: styles,
       name: dia.Style,
@@ -691,8 +692,8 @@ function compileDialogues(ref) {
     minLayer = Math.min(minLayer, dia.Layer);
     results.push(assign({
       layer: dia.Layer,
-      start: dia.Start / timer,
-      end: dia.End / timer,
+      start: dia.Start,
+      end: dia.End,
       // reset style by `\r` will not effect margin and alignment
       margin: {
         left: dia.MarginL || stl.MarginL,
@@ -830,7 +831,6 @@ function compile(text, options) {
     collisions: tree.info.Collisions || 'Normal',
     styles: styles,
     dialogues: compileDialogues({
-      info: tree.info,
       styles: styles,
       dialogues: tree.events.dialogue,
     }),
