@@ -2,6 +2,12 @@ import ASS from '../../src/index.js';
 import { $video } from '../index.js';
 
 describe('resampling API', () => {
+  beforeEach(function () {
+    if (!$video.videoWidth || !$video.videoHeight) {
+      this.skip();
+    }
+  });
+
   it('should handle `video_width`', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',

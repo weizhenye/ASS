@@ -12,7 +12,7 @@ module.exports = (config) => {
     browsers: ['ChromeHeadless'],
     files: [
       { pattern: 'test/fixtures/**/*.*', included: false, served: true },
-      'test/test.js',
+      { pattern: 'test/test.js', watched: false },
     ],
     preprocessors: {
       'test/test.js': ['rollup'],

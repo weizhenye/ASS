@@ -4,8 +4,8 @@ import { getKeyframes } from '../renderer/animation.js';
 export function resize() {
   const cw = this.video.clientWidth;
   const ch = this.video.clientHeight;
-  const vw = this.video.videoWidth;
-  const vh = this.video.videoHeight;
+  const vw = this.video.videoWidth || cw;
+  const vh = this.video.videoHeight || ch;
   const sw = this._.scriptRes.width;
   const sh = this._.scriptRes.height;
   let rw = sw;

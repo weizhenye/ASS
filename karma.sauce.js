@@ -1,20 +1,12 @@
-const fs = require('fs');
-const csso = require('csso');
+const path = require('path');
+const alias = require('rollup-plugin-alias');
 const buble = require('rollup-plugin-buble');
-const istanbul = require('rollup-plugin-istanbul');
-const replace = require('rollup-plugin-replace');
-const resolve = require('rollup-plugin-node-resolve');
 
 const customLaunchers = {
   SL_iOS_Safari_latest: {
     base: 'SauceLabs',
     browserName: 'iphone',
     version: '11.0',
-  },
-  SL_iOS_Safari_oldest: {
-    base: 'SauceLabs',
-    browserName: 'iphone',
-    version: '8.4',
   },
   SL_Android_latest: {
     base: 'SauceLabs',
@@ -41,7 +33,6 @@ const customLaunchers = {
   SL_Safari: {
     base: 'SauceLabs',
     browserName: 'safari',
-    platform: 'macOS 10.12',
   },
   SL_Edge: {
     base: 'SauceLabs',
@@ -73,7 +64,7 @@ module.exports = (config) => {
     customLaunchers,
     files: [
       { pattern: 'test/fixtures/**/*.*', included: false, served: true },
-      'test/test.js',
+      { pattern: 'test/test.js', watched: false },
     ],
     preprocessors: {
       'test/test.js': ['rollup'],
@@ -83,12 +74,8 @@ module.exports = (config) => {
         format: 'iife',
       },
       plugins: [
-        replace({
-          __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,
-        }),
-        resolve(),
-        istanbul({
-          include: ['src/**/*'],
+        alias({
+          '../../src/index.js': path.resolve(__dirname, './dist/ass.esm.js'),
         }),
         buble(),
       ],

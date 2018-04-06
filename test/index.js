@@ -1,4 +1,4 @@
-const thenable = {
+const thenable = window.Promise ? Promise.resolve() : {
   then(cb) {
     cb();
     return this;
@@ -14,32 +14,24 @@ export function playVideo($video) {
   }, () => { this.skip(); });
 }
 
-export const $video = document.createElement('video');
-$video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
-$video.style.width = '640px';
-$video.style.height = '360px';
+// eslint-disable-next-line import/no-mutable-exports
+export let $video = null;
 
-before((done) => {
-  let iid = 0;
+beforeEach((done) => {
+  $video = document.createElement('video');
   const handler = () => {
     $video.removeEventListener('canplaythrough', handler);
-    clearInterval(iid);
     done();
   };
   $video.addEventListener('canplaythrough', handler);
-  iid = setInterval(() => {
-    if ($video.videoWidth) {
-      clearInterval(iid);
-      $video.removeEventListener('canplaythrough', handler);
-      done();
-    }
-  }, 100);
   document.body.appendChild($video);
+  $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
+  $video.muted = true;
+  $video.style.width = '640px';
+  $video.style.height = '360px';
 });
 
-beforeEach((done) => {
-  ($video.pause() || thenable).then(() => {
-    $video.currentTime = 0;
-    done();
-  });
+afterEach(() => {
+  document.body.removeChild($video);
+  $video = null;
 });
