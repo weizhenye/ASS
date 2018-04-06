@@ -18,12 +18,19 @@ export function playVideo($video) {
 export let $video = null;
 
 beforeEach((done) => {
+  let iid = 0;
   $video = document.createElement('video');
   const handler = () => {
     $video.removeEventListener('canplaythrough', handler);
+    clearInterval(iid);
     done();
   };
   $video.addEventListener('canplaythrough', handler);
+  iid = setInterval(() => {
+    if ($video.videoWidth) {
+      handler();
+    }
+  }, 100);
   document.body.appendChild($video);
   $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
   $video.muted = true;
