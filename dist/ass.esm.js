@@ -26,11 +26,17 @@ function parseEffect(text) {
 function parseDrawing(text) {
   return text
     .toLowerCase()
+    // numbers
+    .replace(/([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)/g, ' $1 ')
+    // commands
     .replace(/([mnlbspc])/g, ' $1 ')
     .trim()
     .replace(/\s+/g, ' ')
     .split(/\s(?=[mnlbspc])/)
-    .map(function (cmd) { return cmd.split(' '); });
+    .map(function (cmd) { return (
+      cmd.split(' ')
+        .filter(function (x, i) { return !(i && Number.isNaN(x * 1)); })
+    ); });
 }
 
 var numTags = [
@@ -418,23 +424,21 @@ function compileDrawing(rawCommands) {
   while (i < rawCommands.length) {
     var arr = rawCommands[i];
     var cmd = createCommand(arr);
-    if (cmd.type) {
+    if (isValid(cmd)) {
       if (cmd.type === 'S') {
-        var ref = commands[i - 1].points.slice(-1)[0];
+        var ref = (commands[i - 1] || { points: [{ x: 0, y: 0 }] }).points.slice(-1)[0];
         var x = ref.x;
         var y = ref.y;
         cmd.points.unshift({ x: x, y: y });
       }
-      if (isValid(cmd)) {
-        if (i) {
-          cmd.prev = commands[i - 1].type;
-          commands[i - 1].next = cmd.type;
-        }
-        commands.push(cmd);
+      if (i) {
+        cmd.prev = commands[i - 1].type;
+        commands[i - 1].next = cmd.type;
       }
+      commands.push(cmd);
       i++;
     } else {
-      if (commands[i - 1].type === 'S') {
+      if (i && commands[i - 1].type === 'S') {
         var additionPoints = {
           p: cmd.points,
           c: commands[i - 1].points.slice(0, 3),
@@ -1817,8 +1821,8 @@ function unbindEvents() {
 function resize() {
   var cw = this.video.clientWidth;
   var ch = this.video.clientHeight;
-  var vw = this.video.videoWidth;
-  var vh = this.video.videoHeight;
+  var vw = this.video.videoWidth || cw;
+  var vh = this.video.videoHeight || ch;
   var sw = this._.scriptRes.width;
   var sh = this._.scriptRes.height;
   var rw = sw;
