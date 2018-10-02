@@ -494,7 +494,7 @@
       return null;
     }
     if (key === 'pos' || key === 'org') {
-      return value.length === 2 ? ( obj = {}, obj[key] = { x: value[0], y: value[1] }, obj) : null;
+      return value.length === 2 ? ( obj = {}, obj[key] = { x: value[0], y: value[1] }, obj ) : null;
     }
     if (key === 'move') {
       var x1 = value[0];
@@ -552,7 +552,7 @@
       return { xshad: value, yshad: value };
     }
     if (/^c\d$/.test(key)) {
-      return ( obj$1 = {}, obj$1[key] = value || presets[key], obj$1);
+      return ( obj$1 = {}, obj$1[key] = value || presets[key], obj$1 );
     }
     if (key === 'alpha') {
       return { a1: value, a2: value, a3: value, a4: value };
@@ -581,7 +581,7 @@
       });
       return { t: { t1: t1$3, t2: t2$3, accel: accel, tag: compiledTag } };
     }
-    return ( obj$2 = {}, obj$2[key] = value, obj$2);
+    return ( obj$2 = {}, obj$2[key] = value, obj$2 );
   }
 
   var a2an = [
@@ -847,17 +847,19 @@
     };
   }
 
-  var raf =
-    window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    (function (cb) { return setTimeout(cb, 50 / 3); });
+  var raf = (
+    window.requestAnimationFrame
+    || window.mozRequestAnimationFrame
+    || window.webkitRequestAnimationFrame
+    || (function (cb) { return setTimeout(cb, 50 / 3); })
+  );
 
-  var caf =
-    window.cancelAnimationFrame ||
-    window.mozCancelAnimationFrame ||
-    window.webkitCancelAnimationFrame ||
-    clearTimeout;
+  var caf = (
+    window.cancelAnimationFrame
+    || window.mozCancelAnimationFrame
+    || window.webkitCancelAnimationFrame
+    || clearTimeout
+  );
 
   function color2rgba(c) {
     var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
@@ -906,6 +908,11 @@
     animation: getVendor('animation'),
     clipPath: getVendor('clipPath'),
   };
+
+  function getStyleRoot(container) {
+    var rootNode = container.getRootNode ? container.getRootNode() : document;
+    return rootNode === document ? rootNode.head : rootNode;
+  }
 
   var strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
   var transformTags = ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'];
@@ -1161,10 +1168,12 @@
   var KeyframeBlockList = function KeyframeBlockList() {
     this.obj = {};
   };
+
   KeyframeBlockList.prototype.set = function set (keyText, prop, value) {
     if (!this.obj[keyText]) { this.obj[keyText] = {}; }
     this.obj[keyText][prop] = value;
   };
+
   KeyframeBlockList.prototype.setT = function setT (ref) {
       var t1 = ref.t1;
       var t2 = ref.t2;
@@ -1182,6 +1191,7 @@
     }
     this.set('100.000%', prop, to);
   };
+
   KeyframeBlockList.prototype.toString = function toString () {
       var this$1 = this;
 
@@ -1323,10 +1333,10 @@
               kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'letter-spacing', from: from$1, to: to$1 });
             }
             var hasAlpha = (
-              tag.a1 !== undefined &&
-              tag.a1 === tag.a2 &&
-              tag.a2 === tag.a3 &&
-              tag.a3 === tag.a4
+              tag.a1 !== undefined
+              && tag.a1 === tag.a2
+              && tag.a2 === tag.a3
+              && tag.a3 === tag.a4
             );
             if (tag.c1 || (tag.a1 && !hasAlpha)) {
               var from$2 = color2rgba(fromTag.a1 + fromTag.c1);
@@ -1339,8 +1349,8 @@
               kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'opacity', from: from$3, to: to$3 });
             }
             var hasStroke = strokeTags.some(function (x) { return (
-              tag[x] !== undefined &&
-              tag[x] !== (fragment.tag[x] || slice.tag[x])
+              tag[x] !== undefined
+              && tag[x] !== (fragment.tag[x] || slice.tag[x])
             ); });
             if (hasStroke) {
               var scale = /Yes/i.test(this$1.info.ScaledBorderAndShadow) ? this$1.scale : 1;
@@ -1349,8 +1359,8 @@
               kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'text-shadow', from: from$4, to: to$4 });
             }
             var hasTransfrom = transformTags.some(function (x) { return (
-              tag[x] !== undefined &&
-              tag[x] !== (fragment.tag[x] || slice.tag[x])
+              tag[x] !== undefined
+              && tag[x] !== (fragment.tag[x] || slice.tag[x])
             ); });
             if (hasTransfrom) {
               var toTag = assign({}, fromTag, tag);
@@ -1380,12 +1390,12 @@
   function createAnimation(name, duration, delay) {
     var va = vendor.animation;
     return (
-      va + "animation-name:" + name + ";" +
-      va + "animation-duration:" + duration + "s;" +
-      va + "animation-delay:" + delay + "s;" +
-      va + "animation-timing-function:linear;" +
-      va + "animation-iteration-count:1;" +
-      va + "animation-fill-mode:forwards;"
+      va + "animation-name:" + name + ";"
+      + va + "animation-duration:" + duration + "s;"
+      + va + "animation-delay:" + delay + "s;"
+      + va + "animation-timing-function:linear;"
+      + va + "animation-iteration-count:1;"
+      + va + "animation-fill-mode:forwards;"
     );
   }
 
@@ -1425,9 +1435,9 @@
       ['xlink:href', ("#" + symbolId)],
       ['filter', ("url(#" + filterId + ")")] ]));
     $svg.style.cssText = (
-      'position:absolute;' +
-      "left:" + (minX * scaleX - vbx) + "px;" +
-      "top:" + (minY * scaleY - vby) + "px;"
+      'position:absolute;'
+      + "left:" + (minX * scaleX - vbx) + "px;"
+      + "top:" + (minY * scaleY - vby) + "px;"
     );
     return {
       $svg: $svg,
@@ -1473,8 +1483,8 @@
           }
           if (borderStyle === 3) {
             cssText += (
-              "background-color:" + (color2rgba(tag.a3 + tag.c3)) + ";" +
-              "box-shadow:" + (createCSSStroke(tag, scale)) + ";"
+              "background-color:" + (color2rgba(tag.a3 + tag.c3)) + ";"
+              + "box-shadow:" + (createCSSStroke(tag, scale)) + ";"
             );
           }
           cssText += tag.b ? ("font-weight:" + (tag.b === 1 ? 'bold' : tag.b) + ";") : '';
@@ -1561,19 +1571,19 @@
       var re = channel.right.end[y];
       return (
         (align === 'left' && (
-          (le > vct && lw) ||
-          (ce > vct && cw && 2 * width + cw > stageWidth) ||
-          (re > vct && rw && width + rw > stageWidth)
-        )) ||
-        (align === 'center' && (
-          (le > vct && lw && 2 * lw + width > stageWidth) ||
-          (ce > vct && cw) ||
-          (re > vct && rw && 2 * rw + width > stageWidth)
-        )) ||
-        (align === 'right' && (
-          (le > vct && lw && lw + width > stageWidth) ||
-          (ce > vct && cw && 2 * width + cw > stageWidth) ||
-          (re > vct && rw)
+          (le > vct && lw)
+          || (ce > vct && cw && 2 * width + cw > stageWidth)
+          || (re > vct && rw && width + rw > stageWidth)
+        ))
+        || (align === 'center' && (
+          (le > vct && lw && 2 * lw + width > stageWidth)
+          || (ce > vct && cw)
+          || (re > vct && rw && 2 * rw + width > stageWidth)
+        ))
+        || (align === 'right' && (
+          (le > vct && lw && lw + width > stageWidth)
+          || (ce > vct && cw && 2 * width + cw > stageWidth)
+          || (re > vct && rw)
         ))
       );
     };
@@ -1737,8 +1747,8 @@
     }
     var dias = this.dialogues;
     while (
-      this._.index < dias.length &&
-      vct >= dias[this._.index].start
+      this._.index < dias.length
+      && vct >= dias[this._.index].start
     ) {
       if (vct < dias[this$1._.index].end) {
         var dia$1 = renderer.call(this$1, dias[this$1._.index]);
@@ -1793,8 +1803,8 @@
       if (!from) { return 0; }
       for (var i = from; i < to; i++) {
         if (
-          dias[i].end > vct && vct >= dias[i].start ||
-          i && dias[i - 1].end < vct && vct < dias[i].start
+          dias[i].end > vct && vct >= dias[i].start
+          || (i && dias[i - 1].end < vct && vct < dias[i].start)
         ) {
           return i;
         }
@@ -1853,10 +1863,10 @@
 
     this.container.style.cssText = "width:" + cw + "px;height:" + ch + "px;";
     var cssText = (
-      "width:" + (this.width) + "px;" +
-      "height:" + (this.height) + "px;" +
-      "top:" + ((ch - this.height) / 2) + "px;" +
-      "left:" + ((cw - this.width) / 2) + "px;"
+      "width:" + (this.width) + "px;"
+      + "height:" + (this.height) + "px;"
+      + "top:" + ((ch - this.height) / 2) + "px;"
+      + "left:" + ((cw - this.width) / 2) + "px;"
     );
     this._.$stage.style.cssText = cssText;
     this._.$svg.style.cssText = cssText;
@@ -1888,9 +1898,6 @@
     };
     this._.$svg.appendChild(this._.$defs);
     this._.$stage.className = 'ASS-stage ASS-animation-paused';
-    this._.$animation.type = 'text/css';
-    this._.$animation.className = 'ASS-animation';
-    document.head.appendChild(this._.$animation);
 
     this._.resampling = options.resampling || 'video_height';
 
@@ -1924,14 +1931,18 @@
     };
     this.dialogues = dialogues;
 
-    var $style = document.getElementById('ASS-global-style');
+    var styleRoot = getStyleRoot(this.container);
+    var $style = styleRoot.querySelector('#ASS-global-style');
     if (!$style) {
       $style = document.createElement('style');
       $style.type = 'text/css';
       $style.id = 'ASS-global-style';
       $style.appendChild(document.createTextNode(GLOBAL_CSS));
-      document.head.appendChild($style);
+      styleRoot.appendChild($style);
     }
+    this._.$animation.type = 'text/css';
+    this._.$animation.className = 'ASS-animation';
+    styleRoot.appendChild(this._.$animation);
 
     resize.call(this);
 
@@ -1959,6 +1970,8 @@
     pause.call(this);
     clear.call(this);
     unbindEvents.call(this, this._.listener);
+
+    var styleRoot = getStyleRoot(this.container);
     if (!this._.hasInitContainer) {
       var isPlay = !this.video.paused;
       this.container.parentNode.insertBefore(this.video, this.container);
@@ -1967,7 +1980,8 @@
         this.video.play();
       }
     }
-    document.head.removeChild(this._.$animation);
+    styleRoot.removeChild(this._.$animation);
+
     // eslint-disable-next-line no-restricted-syntax
     for (var key in this$1) {
       if (Object.prototype.hasOwnProperty.call(this$1, key)) {
@@ -2001,21 +2015,27 @@
   };
 
   var prototypeAccessors = { resampling: { configurable: true } };
+
   ASS.prototype.resize = function resize$1 () {
     return resize.call(this);
   };
+
   ASS.prototype.show = function show$1 () {
     return show.call(this);
   };
+
   ASS.prototype.hide = function hide$1 () {
     return hide.call(this);
   };
+
   ASS.prototype.destroy = function destroy$1 () {
     return destroy.call(this);
   };
+
   prototypeAccessors.resampling.get = function () {
     return getter.call(this);
   };
+
   prototypeAccessors.resampling.set = function (r) {
     return setter.call(this, r);
   };
