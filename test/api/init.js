@@ -54,4 +54,20 @@ describe('init API', () => {
       $video.addEventListener('timeupdate', handler);
     });
   });
+
+  it('should work in Shadow DOM', function () {
+    const $shadow = document.createElement('div');
+    if (!($shadow.getRootNode) || !($shadow.attachShadow)) {
+      this.skip();
+      return;
+    }
+    const shadowRoot = $shadow.attachShadow({ mode: 'open' });
+    const $v = document.createElement('video');
+    shadowRoot.appendChild($v);
+    document.body.appendChild($shadow);
+    const ass = new ASS('', $v);
+    expect(shadowRoot.querySelector('#ASS-global-style')).to.not.equal(undefined);
+    ass.destroy();
+    document.body.removeChild($shadow);
+  });
 });

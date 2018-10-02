@@ -55,5 +55,10 @@ export const vendor = {
   clipPath: getVendor('clipPath'),
 };
 
+export function getStyleRoot(container) {
+  const rootNode = container.getRootNode ? container.getRootNode() : document;
+  return rootNode === document ? rootNode.head : rootNode;
+}
+
 export const strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
 export const transformTags = ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'];

@@ -4,7 +4,7 @@ import { play } from './play.js';
 import { resize } from './resize.js';
 import { seek } from './seek.js';
 import { $fixFontSize } from '../renderer/font-size.js';
-import { createSVGEl } from '../utils.js';
+import { createSVGEl, getStyleRoot } from '../utils.js';
 
 const GLOBAL_CSS = '__GLOBAL_CSS__';
 
@@ -24,9 +24,6 @@ export function init(source, video, options = {}) {
   };
   this._.$svg.appendChild(this._.$defs);
   this._.$stage.className = 'ASS-stage ASS-animation-paused';
-  this._.$animation.type = 'text/css';
-  this._.$animation.className = 'ASS-animation';
-  document.head.appendChild(this._.$animation);
 
   this._.resampling = options.resampling || 'video_height';
 
@@ -56,14 +53,18 @@ export function init(source, video, options = {}) {
   };
   this.dialogues = dialogues;
 
-  let $style = document.getElementById('ASS-global-style');
+  const styleRoot = getStyleRoot(this.container);
+  let $style = styleRoot.querySelector('#ASS-global-style');
   if (!$style) {
     $style = document.createElement('style');
     $style.type = 'text/css';
     $style.id = 'ASS-global-style';
     $style.appendChild(document.createTextNode(GLOBAL_CSS));
-    document.head.appendChild($style);
+    styleRoot.appendChild($style);
   }
+  this._.$animation.type = 'text/css';
+  this._.$animation.className = 'ASS-animation';
+  styleRoot.appendChild(this._.$animation);
 
   resize.call(this);
 
