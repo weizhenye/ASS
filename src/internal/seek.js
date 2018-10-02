@@ -14,8 +14,8 @@ export function seek() {
     if (!from) return 0;
     for (let i = from; i < to; i++) {
       if (
-        dias[i].end > vct && vct >= dias[i].start ||
-        i && dias[i - 1].end < vct && vct < dias[i].start
+        dias[i].end > vct && vct >= dias[i].start
+        || (i && dias[i - 1].end < vct && vct < dias[i].start)
       ) {
         return i;
       }

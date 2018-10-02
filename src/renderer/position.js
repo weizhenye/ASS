@@ -20,19 +20,19 @@ function allocate(dialogue) {
     const re = channel.right.end[y];
     return (
       (align === 'left' && (
-        (le > vct && lw) ||
-        (ce > vct && cw && 2 * width + cw > stageWidth) ||
-        (re > vct && rw && width + rw > stageWidth)
-      )) ||
-      (align === 'center' && (
-        (le > vct && lw && 2 * lw + width > stageWidth) ||
-        (ce > vct && cw) ||
-        (re > vct && rw && 2 * rw + width > stageWidth)
-      )) ||
-      (align === 'right' && (
-        (le > vct && lw && lw + width > stageWidth) ||
-        (ce > vct && cw && 2 * width + cw > stageWidth) ||
-        (re > vct && rw)
+        (le > vct && lw)
+        || (ce > vct && cw && 2 * width + cw > stageWidth)
+        || (re > vct && rw && width + rw > stageWidth)
+      ))
+      || (align === 'center' && (
+        (le > vct && lw && 2 * lw + width > stageWidth)
+        || (ce > vct && cw)
+        || (re > vct && rw && 2 * rw + width > stageWidth)
+      ))
+      || (align === 'right' && (
+        (le > vct && lw && lw + width > stageWidth)
+        || (ce > vct && cw && 2 * width + cw > stageWidth)
+        || (re > vct && rw)
       ))
     );
   };

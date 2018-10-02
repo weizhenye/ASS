@@ -30,10 +30,10 @@ export function resize() {
 
   this.container.style.cssText = `width:${cw}px;height:${ch}px;`;
   const cssText = (
-    `width:${this.width}px;` +
-    `height:${this.height}px;` +
-    `top:${(ch - this.height) / 2}px;` +
-    `left:${(cw - this.width) / 2}px;`
+    `width:${this.width}px;`
+    + `height:${this.height}px;`
+    + `top:${(ch - this.height) / 2}px;`
+    + `left:${(cw - this.width) / 2}px;`
   );
   this._.$stage.style.cssText = cssText;
   this._.$svg.style.cssText = cssText;

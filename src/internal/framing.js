@@ -20,8 +20,8 @@ export function framing() {
   }
   const dias = this.dialogues;
   while (
-    this._.index < dias.length &&
-    vct >= dias[this._.index].start
+    this._.index < dias.length
+    && vct >= dias[this._.index].start
   ) {
     if (vct < dias[this._.index].end) {
       const dia = renderer.call(this, dias[this._.index]);

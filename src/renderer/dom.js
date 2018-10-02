@@ -38,8 +38,8 @@ export function createDialogue(dialogue) {
         }
         if (borderStyle === 3) {
           cssText += (
-            `background-color:${color2rgba(tag.a3 + tag.c3)};` +
-            `box-shadow:${createCSSStroke(tag, scale)};`
+            `background-color:${color2rgba(tag.a3 + tag.c3)};`
+            + `box-shadow:${createCSSStroke(tag, scale)};`
           );
         }
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';

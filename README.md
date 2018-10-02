@@ -6,6 +6,7 @@
 [![NPM version](https://img.shields.io/npm/v/assjs.svg)](https://www.npmjs.com/package/assjs)
 [![License](https://img.shields.io/npm/l/assjs.svg)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
 [![File size](https://badge-size.herokuapp.com/weizhenye/ASS/master/dist/ass.min.js?compression=gzip&color=blue&label=min%2Bgzip)](https://unpkg.com/asa-renderer/dist/ass.min.js)
+[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/assjs/badge?style=rounded)](https://www.jsdelivr.com/package/npm/assjs)
 
 [![Browser compatibility](https://saucelabs.com/browser-matrix/assjs.svg)](https://saucelabs.com/u/assjs)
 

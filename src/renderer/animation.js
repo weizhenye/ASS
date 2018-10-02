@@ -12,10 +12,12 @@ class KeyframeBlockList {
   constructor() {
     this.obj = {};
   }
+
   set(keyText, prop, value) {
     if (!this.obj[keyText]) this.obj[keyText] = {};
     this.obj[keyText][prop] = value;
   }
+
   setT({ t1, t2, duration, prop, from, to }) {
     this.set('0.000%', prop, from);
     if (t1 < duration) {
@@ -26,6 +28,7 @@ class KeyframeBlockList {
     }
     this.set('100.000%', prop, to);
   }
+
   toString() {
     return Object.keys(this.obj)
       .map(keyText => (
@@ -138,10 +141,10 @@ export function getKeyframes() {
             kbl.setT({ t1, t2, duration, prop: 'letter-spacing', from, to });
           }
           const hasAlpha = (
-            tag.a1 !== undefined &&
-            tag.a1 === tag.a2 &&
-            tag.a2 === tag.a3 &&
-            tag.a3 === tag.a4
+            tag.a1 !== undefined
+            && tag.a1 === tag.a2
+            && tag.a2 === tag.a3
+            && tag.a3 === tag.a4
           );
           if (tag.c1 || (tag.a1 && !hasAlpha)) {
             const from = color2rgba(fromTag.a1 + fromTag.c1);
@@ -154,8 +157,8 @@ export function getKeyframes() {
             kbl.setT({ t1, t2, duration, prop: 'opacity', from, to });
           }
           const hasStroke = strokeTags.some(x => (
-            tag[x] !== undefined &&
-            tag[x] !== (fragment.tag[x] || slice.tag[x])
+            tag[x] !== undefined
+            && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ));
           if (hasStroke) {
             const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
@@ -164,8 +167,8 @@ export function getKeyframes() {
             kbl.setT({ t1, t2, duration, prop: 'text-shadow', from, to });
           }
           const hasTransfrom = transformTags.some(x => (
-            tag[x] !== undefined &&
-            tag[x] !== (fragment.tag[x] || slice.tag[x])
+            tag[x] !== undefined
+            && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ));
           if (hasTransfrom) {
             const toTag = assign({}, fromTag, tag);
@@ -195,11 +198,11 @@ export function getKeyframes() {
 export function createAnimation(name, duration, delay) {
   const va = vendor.animation;
   return (
-    `${va}animation-name:${name};` +
-    `${va}animation-duration:${duration}s;` +
-    `${va}animation-delay:${delay}s;` +
-    `${va}animation-timing-function:linear;` +
-    `${va}animation-iteration-count:1;` +
-    `${va}animation-fill-mode:forwards;`
+    `${va}animation-name:${name};`
+    + `${va}animation-duration:${duration}s;`
+    + `${va}animation-delay:${delay}s;`
+    + `${va}animation-timing-function:linear;`
+    + `${va}animation-iteration-count:1;`
+    + `${va}animation-fill-mode:forwards;`
   );
 }

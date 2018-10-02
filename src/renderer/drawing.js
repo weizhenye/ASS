@@ -37,9 +37,9 @@ export function createDrawing(fragment, styleTag) {
     ['filter', `url(#${filterId})`],
   ]));
   $svg.style.cssText = (
-    'position:absolute;' +
-    `left:${minX * scaleX - vbx}px;` +
-    `top:${minY * scaleY - vby}px;`
+    'position:absolute;'
+    + `left:${minX * scaleX - vbx}px;`
+    + `top:${minY * scaleY - vby}px;`
   );
   return {
     $svg,

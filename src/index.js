@@ -12,21 +12,27 @@ export default class ASS {
     }
     return init.call(this, source, video, options);
   }
+
   resize() {
     return resize.call(this);
   }
+
   show() {
     return show.call(this);
   }
+
   hide() {
     return hide.call(this);
   }
+
   destroy() {
     return destroy.call(this);
   }
+
   get resampling() {
     return getter.call(this);
   }
+
   set resampling(r) {
     return setter.call(this, r);
   }

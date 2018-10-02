@@ -1,14 +1,16 @@
-export const raf =
-  window.requestAnimationFrame ||
-  window.mozRequestAnimationFrame ||
-  window.webkitRequestAnimationFrame ||
-  (cb => setTimeout(cb, 50 / 3));
+export const raf = (
+  window.requestAnimationFrame
+  || window.mozRequestAnimationFrame
+  || window.webkitRequestAnimationFrame
+  || (cb => setTimeout(cb, 50 / 3))
+);
 
-export const caf =
-  window.cancelAnimationFrame ||
-  window.mozCancelAnimationFrame ||
-  window.webkitCancelAnimationFrame ||
-  clearTimeout;
+export const caf = (
+  window.cancelAnimationFrame
+  || window.mozCancelAnimationFrame
+  || window.webkitCancelAnimationFrame
+  || clearTimeout
+);
 
 export function color2rgba(c) {
   const t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
