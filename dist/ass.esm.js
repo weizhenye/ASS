@@ -741,11 +741,30 @@ var DEFAULT_STYLE = {
   Encoding: '1',
 };
 
+/**
+ * @param {String} color
+ * @returns {Array} [AA, BBGGRR]
+ */
 function parseStyleColor(color) {
-  var ref = color.match(/&H(\w\w)?(\w{6})&?/);
-  var a = ref[1];
-  var c = ref[2];
-  return [a || '00', c];
+  if (/^(&|H|&H)[0-9a-f]{6,}/i.test(color)) {
+    var ref = color.match(/&?H?([0-9a-f]{2})?([0-9a-f]{6})/i);
+    var a = ref[1];
+    var c = ref[2];
+    return [a || '00', c];
+  }
+  var num = parseInt(color, 10);
+  if (!Number.isNaN(num)) {
+    var min = -2147483648;
+    var max = 2147483647;
+    if (num < min) {
+      return ['00', '000000'];
+    }
+    var aabbggrr = (min <= num && num <= max)
+      ? ("00000000" + ((num < 0 ? num + 4294967296 : num).toString(16))).slice(-8)
+      : String(num).slice(0, 8);
+    return [aabbggrr.slice(0, 2), aabbggrr.slice(2)];
+  }
+  return ['00', '000000'];
 }
 
 function compileStyles(ref) {
@@ -1717,26 +1736,24 @@ function renderer(dialogue) {
 }
 
 function framing() {
-  var this$1 = this;
-
   var vct = this.video.currentTime;
   for (var i = this._.stagings.length - 1; i >= 0; i--) {
-    var dia = this$1._.stagings[i];
+    var dia = this._.stagings[i];
     var end = dia.end;
     if (dia.effect && /scroll/.test(dia.effect.name)) {
       var ref = dia.effect;
       var y1 = ref.y1;
       var y2 = ref.y2;
       var delay = ref.delay;
-      var duration = ((y2 || this$1._.resampledRes.height) - y1) / (1000 / delay);
+      var duration = ((y2 || this._.resampledRes.height) - y1) / (1000 / delay);
       end = Math.min(end, dia.start + duration);
     }
     if (end < vct) {
-      this$1._.$stage.removeChild(dia.$div);
+      this._.$stage.removeChild(dia.$div);
       if (dia.$clipPath) {
-        this$1._.$defs.removeChild(dia.$clipPath);
+        this._.$defs.removeChild(dia.$clipPath);
       }
-      this$1._.stagings.splice(i, 1);
+      this._.stagings.splice(i, 1);
     }
   }
   var dias = this.dialogues;
@@ -1744,11 +1761,11 @@ function framing() {
     this._.index < dias.length
     && vct >= dias[this._.index].start
   ) {
-    if (vct < dias[this$1._.index].end) {
-      var dia$1 = renderer.call(this$1, dias[this$1._.index]);
-      this$1._.stagings.push(dia$1);
+    if (vct < dias[this._.index].end) {
+      var dia$1 = renderer.call(this, dias[this._.index]);
+      this._.stagings.push(dia$1);
     }
-    ++this$1._.index;
+    ++this._.index;
   }
 }
 
@@ -1772,13 +1789,11 @@ function pause() {
 }
 
 function clear() {
-  var this$1 = this;
-
   while (this._.$stage.lastChild) {
-    this$1._.$stage.removeChild(this$1._.$stage.lastChild);
+    this._.$stage.removeChild(this._.$stage.lastChild);
   }
   while (this._.$defs.lastChild) {
-    this$1._.$defs.removeChild(this$1._.$defs.lastChild);
+    this._.$defs.removeChild(this._.$defs.lastChild);
   }
   this._.stagings = [];
   this._.space = [];
@@ -1959,8 +1974,6 @@ function hide() {
 }
 
 function destroy() {
-  var this$1 = this;
-
   pause.call(this);
   clear.call(this);
   unbindEvents.call(this, this._.listener);
@@ -1977,9 +1990,9 @@ function destroy() {
   styleRoot.removeChild(this._.$animation);
 
   // eslint-disable-next-line no-restricted-syntax
-  for (var key in this$1) {
-    if (Object.prototype.hasOwnProperty.call(this$1, key)) {
-      this$1[key] = null;
+  for (var key in this) {
+    if (Object.prototype.hasOwnProperty.call(this, key)) {
+      this[key] = null;
     }
   }
 
