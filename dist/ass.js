@@ -1782,6 +1782,7 @@
       framing.call(this$1);
       this$1._.requestId = raf(frame);
     };
+    caf(this._.requestId);
     this._.requestId = raf(frame);
     this._.$stage.classList.remove('ASS-animation-paused');
     return this;
