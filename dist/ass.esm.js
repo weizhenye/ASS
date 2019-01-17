@@ -1776,6 +1776,9 @@ function play() {
     framing.call(this$1);
     this$1._.requestId = raf(frame);
   };
+  if (this._.requestId) {
+    caf(this._.requestId);
+  }
   this._.requestId = raf(frame);
   this._.$stage.classList.remove('ASS-animation-paused');
   return this;
