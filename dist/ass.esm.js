@@ -2016,7 +2016,7 @@ function setter(r) {
 }
 
 var ASS = function ASS(source, video, options) {
-  if (typeof source !== 'string' || !(video instanceof HTMLVideoElement)) {
+  if (typeof source !== 'string') {
     return this;
   }
   return init.call(this, source, video, options);
