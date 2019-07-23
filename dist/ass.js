@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.ASS = factory());
-}(this, (function () { 'use strict';
+  (global = global || self, global.ASS = factory());
+}(this, function () { 'use strict';
 
   function parseEffect(text) {
     var param = text
@@ -2058,4 +2058,4 @@
 
   return ASS;
 
-})));
+}));
