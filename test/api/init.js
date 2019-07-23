@@ -20,8 +20,9 @@ describe('init API', () => {
     ass = new ASS({});
     expect(ass._).to.equal(undefined);
 
-    ass = new ASS('', document.createElement('div'));
-    expect(ass._).to.equal(undefined);
+    // #19 allows to use fake video object
+    // ass = new ASS('', document.createElement('div'));
+    // expect(ass._).to.equal(undefined);
   });
 
   it('should support options.container', () => {

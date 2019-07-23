@@ -2,29 +2,39 @@ const path = require('path');
 const alias = require('rollup-plugin-alias');
 const buble = require('rollup-plugin-buble');
 
+// https://wiki.saucelabs.com/display/DOCS/Platform+Configurator#/
 const customLaunchers = {
   SL_iOS_Safari_latest: {
     base: 'SauceLabs',
-    browserName: 'iphone',
-    version: '11.0',
+    browserName: 'Safari',
+    deviceName: 'iPhone Simulator',
+    platformVersion: '12.2',
+    platformName: 'iOS',
+  },
+  SL_iOS_Safari_oldest: {
+    base: 'SauceLabs',
+    browserName: 'Safari',
+    deviceName: 'iPhone Simulator',
+    platformVersion: '10.3',
+    platformName: 'iOS',
   },
   SL_Android_latest: {
     base: 'SauceLabs',
-    deviceName: 'Android GoogleAPI Emulator',
-    platformName: 'Android',
-    platformVersion: '7.1',
+    deviceName: 'Android Emulator',
     browserName: 'Chrome',
-    appiumVersion: '1.6.5',
+    platformVersion: '8.0',
+    platformName: 'Android',
   },
   SL_Android_oldest: {
     base: 'SauceLabs',
-    browserName: 'android',
-    version: '4.4',
+    deviceName: 'Android Emulator',
+    browserName: 'Browser',
+    platformVersion: '5.1',
+    platformName: 'Android',
   },
   SL_Chrome: {
     base: 'SauceLabs',
     browserName: 'chrome',
-    platform: 'Windows 10',
   },
   SL_Firefox: {
     base: 'SauceLabs',
@@ -37,7 +47,6 @@ const customLaunchers = {
   SL_Edge: {
     base: 'SauceLabs',
     browserName: 'MicrosoftEdge',
-    platform: 'Windows 10',
   },
   SL_IE_11: {
     base: 'SauceLabs',
