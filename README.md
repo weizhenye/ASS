@@ -1,12 +1,12 @@
 # ASS.js
 
-[![Build status](https://img.shields.io/travis/weizhenye/ASS.svg)](https://travis-ci.org/weizhenye/ASS)
-[![Coverage](https://img.shields.io/codecov/c/github/weizhenye/ASS.svg)](https://codecov.io/gh/weizhenye/ASS)
-[![Dependencies](https://img.shields.io/david/weizhenye/ASS.svg)](https://david-dm.org/weizhenye/ASS)
-[![NPM version](https://img.shields.io/npm/v/assjs.svg)](https://www.npmjs.com/package/assjs)
-[![License](https://img.shields.io/npm/l/assjs.svg)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
-[![File size](https://badge-size.herokuapp.com/weizhenye/ASS/master/dist/ass.min.js?compression=gzip&color=blue&label=min%2Bgzip)](https://unpkg.com/asa-renderer/dist/ass.min.js)
-[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/assjs/badge?style=rounded)](https://www.jsdelivr.com/package/npm/assjs)
+[![Build status](https://badgen.net/travis/weizhenye/ASS?icon=travis&label=build)](https://travis-ci.org/weizhenye/ASS)
+[![Coverage](https://badgen.net/codecov/c/github/weizhenye/ASS?icon=codecov)](https://codecov.io/gh/weizhenye/ASS)
+[![Dependencies](https://badgen.net/david/dep/weizhenye/ASS?icon=https://api.iconify.design/si-glyph:connect-2.svg?color=white)](https://david-dm.org/weizhenye/ASS)
+[![NPM version](https://badgen.net/npm/v/assjs?icon=npm)](https://www.npmjs.com/package/assjs)
+[![License](https://badgen.net/npm/license/assjs?icon=https://api.iconify.design/octicon:law.svg?color=white)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
+[![File size](https://badgen.net/bundlephobia/minzip/assjs?icon=https://api.iconify.design/ant-design:file-zip-outline.svg?color=white)](https://bundlephobia.com/result?p=assjs)
+[![jsDelivr](https://badgen.net/jsdelivr/hits/npm/assjs?icon=https://api.iconify.design/simple-icons:jsdelivr.svg?color=white)](https://www.jsdelivr.com/package/npm/assjs)
 
 [![Browser compatibility](https://saucelabs.com/browser-matrix/assjs.svg)](https://saucelabs.com/u/assjs)
 
