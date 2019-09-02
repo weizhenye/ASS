@@ -880,6 +880,15 @@
     || clearTimeout
   );
 
+  function color2rgbOnWhite(c) {
+    var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
+    var rawA = "0x" + (t[1]);
+    var b = +("0x" + (t[2])) + rawA;
+    var g = +("0x" + (t[3])) + rawA;
+    var r = +("0x" + (t[4])) + rawA;
+    return ("rgb(" + r + "," + g + "," + b + ")");
+  }
+
   function color2rgba(c) {
     var t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
     var a = 1 - ("0x" + (t[1])) / 255;
@@ -1104,10 +1113,10 @@
 
   function createCSSStroke(tag, scale) {
     var arr = [];
-    var oc = color2rgba(tag.a3 + tag.c3);
+    var oc = color2rgbOnWhite(tag.a3 + tag.c3);
     var ox = tag.xbord * scale;
     var oy = tag.ybord * scale;
-    var sc = color2rgba(tag.a4 + tag.c4);
+    var sc = color2rgbOnWhite(tag.a4 + tag.c4);
     var sx = tag.xshad * scale;
     var sy = tag.yshad * scale;
     var blur = tag.blur || tag.be || 0;
@@ -1115,14 +1124,9 @@
     if (ox || oy) {
       for (var i = -1; i <= 1; i++) {
         for (var j = -1; j <= 1; j++) {
-          for (var x = 1; x < ox; x++) {
-            for (var y = 1; y < oy; y++) {
-              if (i || j) {
-                arr.push((oc + " " + (i * x) + "px " + (j * y) + "px " + blur + "px"));
-              }
-            }
+          if (i && j) {
+            arr.push((oc + " " + (i * ox) + "px " + (j * oy) + "px " + blur + "px"));
           }
-          arr.push((oc + " " + (i * ox) + "px " + (j * oy) + "px " + blur + "px"));
         }
       }
     }
@@ -1131,9 +1135,9 @@
       var pny = sy > 0 ? 1 : -1;
       sx = Math.abs(sx);
       sy = Math.abs(sy);
-      for (var x$1 = Math.max(ox, sx - ox); x$1 < sx + ox; x$1++) {
-        for (var y$1 = Math.max(oy, sy - oy); y$1 < sy + oy; y$1++) {
-          arr.push((sc + " " + (x$1 * pnx) + "px " + (y$1 * pny) + "px " + blur + "px"));
+      for (var x = Math.max(ox, sx - ox); x < sx + ox; x++) {
+        for (var y = Math.max(oy, sy - oy); y < sy + oy; y++) {
+          arr.push((sc + " " + (x * pnx) + "px " + (y * pny) + "px " + blur + "px"));
         }
       }
       arr.push((sc + " " + ((sx + ox) * pnx) + "px " + ((sy + oy) * pny) + "px " + blur + "px"));
@@ -1495,7 +1499,8 @@
         if (!drawing) {
           cssText += "font-family:\"" + (tag.fn) + "\",Arial;";
           cssText += "font-size:" + (this$1.scale * getRealFontSize(tag.fn, tag.fs)) + "px;";
-          cssText += "color:" + (color2rgba(tag.a1 + tag.c1)) + ";";
+          cssText += "color:" + (color2rgba(("00" + (tag.c1)))) + ";";
+          cssText += "opacity:" + (1 - (("0x" + (tag.a1))) / 255) + ";";
           var scale = /Yes/i.test(this$1.info.ScaledBorderAndShadow) ? this$1.scale : 1;
           if (borderStyle === 1) {
             cssText += "text-shadow:" + (createCSSStroke(tag, scale)) + ";";

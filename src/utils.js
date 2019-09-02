@@ -12,6 +12,15 @@ export const caf = (
   || clearTimeout
 );
 
+export function color2rgbOnWhite(c) {
+  const t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
+  const rawA = `0x${t[1]}`;
+  const b = +`0x${t[2]}` + rawA;
+  const g = +`0x${t[3]}` + rawA;
+  const r = +`0x${t[4]}` + rawA;
+  return `rgb(${r},${g},${b})`;
+}
+
 export function color2rgba(c) {
   const t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
   const a = 1 - `0x${t[1]}` / 255;

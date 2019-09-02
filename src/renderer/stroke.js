@@ -1,4 +1,4 @@
-import { color2rgba, createSVGEl } from '../utils.js';
+import { color2rgba, color2rgbOnWhite, createSVGEl } from '../utils.js';
 
 export function createSVGStroke(tag, id, scale) {
   const hasBorder = tag.xbord || tag.ybord;
@@ -101,10 +101,10 @@ export function createSVGStroke(tag, id, scale) {
 
 export function createCSSStroke(tag, scale) {
   const arr = [];
-  const oc = color2rgba(tag.a3 + tag.c3);
+  const oc = color2rgbOnWhite(tag.a3 + tag.c3);
   const ox = tag.xbord * scale;
   const oy = tag.ybord * scale;
-  const sc = color2rgba(tag.a4 + tag.c4);
+  const sc = color2rgbOnWhite(tag.a4 + tag.c4);
   let sx = tag.xshad * scale;
   let sy = tag.yshad * scale;
   const blur = tag.blur || tag.be || 0;
@@ -112,14 +112,9 @@ export function createCSSStroke(tag, scale) {
   if (ox || oy) {
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
-        for (let x = 1; x < ox; x++) {
-          for (let y = 1; y < oy; y++) {
-            if (i || j) {
-              arr.push(`${oc} ${i * x}px ${j * y}px ${blur}px`);
-            }
-          }
+        if (i && j) {
+          arr.push(`${oc} ${i * ox}px ${j * oy}px ${blur}px`);
         }
-        arr.push(`${oc} ${i * ox}px ${j * oy}px ${blur}px`);
       }
     }
   }

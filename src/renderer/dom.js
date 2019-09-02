@@ -31,7 +31,8 @@ export function createDialogue(dialogue) {
       if (!drawing) {
         cssText += `font-family:"${tag.fn}",Arial;`;
         cssText += `font-size:${this.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
-        cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
+        cssText += `color:${color2rgba(`00${tag.c1}`)};`;
+        cssText += `opacity:${1 - (`0x${tag.a1}`) / 255};`;
         const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
         if (borderStyle === 1) {
           cssText += `text-shadow:${createCSSStroke(tag, scale)};`;
