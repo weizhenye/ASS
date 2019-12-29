@@ -12,7 +12,7 @@ describe('resampling API', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
-      { resampling: 'video_width' }
+      { resampling: 'video_width' },
     );
     expect(ass.scale).to.equal(0.5);
     expect(ass.width).to.equal(640);
@@ -27,7 +27,7 @@ describe('resampling API', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
-      { resampling: 'video_height' }
+      { resampling: 'video_height' },
     );
     expect(ass.scale).to.equal(0.375);
     expect(ass.width).to.equal(640);
@@ -42,7 +42,7 @@ describe('resampling API', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
-      { resampling: 'script_width' }
+      { resampling: 'script_width' },
     );
     expect(ass.scale).to.equal(0.5);
     expect(ass.width).to.equal(640);
@@ -57,7 +57,7 @@ describe('resampling API', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
-      { resampling: 'script_height' }
+      { resampling: 'script_height' },
     );
     expect(ass.scale).to.equal(0.375);
     expect(ass.width).to.equal(480);
@@ -71,7 +71,7 @@ describe('resampling API', () => {
   it('should default resampling to `video_height`', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
-      $video
+      $video,
     );
     expect(ass.resampling).to.equal('video_height');
 
@@ -81,7 +81,7 @@ describe('resampling API', () => {
   it('should support to set resampling after initializing', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
-      $video
+      $video,
     );
     ass.resampling = 'video_height';
     expect(ass.scale).to.equal(0.375);

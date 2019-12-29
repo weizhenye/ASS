@@ -8,7 +8,7 @@ describe('resize API', () => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 640\nPlayResY: 360',
       $video,
-      { container: $container }
+      { container: $container },
     );
     expect(ass.container.clientWidth).to.equal(640);
     expect(ass.container.clientHeight).to.equal(360);

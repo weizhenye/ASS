@@ -84,7 +84,9 @@ module.exports = (config) => {
       },
       plugins: [
         alias({
-          '../../src/index.js': path.resolve(__dirname, './dist/ass.esm.js'),
+          entries: {
+            '../../src/index.js': path.resolve(__dirname, './dist/ass.esm.js'),
+          },
         }),
         buble(),
       ],

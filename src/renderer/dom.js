@@ -55,7 +55,7 @@ export function createDialogue(dialogue) {
           cssText += 'word-break:normal;white-space:nowrap;';
         }
       }
-      const hasTransfrom = transformTags.some(x => (
+      const hasTransfrom = transformTags.some((x) => (
         /^fsc[xy]$/.test(x) ? tag[x] !== 100 : !!tag[x]
       ));
       if (hasTransfrom) {

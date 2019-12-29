@@ -2,7 +2,7 @@ export const raf = (
   window.requestAnimationFrame
   || window.mozRequestAnimationFrame
   || window.webkitRequestAnimationFrame
-  || (cb => setTimeout(cb, 50 / 3))
+  || ((cb) => setTimeout(cb, 50 / 3))
 );
 
 export const caf = (
@@ -36,7 +36,7 @@ export function createSVGEl(name, attrs = []) {
     $el.setAttributeNS(
       attr[0] === 'xlink:href' ? 'http://www.w3.org/1999/xlink' : null,
       attr[0],
-      attr[1]
+      attr[1],
     );
   }
   return $el;
@@ -44,7 +44,7 @@ export function createSVGEl(name, attrs = []) {
 
 function getVendor(prop) {
   const { style } = document.body;
-  const Prop = prop.replace(/^\w/, x => x.toUpperCase());
+  const Prop = prop.replace(/^\w/, (x) => x.toUpperCase());
   if (prop in style) return '';
   if (`webkit${Prop}` in style) return '-webkit-';
   if (`moz${Prop}` in style) return '-moz-';

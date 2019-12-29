@@ -92,7 +92,7 @@ export function getPosition(dialogue) {
     if (alignment % 3 === 1) x = 0;
     if (alignment % 3 === 2) x = (this.width - width) / 2;
     if (alignment % 3 === 0) x = this.width - width - this.scale * margin.right;
-    const hasT = slices.some(slice => (
+    const hasT = slices.some((slice) => (
       slice.fragments.some(({ animationName }) => animationName)
     ));
     if (hasT) {

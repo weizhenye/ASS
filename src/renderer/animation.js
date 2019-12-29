@@ -31,10 +31,10 @@ class KeyframeBlockList {
 
   toString() {
     return Object.keys(this.obj)
-      .map(keyText => (
+      .map((keyText) => (
         `${keyText}{${
           Object.keys(this.obj[keyText])
-            .map(prop => `${vendor[prop] || ''}${prop}:${this.obj[keyText][prop]};`)
+            .map((prop) => `${vendor[prop] || ''}${prop}:${this.obj[keyText][prop]};`)
             .join('')
         }}`
       ))
@@ -106,8 +106,8 @@ export function getKeyframes() {
         }
       } else {
         const { a1, a2, a3, t1, t2, t3, t4 } = fade;
-        const keyTexts = [t1, t2, t3, t4].map(t => `${(t / duration * 100).toFixed(3)}%`);
-        const values = [a1, a2, a3].map(a => 1 - a / 255);
+        const keyTexts = [t1, t2, t3, t4].map((t) => `${(t / duration * 100).toFixed(3)}%`);
+        const values = [a1, a2, a3].map((a) => 1 - a / 255);
         diaKbl.set('0.000%', 'opacity', values[0]);
         if (t1 < duration) diaKbl.set(keyTexts[0], 'opacity', values[0]);
         if (t2 < duration) diaKbl.set(keyTexts[1], 'opacity', values[1]);
@@ -156,7 +156,7 @@ export function getKeyframes() {
             const to = 1 - parseInt(tag.a1, 16) / 255;
             kbl.setT({ t1, t2, duration, prop: 'opacity', from, to });
           }
-          const hasStroke = strokeTags.some(x => (
+          const hasStroke = strokeTags.some((x) => (
             tag[x] !== undefined
             && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ));
@@ -166,7 +166,7 @@ export function getKeyframes() {
             const to = createCSSStroke(assign({}, fromTag, tag), scale);
             kbl.setT({ t1, t2, duration, prop: 'text-shadow', from, to });
           }
-          const hasTransfrom = transformTags.some(x => (
+          const hasTransfrom = transformTags.some((x) => (
             tag[x] !== undefined
             && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ));
