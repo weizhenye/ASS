@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.ASS = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   function parseEffect(text) {
     var param = text
@@ -1011,7 +1011,7 @@
   function getRealFontSize(fn, fs) {
     var key = fn + "-" + fs;
     if (!cache[key]) {
-      $fixFontSize.style.cssText = "font-size:" + fs + "px;font-family:\"" + fn + "\",Arial;";
+      $fixFontSize.style.cssText = "line-height:normal;font-size:" + fs + "px;font-family:\"" + fn + "\",Arial;";
       cache[key] = fs * fs / $fixFontSize.clientHeight;
     }
     return cache[key];
@@ -2058,4 +2058,4 @@
 
   return ASS;
 
-}));
+})));
