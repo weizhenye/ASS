@@ -29,7 +29,7 @@ export function createDialogue(dialogue) {
       let cssText = 'display:inline-block;';
       const vct = this.video.currentTime;
       if (!drawing) {
-        cssText += `font-family:"${tag.fn}",Arial;`;
+        cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
         cssText += `font-size:${this.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
         const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
