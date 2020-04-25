@@ -3,49 +3,68 @@
 <head>
 <meta charset="utf-8">
 <title>ass-compiler</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/lib/codemirror.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldgutter.css">
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/lib/codemirror.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/mode/javascript/javascript.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldgutter.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/foldcode.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.30.0/addon/fold/brace-fold.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ass-compiler/dist/ass-compiler.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/addon/fold/foldgutter.css">
 <style>
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track-piece {
+  background: #fff;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.38);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,.54);
+}
+html,
+body {
+  height: 100%;
+}
 body {
   margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
-#header {
-  width: 100%;
-  height: 32px;
-  line-height: 32px;
+header {
+  flex: 0 0 40px;
   background-color: #f7f7f7;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
 }
-#header h1 {
+header h1 {
   font-size: 24px;
-  display: inline-block;
   margin: 0;
-  padding: 0 8px;
 }
-#header div {
-  display: inline-block;
-  float: right;
-  padding: 0 8px;
+.badge {
+  display: inline-flex;
+  margin-left: 8px;
 }
-#input {
+main {
+  flex: 1 1 100%;
+  min-height: 0;
+  border-top: 1px solid #ddd;
+  display: flex;
+}
+main > section {
+  min-width: 0;
+  flex: 1 1 33%;
+  border-left: 1px solid #ddd;
+  position: relative;
+}
+.desc {
+  background-color: wheat;
+  padding: 0 4px;
+  opacity: 0.7;
+  pointer-events: none;
   position: absolute;
-  top: 32px;
-  bottom: 0;
-  left: 0;
-  right: 50%;
-}
-#output {
-  position: absolute;
-  top: 32px;
-  bottom: 0;
-  left: 50%;
-  right: 0;
+  top: 0;
+  right: 8px;
+  z-index: 999;
 }
 .CodeMirror {
   height: 100%;
@@ -53,23 +72,44 @@ body {
 </style>
 </head>
 <body>
-<header id="header">
+<header>
   <h1>ass-compiler</h1>
-  <div>
-    <label><input type="radio" name="api" onclick="onModeChange('parse')">parse</label>
-    <label><input type="radio" name="api" onclick="onModeChange('compile')" checked>compile</label>
+  <a href="https://github.com/weizhenye/ass-compiler" target="_blank" class="badge">
+    <img src="https://badgen.net/github/stars/weizhenye/ass-compiler?icon=github&amp;scale=1.2" alt="GitHub">
+  </a>
+  <a href="https://www.npmjs.com/package/ass-compiler" target="_blank" class="badge">
+    <img src="https://badgen.net/npm/v/ass-compiler?icon=npm&amp;scale=1.2" alt="version">
+  </a>
+  <div style="margin-left: auto;">
+    <label><input type="radio" name="api" onclick="onModeChange('parse')">parse/stringify</label>
+    <label><input type="radio" name="api" onclick="onModeChange('compile')" checked>compile/decompile</label>
     <button id="load">load sample ASS file</button>
   </div>
 </header>
-<div id="input"></div>
-<div id="output"></div>
+<main>
+  <section id="origin">
+    <div class="desc">Origin Text</div>
+  </section>
+  <section id="structured">
+    <div class="desc">Parsed/Compiled JSON</div>
+  </section>
+  <section id="serialized">
+    <div class="desc">Stringified/Decompiled Text</div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/addon/fold/foldgutter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/addon/fold/foldcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.53.0/addon/fold/brace-fold.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ass-compiler/dist/ass-compiler.js"></script>
 <script>
-var inputCodeMirror = CodeMirror(document.getElementById('input'), {
+var originCodeMirror = CodeMirror(document.getElementById('origin'), {
   value: '',
   mode: 'text',
   lineNumbers: true,
 });
-var outputCodeMirror = CodeMirror(document.getElementById('output'), {
+var structuredCodeMirror = CodeMirror(document.getElementById('structured'), {
   value: '',
   mode: { name: 'javascript', json: true },
   readOnly: true,
@@ -77,27 +117,42 @@ var outputCodeMirror = CodeMirror(document.getElementById('output'), {
   foldGutter: true,
   gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
 });
+var serializedCodeMirror = CodeMirror(document.getElementById('serialized'), {
+  value: '',
+  mode: 'text',
+  readOnly: true,
+  lineNumbers: true,
+});
 
 var mode = 'compile';
 
-var $tip = document.getElementById('tip');
-
-function onChange() {
+function run() {
   try {
-    var obj = assCompiler[mode](inputCodeMirror.getValue());
-    outputCodeMirror.setValue(JSON.stringify(obj, null, 2));
+    console.time(mode);
+    var obj = assCompiler[mode](originCodeMirror.getValue());
+    console.timeEnd(mode);
+    structuredCodeMirror.setValue(JSON.stringify(obj, null, 2));
+
+    var serialize = mode === 'parse' ? 'stringify' : 'decompile';
+    console.time(serialize);
+    var text = assCompiler[serialize](obj);
+    console.timeEnd(serialize);
+    serializedCodeMirror.setValue(text);
   } catch (err) {
-    outputCodeMirror.setValue(mode + ' failed');
+    structuredCodeMirror.setValue(mode + ' failed');
+    serializedCodeMirror.setValue('serialize failed');
     console.log(err);
   }
 }
 
+run();
+
 function onModeChange(m) {
   mode = m;
-  onChange();
+  run();
 }
 
-inputCodeMirror.on('change', onChange);
+originCodeMirror.on('change', run);
 
 var ASS_FILE_URL = 'https://raw.githubusercontent.com/Aegisub/Aegisub/master/docs/specs/ass-format-tests.ass';
 
@@ -110,7 +165,7 @@ document.getElementById('load').addEventListener('click', function () {
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
-        inputCodeMirror.setValue(xhr.responseText);
+        originCodeMirror.setValue(xhr.responseText);
       } else {
         that.disabled = false;
       }
