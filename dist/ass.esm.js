@@ -926,8 +926,6 @@ function getStyleRoot(container) {
   var rootNode = container.getRootNode ? container.getRootNode() : document;
   return rootNode === document ? rootNode.head : rootNode;
 }
-
-var strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
 var transformTags = ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'];
 
 function createClipPath(clip) {
@@ -1009,130 +1007,6 @@ function getRealFontSize(fn, fs) {
     cache[key] = fs * fs / $fixFontSize.clientHeight;
   }
   return cache[key];
-}
-
-function createSVGStroke(tag, id, scale) {
-  var hasBorder = tag.xbord || tag.ybord;
-  var hasShadow = tag.xshad || tag.yshad;
-  var isOpaque = tag.a1 !== 'FF';
-  var blur = tag.blur || tag.be || 0;
-  var $filter = createSVGEl('filter', [['id', id]]);
-  $filter.appendChild(createSVGEl('feGaussianBlur', [
-    ['stdDeviation', hasBorder ? 0 : blur],
-    ['in', 'SourceGraphic'],
-    ['result', 'sg_b'] ]));
-  $filter.appendChild(createSVGEl('feFlood', [
-    ['flood-color', color2rgba(tag.a1 + tag.c1)],
-    ['result', 'c1'] ]));
-  $filter.appendChild(createSVGEl('feComposite', [
-    ['operator', 'in'],
-    ['in', 'c1'],
-    ['in2', 'sg_b'],
-    ['result', 'main'] ]));
-  if (hasBorder) {
-    $filter.appendChild(createSVGEl('feMorphology', [
-      ['radius', ((tag.xbord * scale) + " " + (tag.ybord * scale))],
-      ['operator', 'dilate'],
-      ['in', 'SourceGraphic'],
-      ['result', 'dil'] ]));
-    $filter.appendChild(createSVGEl('feGaussianBlur', [
-      ['stdDeviation', blur],
-      ['in', 'dil'],
-      ['result', 'dil_b'] ]));
-    $filter.appendChild(createSVGEl('feComposite', [
-      ['operator', 'out'],
-      ['in', 'dil_b'],
-      ['in2', 'SourceGraphic'],
-      ['result', 'dil_b_o'] ]));
-    $filter.appendChild(createSVGEl('feFlood', [
-      ['flood-color', color2rgba(tag.a3 + tag.c3)],
-      ['result', 'c3'] ]));
-    $filter.appendChild(createSVGEl('feComposite', [
-      ['operator', 'in'],
-      ['in', 'c3'],
-      ['in2', 'dil_b_o'],
-      ['result', 'border'] ]));
-  }
-  if (hasShadow && (hasBorder || isOpaque)) {
-    $filter.appendChild(createSVGEl('feOffset', [
-      ['dx', tag.xshad * scale],
-      ['dy', tag.yshad * scale],
-      ['in', hasBorder ? 'dil' : 'SourceGraphic'],
-      ['result', 'off'] ]));
-    $filter.appendChild(createSVGEl('feGaussianBlur', [
-      ['stdDeviation', blur],
-      ['in', 'off'],
-      ['result', 'off_b'] ]));
-    if (!isOpaque) {
-      $filter.appendChild(createSVGEl('feOffset', [
-        ['dx', tag.xshad * scale],
-        ['dy', tag.yshad * scale],
-        ['in', 'SourceGraphic'],
-        ['result', 'sg_off'] ]));
-      $filter.appendChild(createSVGEl('feComposite', [
-        ['operator', 'out'],
-        ['in', 'off_b'],
-        ['in2', 'sg_off'],
-        ['result', 'off_b_o'] ]));
-    }
-    $filter.appendChild(createSVGEl('feFlood', [
-      ['flood-color', color2rgba(tag.a4 + tag.c4)],
-      ['result', 'c4'] ]));
-    $filter.appendChild(createSVGEl('feComposite', [
-      ['operator', 'in'],
-      ['in', 'c4'],
-      ['in2', isOpaque ? 'off_b' : 'off_b_o'],
-      ['result', 'shadow'] ]));
-  }
-  var $merge = createSVGEl('feMerge', []);
-  if (hasShadow && (hasBorder || isOpaque)) {
-    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'shadow']]));
-  }
-  if (hasBorder) {
-    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'border']]));
-  }
-  $merge.appendChild(createSVGEl('feMergeNode', [['in', 'main']]));
-  $filter.appendChild($merge);
-  return $filter;
-}
-
-function createCSSStroke(tag, scale) {
-  var arr = [];
-  var oc = color2rgba(tag.a3 + tag.c3);
-  var ox = tag.xbord * scale;
-  var oy = tag.ybord * scale;
-  var sc = color2rgba(tag.a4 + tag.c4);
-  var sx = tag.xshad * scale;
-  var sy = tag.yshad * scale;
-  var blur = tag.blur || tag.be || 0;
-  if (!(ox + oy + sx + sy)) { return 'none'; }
-  if (ox || oy) {
-    for (var i = -1; i <= 1; i++) {
-      for (var j = -1; j <= 1; j++) {
-        for (var x = 1; x < ox; x++) {
-          for (var y = 1; y < oy; y++) {
-            if (i || j) {
-              arr.push((oc + " " + (i * x) + "px " + (j * y) + "px " + blur + "px"));
-            }
-          }
-        }
-        arr.push((oc + " " + (i * ox) + "px " + (j * oy) + "px " + blur + "px"));
-      }
-    }
-  }
-  if (sx || sy) {
-    var pnx = sx > 0 ? 1 : -1;
-    var pny = sy > 0 ? 1 : -1;
-    sx = Math.abs(sx);
-    sy = Math.abs(sy);
-    for (var x$1 = Math.max(ox, sx - ox); x$1 < sx + ox; x$1++) {
-      for (var y$1 = Math.max(oy, sy - oy); y$1 < sy + oy; y$1++) {
-        arr.push((sc + " " + (x$1 * pnx) + "px " + (y$1 * pny) + "px " + blur + "px"));
-      }
-    }
-    arr.push((sc + " " + ((sx + ox) * pnx) + "px " + ((sy + oy) * pny) + "px " + blur + "px"));
-  }
-  return arr.join();
 }
 
 function createTransform(tag) {
@@ -1361,21 +1235,11 @@ function getKeyframes() {
             var to$3 = 1 - parseInt(tag.a1, 16) / 255;
             kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'opacity', from: from$3, to: to$3 });
           }
-          var hasStroke = strokeTags.some(function (x) { return (
+          var hasTransform = transformTags.some(function (x) { return (
             tag[x] !== undefined
             && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ); });
-          if (hasStroke) {
-            var scale = /Yes/i.test(this$1.info.ScaledBorderAndShadow) ? this$1.scale : 1;
-            var from$4 = createCSSStroke(fromTag, scale);
-            var to$4 = createCSSStroke(assign({}, fromTag, tag), scale);
-            kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'text-shadow', from: from$4, to: to$4 });
-          }
-          var hasTransfrom = transformTags.some(function (x) { return (
-            tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || slice.tag[x])
-          ); });
-          if (hasTransfrom) {
+          if (hasTransform) {
             var toTag = assign({}, fromTag, tag);
             if (fragment.drawing) {
               // scales will be handled inside svg
@@ -1386,9 +1250,9 @@ function getKeyframes() {
               });
               assign(fromTag, { fscx: 100, fscy: 100 });
             }
-            var from$5 = createTransform(fromTag);
-            var to$5 = createTransform(toTag);
-            kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'transform', from: from$5, to: to$5 });
+            var from$4 = createTransform(fromTag);
+            var to$4 = createTransform(toTag);
+            kbl.setT({ t1: t1, t2: t2, duration: duration, prop: 'transform', from: from$4, to: to$4 });
           }
         });
         var list = kbl.toString();
@@ -1410,6 +1274,138 @@ function createAnimation(name, duration, delay) {
     + va + "animation-iteration-count:1;"
     + va + "animation-fill-mode:forwards;"
   );
+}
+
+function createSVGStroke(tag, id, scale) {
+  var hasBorder = tag.xbord || tag.ybord;
+  var hasShadow = tag.xshad || tag.yshad;
+  var isOpaque = tag.a1 !== 'FF';
+  var blur = tag.blur || tag.be || 0;
+  var $filter = createSVGEl('filter', [['id', id]]);
+  $filter.appendChild(createSVGEl('feGaussianBlur', [
+    ['stdDeviation', hasBorder ? 0 : blur],
+    ['in', 'SourceGraphic'],
+    ['result', 'sg_b'] ]));
+  $filter.appendChild(createSVGEl('feFlood', [
+    ['flood-color', color2rgba(tag.a1 + tag.c1)],
+    ['result', 'c1'] ]));
+  $filter.appendChild(createSVGEl('feComposite', [
+    ['operator', 'in'],
+    ['in', 'c1'],
+    ['in2', 'sg_b'],
+    ['result', 'main'] ]));
+  if (hasBorder) {
+    $filter.appendChild(createSVGEl('feMorphology', [
+      ['radius', ((tag.xbord * scale) + " " + (tag.ybord * scale))],
+      ['operator', 'dilate'],
+      ['in', 'SourceGraphic'],
+      ['result', 'dil'] ]));
+    $filter.appendChild(createSVGEl('feGaussianBlur', [
+      ['stdDeviation', blur],
+      ['in', 'dil'],
+      ['result', 'dil_b'] ]));
+    $filter.appendChild(createSVGEl('feComposite', [
+      ['operator', 'out'],
+      ['in', 'dil_b'],
+      ['in2', 'SourceGraphic'],
+      ['result', 'dil_b_o'] ]));
+    $filter.appendChild(createSVGEl('feFlood', [
+      ['flood-color', color2rgba(tag.a3 + tag.c3)],
+      ['result', 'c3'] ]));
+    $filter.appendChild(createSVGEl('feComposite', [
+      ['operator', 'in'],
+      ['in', 'c3'],
+      ['in2', 'dil_b_o'],
+      ['result', 'border'] ]));
+  }
+  if (hasShadow && (hasBorder || isOpaque)) {
+    $filter.appendChild(createSVGEl('feOffset', [
+      ['dx', tag.xshad * scale],
+      ['dy', tag.yshad * scale],
+      ['in', hasBorder ? 'dil' : 'SourceGraphic'],
+      ['result', 'off'] ]));
+    $filter.appendChild(createSVGEl('feGaussianBlur', [
+      ['stdDeviation', blur],
+      ['in', 'off'],
+      ['result', 'off_b'] ]));
+    if (!isOpaque) {
+      $filter.appendChild(createSVGEl('feOffset', [
+        ['dx', tag.xshad * scale],
+        ['dy', tag.yshad * scale],
+        ['in', 'SourceGraphic'],
+        ['result', 'sg_off'] ]));
+      $filter.appendChild(createSVGEl('feComposite', [
+        ['operator', 'out'],
+        ['in', 'off_b'],
+        ['in2', 'sg_off'],
+        ['result', 'off_b_o'] ]));
+    }
+    $filter.appendChild(createSVGEl('feFlood', [
+      ['flood-color', color2rgba(tag.a4 + tag.c4)],
+      ['result', 'c4'] ]));
+    $filter.appendChild(createSVGEl('feComposite', [
+      ['operator', 'in'],
+      ['in', 'c4'],
+      ['in2', isOpaque ? 'off_b' : 'off_b_o'],
+      ['result', 'shadow'] ]));
+  }
+  var $merge = createSVGEl('feMerge', []);
+  if (hasShadow && (hasBorder || isOpaque)) {
+    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'shadow']]));
+  }
+  if (hasBorder) {
+    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'border']]));
+  }
+  $merge.appendChild(createSVGEl('feMergeNode', [['in', 'main']]));
+  $filter.appendChild($merge);
+  return $filter;
+}
+
+function createCSSStroke(tag, scale) {
+  var arr = [];
+  var oc = color2rgba(tag.a3 + tag.c3);
+  var ox = tag.xbord * scale;
+  var oy = tag.ybord * scale;
+  var sc = color2rgba(tag.a4 + tag.c4);
+  var sx = tag.xshad * scale;
+  var sy = tag.yshad * scale;
+  var blur = tag.blur * scale;
+  if (ox || oy) {
+    var oavg = (ox + oy) / 2;
+    arr.push(("-webkit-text-stroke: " + oavg + "px " + oc + ";"));
+    arr.push(("transform:" + ((ox > oy) ? ("scaleY(" + (oy / oavg) + ")") : ("scaleX(" + (ox / oavg) + ")")) + ";"));
+  }
+  if (sx || sy) {
+    arr.push(("text-shadow:" + sx + "px " + sy + "px " + sc + ";"));
+  }
+  if (blur) { arr.push(("filter:blur(" + blur + "px);")); }
+  return arr.join('');
+}
+
+function createCSSBorder(tag, scale) {
+  var arr = [];
+  var oc = color2rgba(tag.a3 + tag.c3);
+  var ox = tag.xbord * scale;
+  var oy = tag.ybord * scale;
+  var sc = color2rgba(tag.a4 + tag.c4);
+  var sx = tag.xshad * scale;
+  var sy = tag.yshad * scale;
+  var blur = tag.blur * scale;
+  if (ox) {
+    arr.push(("margin-left:-" + ox + "px;"));
+    arr.push(("border-left:" + ox + "px solid " + oc + ";"));
+    arr.push(("border-right:" + ox + "px solid " + oc + ";"));
+  }
+  if (oy) {
+    arr.push(("margin-top:-" + oy + "px;"));
+    arr.push(("border-top:" + oy + "px solid " + oc + ";"));
+    arr.push(("border-bottom:" + oy + "px solid " + oc + ";"));
+  }
+  if (sx || sy) {
+    arr.push(("box-shadow:" + sx + "px " + sy + "px " + sc + ";"));
+  }
+  if (blur) { arr.push(("filter:blur(" + blur + "px);")); }
+  return arr.join('');
 }
 
 function createDrawing(fragment, styleTag) {
@@ -1485,20 +1481,20 @@ function createDialogue(dialogue) {
       var animationName = fragment.animationName;
       var tag = assign({}, slice.tag, fragment.tag);
       var cssText = 'display:inline-block;';
+      var cssBefore = 'position:absolute;z-index:-1;content:attr(data-html);color:transparent;';
       var vct = this$1.video.currentTime;
       if (!drawing) {
-        cssText += "font-family:\"" + (tag.fn) + "\",Arial;";
+        cssText += "line-height:normal;font-family:\"" + (tag.fn) + "\",Arial;";
         cssText += "font-size:" + (this$1.scale * getRealFontSize(tag.fn, tag.fs)) + "px;";
         cssText += "color:" + (color2rgba(tag.a1 + tag.c1)) + ";";
         var scale = /Yes/i.test(this$1.info.ScaledBorderAndShadow) ? this$1.scale : 1;
         if (borderStyle === 1) {
-          cssText += "text-shadow:" + (createCSSStroke(tag, scale)) + ";";
+          cssBefore += createCSSStroke(tag, scale);
+          cssText += "text-shadow:0px 0px 0px " + (color2rgba(tag.a3 + tag.c3)) + ";";
         }
         if (borderStyle === 3) {
-          cssText += (
-            "background-color:" + (color2rgba(tag.a3 + tag.c3)) + ";"
-            + "box-shadow:" + (createCSSStroke(tag, scale)) + ";"
-          );
+          cssBefore += createCSSBorder(tag, scale);
+          cssText += "background-color:" + (color2rgba(tag.a3 + tag.c3)) + ";";
         }
         cssText += tag.b ? ("font-weight:" + (tag.b === 1 ? 'bold' : tag.b) + ";") : '';
         cssText += tag.i ? 'font-style:italic;' : '';
@@ -1546,6 +1542,13 @@ function createDialogue(dialogue) {
             return;
           }
           $span.innerHTML = html;
+          if (cssBefore) {
+            $span.dataset.html = html;
+            $span.className = "ASS-" + (uuid());
+            var $style = document.createElement('style');
+            $style.appendChild(document.createTextNode(("span." + ($span.className) + "::before {" + cssBefore + "}")));
+            df.appendChild($style);
+          }
         }
         // TODO: maybe it can be optimized
         $span.style.cssText += cssText;

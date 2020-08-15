@@ -1,9 +1,9 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, vendor, transformTags } from '../utils.js';
+import { color2rgba, uuid, vendor, transformTags } from '../utils.js';
 import { createAnimation } from './animation.js';
 import { createDrawing } from './drawing.js';
 import { getRealFontSize } from './font-size.js';
-import { createCSSStroke } from './stroke.js';
+import { createCSSStroke, createCSSBorder } from './stroke.js';
 import { createTransform } from './transform.js';
 
 function encodeText(text, q) {
@@ -27,6 +27,7 @@ export function createDialogue(dialogue) {
       const { text, drawing, animationName } = fragment;
       const tag = assign({}, slice.tag, fragment.tag);
       let cssText = 'display:inline-block;';
+      let cssBefore = 'position:absolute;z-index:-1;content:attr(data-html);color:transparent;';
       const vct = this.video.currentTime;
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
@@ -34,13 +35,12 @@ export function createDialogue(dialogue) {
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
         const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
         if (borderStyle === 1) {
-          cssText += `text-shadow:${createCSSStroke(tag, scale)};`;
+          cssBefore += createCSSStroke(tag, scale);
+          cssText += `text-shadow:0px 0px 0px ${color2rgba(tag.a3 + tag.c3)};`;
         }
         if (borderStyle === 3) {
-          cssText += (
-            `background-color:${color2rgba(tag.a3 + tag.c3)};`
-            + `box-shadow:${createCSSStroke(tag, scale)};`
-          );
+          cssBefore += createCSSBorder(tag, scale);
+          cssText += `background-color:${color2rgba(tag.a3 + tag.c3)};`;
         }
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
@@ -88,6 +88,13 @@ export function createDialogue(dialogue) {
             return;
           }
           $span.innerHTML = html;
+          if (cssBefore) {
+            $span.dataset.html = html;
+            $span.className = `ASS-${uuid()}`;
+            const $style = document.createElement('style');
+            $style.appendChild(document.createTextNode(`span.${$span.className}::before {${cssBefore}}`));
+            df.appendChild($style);
+          }
         }
         // TODO: maybe it can be optimized
         $span.style.cssText += cssText;

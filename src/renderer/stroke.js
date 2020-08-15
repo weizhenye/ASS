@@ -105,35 +105,43 @@ export function createCSSStroke(tag, scale) {
   const ox = tag.xbord * scale;
   const oy = tag.ybord * scale;
   const sc = color2rgba(tag.a4 + tag.c4);
-  let sx = tag.xshad * scale;
-  let sy = tag.yshad * scale;
-  const blur = tag.blur || tag.be || 0;
-  if (!(ox + oy + sx + sy)) return 'none';
+  const sx = tag.xshad * scale;
+  const sy = tag.yshad * scale;
+  const blur = tag.blur * scale;
   if (ox || oy) {
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        for (let x = 1; x < ox; x++) {
-          for (let y = 1; y < oy; y++) {
-            if (i || j) {
-              arr.push(`${oc} ${i * x}px ${j * y}px ${blur}px`);
-            }
-          }
-        }
-        arr.push(`${oc} ${i * ox}px ${j * oy}px ${blur}px`);
-      }
-    }
+    const oavg = (ox + oy) / 2;
+    arr.push(`-webkit-text-stroke: ${oavg}px ${oc};`);
+    arr.push(`transform:${(ox > oy) ? `scaleY(${oy / oavg})` : `scaleX(${ox / oavg})`};`);
   }
   if (sx || sy) {
-    const pnx = sx > 0 ? 1 : -1;
-    const pny = sy > 0 ? 1 : -1;
-    sx = Math.abs(sx);
-    sy = Math.abs(sy);
-    for (let x = Math.max(ox, sx - ox); x < sx + ox; x++) {
-      for (let y = Math.max(oy, sy - oy); y < sy + oy; y++) {
-        arr.push(`${sc} ${x * pnx}px ${y * pny}px ${blur}px`);
-      }
-    }
-    arr.push(`${sc} ${(sx + ox) * pnx}px ${(sy + oy) * pny}px ${blur}px`);
+    arr.push(`text-shadow:${sx}px ${sy}px ${sc};`);
   }
-  return arr.join();
+  if (blur) arr.push(`filter:blur(${blur}px);`);
+  return arr.join('');
+}
+
+export function createCSSBorder(tag, scale) {
+  const arr = [];
+  const oc = color2rgba(tag.a3 + tag.c3);
+  const ox = tag.xbord * scale;
+  const oy = tag.ybord * scale;
+  const sc = color2rgba(tag.a4 + tag.c4);
+  const sx = tag.xshad * scale;
+  const sy = tag.yshad * scale;
+  const blur = tag.blur * scale;
+  if (ox) {
+    arr.push(`margin-left:-${ox}px;`);
+    arr.push(`border-left:${ox}px solid ${oc};`);
+    arr.push(`border-right:${ox}px solid ${oc};`);
+  }
+  if (oy) {
+    arr.push(`margin-top:-${oy}px;`);
+    arr.push(`border-top:${oy}px solid ${oc};`);
+    arr.push(`border-bottom:${oy}px solid ${oc};`);
+  }
+  if (sx || sy) {
+    arr.push(`box-shadow:${sx}px ${sy}px ${sc};`);
+  }
+  if (blur) arr.push(`filter:blur(${blur}px);`);
+  return arr.join('');
 }

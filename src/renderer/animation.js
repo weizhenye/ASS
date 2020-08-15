@@ -1,7 +1,6 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, uuid, vendor, strokeTags, transformTags } from '../utils.js';
+import { color2rgba, uuid, vendor, transformTags } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
-import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
 
 function getKeyframeString(name, list) {
@@ -156,21 +155,11 @@ export function getKeyframes() {
             const to = 1 - parseInt(tag.a1, 16) / 255;
             kbl.setT({ t1, t2, duration, prop: 'opacity', from, to });
           }
-          const hasStroke = strokeTags.some((x) => (
+          const hasTransform = transformTags.some((x) => (
             tag[x] !== undefined
             && tag[x] !== (fragment.tag[x] || slice.tag[x])
           ));
-          if (hasStroke) {
-            const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
-            const from = createCSSStroke(fromTag, scale);
-            const to = createCSSStroke(assign({}, fromTag, tag), scale);
-            kbl.setT({ t1, t2, duration, prop: 'text-shadow', from, to });
-          }
-          const hasTransfrom = transformTags.some((x) => (
-            tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || slice.tag[x])
-          ));
-          if (hasTransfrom) {
+          if (hasTransform) {
             const toTag = assign({}, fromTag, tag);
             if (fragment.drawing) {
               // scales will be handled inside svg
