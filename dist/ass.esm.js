@@ -1481,7 +1481,7 @@ function createDialogue(dialogue) {
       var animationName = fragment.animationName;
       var tag = assign({}, slice.tag, fragment.tag);
       var cssText = 'display:inline-block;';
-      var cssBefore = 'position:absolute;z-index:-1;content:attr(data-html);color:transparent;';
+      var cssBefore = 'position:absolute;z-index:-1;content:attr(data-inner-text);color:transparent;';
       var vct = this$1.video.currentTime;
       if (!drawing) {
         cssText += "line-height:normal;font-family:\"" + (tag.fn) + "\",Arial;";
@@ -1543,7 +1543,7 @@ function createDialogue(dialogue) {
           }
           $span.innerHTML = html;
           if (cssBefore) {
-            $span.dataset.html = html;
+            $span.dataset.innerText = $span.innerText;
             $span.className = "ASS-" + (uuid());
             var $style = document.createElement('style');
             $style.appendChild(document.createTextNode(("span." + ($span.className) + "::before {" + cssBefore + "}")));

@@ -27,7 +27,7 @@ export function createDialogue(dialogue) {
       const { text, drawing, animationName } = fragment;
       const tag = assign({}, slice.tag, fragment.tag);
       let cssText = 'display:inline-block;';
-      let cssBefore = 'position:absolute;z-index:-1;content:attr(data-html);color:transparent;';
+      let cssBefore = 'position:absolute;z-index:-1;content:attr(data-inner-text);color:transparent;';
       const vct = this.video.currentTime;
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
@@ -89,7 +89,7 @@ export function createDialogue(dialogue) {
           }
           $span.innerHTML = html;
           if (cssBefore) {
-            $span.dataset.html = html;
+            $span.dataset.innerText = $span.innerText;
             $span.className = `ASS-${uuid()}`;
             const $style = document.createElement('style');
             $style.appendChild(document.createTextNode(`span.${$span.className}::before {${cssBefore}}`));
