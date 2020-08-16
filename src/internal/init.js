@@ -45,12 +45,13 @@ export function init(source, video, options = {}) {
   }
   this.container.appendChild(this._.$stage);
 
-  const { info, width, height, dialogues } = compile(source);
+  const { info, width, height, styles, dialogues } = compile(source);
   this.info = info;
   this._.scriptRes = {
     width: width || video.videoWidth,
     height: height || video.videoHeight,
   };
+  this.styles = styles;
   this.dialogues = dialogues;
 
   const styleRoot = getStyleRoot(this.container);

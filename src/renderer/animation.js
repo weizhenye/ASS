@@ -122,12 +122,13 @@ export function getKeyframes() {
       keyframes += getKeyframeString(dialogue.animationName, diaList);
     }
     slices.forEach((slice) => {
+      const sliceTag = this.styles[slice.style].tag;
       slice.fragments.forEach((fragment) => {
         if (!fragment.tag.t || !fragment.tag.t.length) {
           return;
         }
         const kbl = new KeyframeBlockList();
-        const fromTag = assign({}, slice.tag, fragment.tag);
+        const fromTag = assign({}, sliceTag, fragment.tag);
         // TODO: accel is not implemented yet
         mergeT(fragment.tag.t).forEach(({ t1, t2, tag }) => {
           if (tag.fs) {
@@ -158,7 +159,7 @@ export function getKeyframes() {
           }
           const hasStroke = strokeTags.some((x) => (
             tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || slice.tag[x])
+            && tag[x] !== (fragment.tag[x] || sliceTag[x])
           ));
           if (hasStroke) {
             const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
@@ -168,7 +169,7 @@ export function getKeyframes() {
           }
           const hasTransfrom = transformTags.some((x) => (
             tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || slice.tag[x])
+            && tag[x] !== (fragment.tag[x] || sliceTag[x])
           ));
           if (hasTransfrom) {
             const toTag = assign({}, fromTag, tag);

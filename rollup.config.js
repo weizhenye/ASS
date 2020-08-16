@@ -1,8 +1,9 @@
 import fs from 'fs';
 import csso from 'csso';
-import buble from 'rollup-plugin-buble';
-import replace from 'rollup-plugin-replace';
-import resolve from 'rollup-plugin-node-resolve';
+import buble from '@rollup/plugin-buble';
+import replace from '@rollup/plugin-replace';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/index.js',
@@ -13,15 +14,21 @@ export default {
       name: 'ASS',
     },
     {
+      file: 'dist/ass.min.js',
+      format: 'umd',
+      name: 'ASS',
+      plugins: [terser()],
+    },
+    {
       file: 'dist/ass.esm.js',
-      format: 'es',
+      format: 'esm',
     },
   ],
   plugins: [
     replace({
       __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,
     }),
-    resolve(),
+    nodeResolve(),
     buble(),
   ],
 };

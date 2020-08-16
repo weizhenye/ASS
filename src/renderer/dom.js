@@ -22,10 +22,11 @@ export function createDialogue(dialogue) {
   const df = document.createDocumentFragment();
   const { slices, start, end } = dialogue;
   slices.forEach((slice) => {
-    const { borderStyle } = slice;
+    const sliceTag = this.styles[slice.style].tag;
+    const borderStyle = this.styles[slice.style].style.BorderStyle;
     slice.fragments.forEach((fragment) => {
       const { text, drawing, animationName } = fragment;
-      const tag = assign({}, slice.tag, fragment.tag);
+      const tag = assign({}, sliceTag, fragment.tag);
       let cssText = 'display:inline-block;';
       const vct = this.video.currentTime;
       if (!drawing) {
@@ -77,7 +78,7 @@ export function createDialogue(dialogue) {
         const $span = document.createElement('span');
         $span.dataset.hasRotate = hasRotate;
         if (drawing) {
-          const obj = createDrawing.call(this, fragment, slice.tag);
+          const obj = createDrawing.call(this, fragment, sliceTag);
           $span.style.cssText = obj.cssText;
           $span.appendChild(obj.$svg);
         } else {
