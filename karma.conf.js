@@ -1,6 +1,5 @@
 const fs = require('fs');
 const csso = require('csso');
-const buble = require('@rollup/plugin-buble');
 const istanbul = require('rollup-plugin-istanbul');
 const replace = require('@rollup/plugin-replace');
 const { nodeResolve } = require('@rollup/plugin-node-resolve');
@@ -29,7 +28,6 @@ module.exports = (config) => {
         istanbul({
           include: ['src/**/*'],
         }),
-        buble(),
       ],
     },
     reporters: ['dots', 'coverage'],

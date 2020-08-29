@@ -1,8 +1,7 @@
 # ASS.js
 
-[![Build status](https://badgen.net/travis/weizhenye/ASS?icon=travis&label=build)](https://travis-ci.org/weizhenye/ASS)
+[![GitHub Action](https://github.com/weizhenye/ASS/workflows/CI/badge.svg)](https://github.com/weizhenye/ASS/actions)
 [![Coverage](https://badgen.net/codecov/c/github/weizhenye/ASS?icon=codecov)](https://codecov.io/gh/weizhenye/ASS)
-[![Dependencies](https://badgen.net/david/dep/weizhenye/ASS?icon=https://api.iconify.design/si-glyph:connect-2.svg?color=white)](https://david-dm.org/weizhenye/ASS)
 [![NPM version](https://badgen.net/npm/v/assjs?icon=npm)](https://www.npmjs.com/package/assjs)
 [![License](https://badgen.net/npm/license/assjs?icon=https://api.iconify.design/octicon:law.svg?color=white)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
 [![File size](https://badgen.net/bundlephobia/minzip/assjs?icon=https://api.iconify.design/ant-design:file-zip-outline.svg?color=white)](https://bundlephobia.com/result?p=assjs)

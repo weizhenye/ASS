@@ -1,6 +1,5 @@
 import fs from 'fs';
 import csso from 'csso';
-import buble from '@rollup/plugin-buble';
 import replace from '@rollup/plugin-replace';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { terser } from 'rollup-plugin-terser';
@@ -29,6 +28,5 @@ export default {
       __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,
     }),
     nodeResolve(),
-    buble(),
   ],
 };

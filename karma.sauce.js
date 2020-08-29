@@ -1,35 +1,20 @@
 const path = require('path');
 const alias = require('@rollup/plugin-alias');
-const buble = require('@rollup/plugin-buble');
 
 // https://wiki.saucelabs.com/display/DOCS/Platform+Configurator#/
 const customLaunchers = {
-  SL_iOS_Safari_latest: {
+  SL_iOS_Safari: {
     base: 'SauceLabs',
     browserName: 'Safari',
     deviceName: 'iPhone Simulator',
-    platformVersion: '13.4',
+    // platformVersion: '13.4',
     platformName: 'iOS',
   },
-  SL_iOS_Safari_oldest: {
-    base: 'SauceLabs',
-    browserName: 'Safari',
-    deviceName: 'iPhone Simulator',
-    platformVersion: '10.3',
-    platformName: 'iOS',
-  },
-  // SL_Android_latest: {
-  //   base: 'SauceLabs',
-  //   deviceName: 'Android Emulator',
-  //   browserName: 'Chrome',
-  //   platformVersion: '10.0',
-  //   platformName: 'Android',
-  // },
-  SL_Android_oldest: {
+  SL_Android: {
     base: 'SauceLabs',
     deviceName: 'Android Emulator',
-    browserName: 'Browser',
-    platformVersion: '5.1',
+    browserName: 'Chrome',
+    // platformVersion: '10.0',
     platformName: 'Android',
   },
   SL_Chrome: {
@@ -47,18 +32,6 @@ const customLaunchers = {
   SL_Edge: {
     base: 'SauceLabs',
     browserName: 'MicrosoftEdge',
-  },
-  SL_IE_11: {
-    base: 'SauceLabs',
-    browserName: 'internet explorer',
-    platform: 'Windows 8.1',
-    version: '11',
-  },
-  SL_IE_10: {
-    base: 'SauceLabs',
-    browserName: 'internet explorer',
-    platform: 'Windows 8',
-    version: '10',
   },
 };
 
@@ -88,7 +61,6 @@ module.exports = (config) => {
             '../../src/index.js': path.resolve(__dirname, './dist/ass.esm.js'),
           },
         }),
-        buble(),
       ],
     },
     reporters: ['dots', 'saucelabs'],
