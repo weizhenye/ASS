@@ -15,6 +15,31 @@
 .ASS-dialogue {
   font-size: 0;
   position: absolute;
+  z-index: 0;
+}
+.ASS-dialogue [data-stroke] {
+  position: relative;
+}
+.ASS-dialogue [data-stroke]::before,
+.ASS-dialogue [data-stroke]::after {
+  content: attr(data-stroke);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  filter: var(--ass-blur);
+}
+.ASS-dialogue [data-stroke]::before {
+  color: var(--ass-shadow-color);
+  transform: translate(var(--ass-shadow-offset));
+  -webkit-text-stroke: var(--ass-border-width) var(--ass-shadow-color);
+  text-shadow: var(--ass-shadow-delta);
+  opacity: var(--ass-shadow-opacity);
+}
+.ASS-dialogue [data-stroke]::after {
+  -webkit-text-stroke: var(--ass-border-width) var(--ass-border-color);
+  text-shadow: var(--ass-border-delta);
+  opacity: var(--ass-border-opacity);
 }
 .ASS-fix-font-size {
   position: absolute;

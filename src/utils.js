@@ -12,9 +12,13 @@ export const caf = (
   || clearTimeout
 );
 
+export function alpha2opacity(a) {
+  return 1 - `0x${a}` / 255;
+}
+
 export function color2rgba(c) {
   const t = c.match(/(\w\w)(\w\w)(\w\w)(\w\w)/);
-  const a = 1 - `0x${t[1]}` / 255;
+  const a = alpha2opacity(t[1]);
   const b = +`0x${t[2]}`;
   const g = +`0x${t[3]}`;
   const r = +`0x${t[4]}`;

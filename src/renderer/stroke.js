@@ -1,4 +1,4 @@
-import { color2rgba, createSVGEl } from '../utils.js';
+import { color2rgba, alpha2opacity, createSVGEl } from '../utils.js';
 
 export function createSVGStroke(tag, id, scale) {
   const hasBorder = tag.xbord || tag.ybord;
@@ -99,41 +99,47 @@ export function createSVGStroke(tag, id, scale) {
   return $filter;
 }
 
+function get4QuadrantPoints([x, y]) {
+  return [[0, 0], [0, 1], [1, 0], [1, 1]]
+    .filter(([i, j]) => (i || x) && (j || y))
+    .map(([i, j]) => [(i || -1) * x, (j || -1) * y]);
+}
+
+function getOffsets(x, y) {
+  if (x === y) return [];
+  const nx = Math.min(x, y);
+  const ny = Math.max(x, y);
+  const offsets = [[nx, ny]];
+  for (let i = 0; i < nx; i++) {
+    for (let j = Math.round(nx + 0.5); j < ny; j++) {
+      offsets.push([i, j]);
+    }
+  }
+  return [].concat(...offsets.map(get4QuadrantPoints));
+  // return [].concat(...Array.from({ length: Math.ceil(ny) - 1 }, (_, i) => i + 1).concat(ny)
+  //   .map((n) => [(ny - n) / ny * nx, n])
+  //   .map(([i, j]) => (x > y ? [j, i] : [i, j]))
+  //   .map(get4QuadrantPoints));
+}
+
 export function createCSSStroke(tag, scale) {
-  const arr = [];
-  const oc = color2rgba(tag.a3 + tag.c3);
-  const ox = tag.xbord * scale;
-  const oy = tag.ybord * scale;
-  const sc = color2rgba(tag.a4 + tag.c4);
-  let sx = tag.xshad * scale;
-  let sy = tag.yshad * scale;
+  const bc = color2rgba(`00${tag.c3}`);
+  const bx = tag.xbord * scale;
+  const by = tag.ybord * scale;
+  const sc = color2rgba(`00${tag.c4}`);
+  const sx = tag.xshad * scale;
+  const sy = tag.yshad * scale;
   const blur = tag.blur || tag.be || 0;
-  if (!(ox + oy + sx + sy)) return 'none';
-  if (ox || oy) {
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        for (let x = 1; x < ox; x++) {
-          for (let y = 1; y < oy; y++) {
-            if (i || j) {
-              arr.push(`${oc} ${i * x}px ${j * y}px ${blur}px`);
-            }
-          }
-        }
-        arr.push(`${oc} ${i * ox}px ${j * oy}px ${blur}px`);
-      }
-    }
-  }
-  if (sx || sy) {
-    const pnx = sx > 0 ? 1 : -1;
-    const pny = sy > 0 ? 1 : -1;
-    sx = Math.abs(sx);
-    sy = Math.abs(sy);
-    for (let x = Math.max(ox, sx - ox); x < sx + ox; x++) {
-      for (let y = Math.max(oy, sy - oy); y < sy + oy; y++) {
-        arr.push(`${sc} ${x * pnx}px ${y * pny}px ${blur}px`);
-      }
-    }
-    arr.push(`${sc} ${(sx + ox) * pnx}px ${(sy + oy) * pny}px ${blur}px`);
-  }
-  return arr.join();
+  const deltaOffsets = getOffsets(bx, by);
+  return [
+    { key: 'border-width', value: `${Math.min(bx, by) * 2}px` },
+    { key: 'border-color', value: bc },
+    { key: 'border-opacity', value: alpha2opacity(tag.a3) },
+    { key: 'border-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join() },
+    { key: 'shadow-offset', value: `${sx}px, ${sy}px` },
+    { key: 'shadow-color', value: sc },
+    { key: 'shadow-opacity', value: alpha2opacity(tag.a4) },
+    { key: 'shadow-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join() },
+    { key: 'blur', value: `blur(${blur}px)` },
+  ].map((kv) => Object.assign(kv, { key: `--ass-${kv.key}` }));
 }

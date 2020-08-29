@@ -8,12 +8,9 @@ import { createTransform } from './transform.js';
 
 function encodeText(text, q) {
   return text
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\s/g, '&nbsp;')
-    .replace(/\\h/g, '&nbsp;')
-    .replace(/\\N/g, '<br>')
-    .replace(/\\n/g, q === 2 ? '<br>' : '&nbsp;');
+    .replace(/\\h/g, ' ')
+    .replace(/\\N/g, '\n')
+    .replace(/\\n/g, q === 2 ? '\n' : ' ');
 }
 
 export function createDialogue(dialogue) {
@@ -28,6 +25,7 @@ export function createDialogue(dialogue) {
       const { text, drawing, animationName } = fragment;
       const tag = assign({}, sliceTag, fragment.tag);
       let cssText = 'display:inline-block;';
+      const cssVars = [];
       const vct = this.video.currentTime;
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
@@ -35,12 +33,22 @@ export function createDialogue(dialogue) {
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
         const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
         if (borderStyle === 1) {
-          cssText += `text-shadow:${createCSSStroke(tag, scale)};`;
+          cssVars.push(...createCSSStroke(tag, scale));
         }
         if (borderStyle === 3) {
+          // TODO: \bord0\shad16
+          const bc = color2rgba(tag.a3 + tag.c3);
+          const bx = tag.xbord * scale;
+          const by = tag.ybord * scale;
+          const sc = color2rgba(tag.a4 + tag.c4);
+          const sx = tag.xshad * scale;
+          const sy = tag.yshad * scale;
           cssText += (
-            `background-color:${color2rgba(tag.a3 + tag.c3)};`
-            + `box-shadow:${createCSSStroke(tag, scale)};`
+            `${bx || by ? `background-color:${bc};` : ''}`
+            + `border:0 solid ${bc};`
+            + `border-width:${bx}px ${by}px;`
+            + `margin:${-bx}px ${-by}px;`
+            + `box-shadow:${sx}px ${sy}px ${sc};`
           );
         }
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
@@ -74,7 +82,7 @@ export function createDialogue(dialogue) {
       }
 
       const hasRotate = /"fr[xyz]":[^0]/.test(JSON.stringify(tag));
-      encodeText(text, tag.q).split('<br>').forEach((html, idx) => {
+      encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         $span.dataset.hasRotate = hasRotate;
         if (drawing) {
@@ -85,13 +93,19 @@ export function createDialogue(dialogue) {
           if (idx) {
             df.appendChild(document.createElement('br'));
           }
-          if (!html) {
+          if (!content) {
             return;
           }
-          $span.innerHTML = html;
+          $span.textContent = content;
+          if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
+            $span.dataset.stroke = content;
+          }
         }
         // TODO: maybe it can be optimized
         $span.style.cssText += cssText;
+        cssVars.forEach(({ key, value }) => {
+          $span.style.setProperty(key, value);
+        });
         df.appendChild($span);
       });
     });
