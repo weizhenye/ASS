@@ -1,17 +1,3 @@
-export const raf = (
-  window.requestAnimationFrame
-  || window.mozRequestAnimationFrame
-  || window.webkitRequestAnimationFrame
-  || ((cb) => setTimeout(cb, 50 / 3))
-);
-
-export const caf = (
-  window.cancelAnimationFrame
-  || window.mozCancelAnimationFrame
-  || window.webkitCancelAnimationFrame
-  || clearTimeout
-);
-
 export function alpha2opacity(a) {
   return 1 - `0x${a}` / 255;
 }
@@ -56,8 +42,6 @@ function getVendor(prop) {
 }
 
 export const vendor = {
-  transform: getVendor('transform'),
-  animation: getVendor('animation'),
   clipPath: getVendor('clipPath'),
 };
 

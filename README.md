@@ -21,9 +21,16 @@ ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse A
 npm install assjs
 ```
 
+CDN: [jsDelivr](https://www.jsdelivr.com/package/npm/assjs), [unpkg](https://unpkg.com/assjs/)
+
+ASS.js only targets for latest modern browsers, if you need support IE 10 or 11, please use [v0.0.11](https://github.com/weizhenye/ASS/tree/v0.0.11).
+
 ## Usage
 
 ```html
+<div id="container" style="position:relative;">
+  <video id="video" src="./example.mp4" style="position:absolute;"></video>
+</div>
 <video id="video" src="example.mp4"></video>
 
 <script src="dist/ass.min.js"></script>
@@ -31,7 +38,11 @@ npm install assjs
 fetch('/path/to/example.ass')
   .then(res => res.text())
   .then((text) => {
-    const ass = new ASS(text, document.getElementById('video'));
+    const ass = new ASS(
+      text,
+      document.getElementById('video'),
+      { container: document.getElementById('container') },
+    );
   });
 </script>
 ```
@@ -123,5 +134,4 @@ Items with <del>strikethrough</del> means they won't be supported.
 * `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
-* For I'm using the `clip-path` CSS property to implement `\clip`, [IE and Edge are not supported yet](https://caniuse.com/#feat=css-clip-path).
 * `\be` is just treated as `\blur`.

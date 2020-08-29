@@ -1,5 +1,3 @@
-import { vendor } from '../utils.js';
-
 export function createTransform(tag) {
   return [
     // TODO: I don't know why perspective is 314, it just performances well.
@@ -30,7 +28,7 @@ export function setTransformOrigin(dialogue) {
       // It's not extremely precise for offsets are round the value to an integer.
       const tox = org.x - x - node.offsetLeft;
       const toy = org.y - y - node.offsetTop;
-      node.style.cssText += `${vendor.transform}transform-origin:${tox}px ${toy}px;`;
+      node.style.cssText += `transform-origin:${tox}px ${toy}px;`;
     }
   }
 }

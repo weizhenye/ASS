@@ -1,11 +1,11 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, uuid, vendor, strokeTags, transformTags } from '../utils.js';
+import { color2rgba, uuid, strokeTags, transformTags } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
 
 function getKeyframeString(name, list) {
-  return `@${vendor.animation}keyframes ${name} {${list}}\n`;
+  return `@keyframes ${name} {${list}}\n`;
 }
 
 class KeyframeBlockList {
@@ -34,7 +34,7 @@ class KeyframeBlockList {
       .map((keyText) => (
         `${keyText}{${
           Object.keys(this.obj[keyText])
-            .map((prop) => `${vendor[prop] || ''}${prop}:${this.obj[keyText][prop]};`)
+            .map((prop) => `${prop}:${this.obj[keyText][prop]};`)
             .join('')
         }}`
       ))
@@ -197,13 +197,12 @@ export function getKeyframes() {
 }
 
 export function createAnimation(name, duration, delay) {
-  const va = vendor.animation;
   return (
-    `${va}animation-name:${name};`
-    + `${va}animation-duration:${duration}s;`
-    + `${va}animation-delay:${delay}s;`
-    + `${va}animation-timing-function:linear;`
-    + `${va}animation-iteration-count:1;`
-    + `${va}animation-fill-mode:forwards;`
+    `animation-name:${name};`
+    + `animation-duration:${duration}s;`
+    + `animation-delay:${delay}s;`
+    + 'animation-timing-function:linear;'
+    + 'animation-iteration-count:1;'
+    + 'animation-fill-mode:forwards;'
   );
 }

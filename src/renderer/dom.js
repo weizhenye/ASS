@@ -1,5 +1,5 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, vendor, transformTags } from '../utils.js';
+import { color2rgba, transformTags } from '../utils.js';
 import { createAnimation } from './animation.js';
 import { createDrawing } from './drawing.js';
 import { getRealFontSize } from './font-size.js';
@@ -68,7 +68,7 @@ export function createDialogue(dialogue) {
         /^fsc[xy]$/.test(x) ? tag[x] !== 100 : !!tag[x]
       ));
       if (hasTransfrom) {
-        cssText += `${vendor.transform}transform:${createTransform(tag)};`;
+        cssText += `transform:${createTransform(tag)};`;
         if (!drawing) {
           cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
         }
