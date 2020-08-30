@@ -1,4 +1,5 @@
 import { renderer } from '../renderer/renderer.js';
+import { batchAnimate } from '../utils.js';
 
 export function framing() {
   const vct = this.video.currentTime;
@@ -25,6 +26,9 @@ export function framing() {
   ) {
     if (vct < dias[this._.index].end) {
       const dia = renderer.call(this, dias[this._.index]);
+      if (!this.video.paused) {
+        batchAnimate(dia.$div, 'play');
+      }
       this._.stagings.push(dia);
     }
     ++this._.index;

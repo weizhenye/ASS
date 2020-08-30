@@ -1,6 +1,5 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, transformTags } from '../utils.js';
-import { createAnimation } from './animation.js';
+import { color2rgba, transformTags, initAnimation } from '../utils.js';
 import { createDrawing } from './drawing.js';
 import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
@@ -18,15 +17,20 @@ export function createDialogue(dialogue) {
   $div.className = 'ASS-dialogue';
   const df = document.createDocumentFragment();
   const { slices, start, end } = dialogue;
+  const animationOptions = {
+    duration: (end - start) * 1000,
+    delay: Math.min(0, start - this.video.currentTime) * 1000,
+    fill: 'forwards',
+  };
+  $div.animations = [];
   slices.forEach((slice) => {
     const sliceTag = this.styles[slice.style].tag;
     const borderStyle = this.styles[slice.style].style.BorderStyle;
     slice.fragments.forEach((fragment) => {
-      const { text, drawing, animationName } = fragment;
+      const { text, drawing } = fragment;
       const tag = assign({}, sliceTag, fragment.tag);
       let cssText = 'display:inline-block;';
       const cssVars = [];
-      const vct = this.video.currentTime;
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
         cssText += `font-size:${this.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
@@ -73,9 +77,6 @@ export function createDialogue(dialogue) {
           cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
         }
       }
-      if (animationName) {
-        cssText += createAnimation(animationName, end - start, Math.min(0, start - vct));
-      }
       if (drawing && tag.pbo) {
         const pbo = this.scale * -tag.pbo * (tag.fscy || 100) / 100;
         cssText += `vertical-align:${pbo}px;`;
@@ -106,10 +107,16 @@ export function createDialogue(dialogue) {
         cssVars.forEach(({ key, value }) => {
           $span.style.setProperty(key, value);
         });
+        if (fragment.keyframes) {
+          $div.animations.push(initAnimation($span, fragment.keyframes, animationOptions));
+        }
         df.appendChild($span);
       });
     });
   });
+  if (dialogue.keyframes) {
+    $div.animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
+  }
   $div.appendChild(df);
   return $div;
 }

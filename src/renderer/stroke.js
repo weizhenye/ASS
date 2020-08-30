@@ -109,17 +109,18 @@ function getOffsets(x, y) {
   if (x === y) return [];
   const nx = Math.min(x, y);
   const ny = Math.max(x, y);
-  const offsets = [[nx, ny]];
-  for (let i = 0; i < nx; i++) {
-    for (let j = Math.round(nx + 0.5); j < ny; j++) {
-      offsets.push([i, j]);
-    }
-  }
-  return [].concat(...offsets.map(get4QuadrantPoints));
-  // return [].concat(...Array.from({ length: Math.ceil(ny) - 1 }, (_, i) => i + 1).concat(ny)
-  //   .map((n) => [(ny - n) / ny * nx, n])
-  //   .map(([i, j]) => (x > y ? [j, i] : [i, j]))
-  //   .map(get4QuadrantPoints));
+  // const offsets = [[nx, ny]];
+  // for (let i = 0; i < nx; i++) {
+  //   for (let j = Math.round(nx + 0.5); j < ny; j++) {
+  //     offsets.push([i, j]);
+  //   }
+  // }
+  // return [].concat(...offsets.map(get4QuadrantPoints));
+  return Array.from({ length: Math.ceil(ny) - 1 }, (_, i) => i + 1).concat(ny)
+    .map((n) => [(ny - n) / ny * nx, n])
+    .map(([i, j]) => (x > y ? [j, i] : [i, j]))
+    .map(get4QuadrantPoints)
+    .flat();
 }
 
 export function createCSSStroke(tag, scale) {

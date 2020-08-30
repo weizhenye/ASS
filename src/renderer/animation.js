@@ -1,46 +1,7 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, uuid, strokeTags, transformTags } from '../utils.js';
+import { color2rgba, transformTags } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
-import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
-
-function getKeyframeString(name, list) {
-  return `@keyframes ${name} {${list}}\n`;
-}
-
-class KeyframeBlockList {
-  constructor() {
-    this.obj = {};
-  }
-
-  set(keyText, prop, value) {
-    if (!this.obj[keyText]) this.obj[keyText] = {};
-    this.obj[keyText][prop] = value;
-  }
-
-  setT({ t1, t2, duration, prop, from, to }) {
-    this.set('0.000%', prop, from);
-    if (t1 < duration) {
-      this.set(`${(t1 / duration * 100).toFixed(3)}%`, prop, from);
-    }
-    if (t2 < duration) {
-      this.set(`${(t2 / duration * 100).toFixed(3)}%`, prop, to);
-    }
-    this.set('100.000%', prop, to);
-  }
-
-  toString() {
-    return Object.keys(this.obj)
-      .map((keyText) => (
-        `${keyText}{${
-          Object.keys(this.obj[keyText])
-            .map((prop) => `${prop}:${this.obj[keyText][prop]};`)
-            .join('')
-        }}`
-      ))
-      .join('');
-  }
-}
 
 // TODO: multi \t can't be merged directly
 function mergeT(ts) {
@@ -55,154 +16,147 @@ function mergeT(ts) {
   }, []);
 }
 
-export function getKeyframes() {
-  let keyframes = '';
-  this.dialogues.forEach((dialogue) => {
-    const { start, end, effect, move, fade, slices } = dialogue;
-    const duration = (end - start) * 1000;
-    const diaKbl = new KeyframeBlockList();
-    // TODO: when effect and move both exist, its behavior is weird, for now only move works.
-    if (effect && !move) {
-      const { name, delay, lefttoright, y1 } = effect;
-      const y2 = effect.y2 || this._.resampledRes.height;
-      if (name === 'banner') {
-        const tx = this.scale * (duration / delay) * (lefttoright ? 1 : -1);
-        diaKbl.set('0.000%', 'transform', 'translateX(0)');
-        diaKbl.set('100.000%', 'transform', `translateX(${tx}px)`);
-      }
-      if (/^scroll/.test(name)) {
-        const updown = /up/.test(name) ? -1 : 1;
-        const tFrom = `translateY(${this.scale * y1 * updown}px)`;
-        const tTo = `translateY(${this.scale * y2 * updown}px)`;
-        const dp = (y2 - y1) / (duration / delay) * 100;
-        diaKbl.set('0.000%', 'transform', tFrom);
-        if (dp < 100) {
-          diaKbl.set(`${dp.toFixed(3)}%`, 'transform', tTo);
-        }
-        diaKbl.set('100.000%', 'transform', tTo);
-      }
-    }
-    if (move) {
-      const { x1, y1, x2, y2, t1 } = move;
-      const t2 = move.t2 || duration;
-      const pos = dialogue.pos || { x: 0, y: 0 };
-      const values = [{ x: x1, y: y1 }, { x: x2, y: y2 }].map(({ x, y }) => (
-        `translate(${this.scale * (x - pos.x)}px, ${this.scale * (y - pos.y)}px)`
-      ));
-      diaKbl.setT({ t1, t2, duration, prop: 'transform', from: values[0], to: values[1] });
-    }
-    if (fade) {
-      if (fade.type === 'fad') {
-        const { t1, t2 } = fade;
-        diaKbl.set('0.000%', 'opacity', 0);
-        if (t1 < duration) {
-          diaKbl.set(`${(t1 / duration * 100).toFixed(3)}%`, 'opacity', 1);
-          if (t1 + t2 < duration) {
-            diaKbl.set(`${((duration - t2) / duration * 100).toFixed(3)}%`, 'opacity', 1);
-          }
-          diaKbl.set('100.000%', 'opacity', 0);
-        } else {
-          diaKbl.set('100.000%', 'opacity', duration / t1);
-        }
-      } else {
-        const { a1, a2, a3, t1, t2, t3, t4 } = fade;
-        const keyTexts = [t1, t2, t3, t4].map((t) => `${(t / duration * 100).toFixed(3)}%`);
-        const values = [a1, a2, a3].map((a) => 1 - a / 255);
-        diaKbl.set('0.000%', 'opacity', values[0]);
-        if (t1 < duration) diaKbl.set(keyTexts[0], 'opacity', values[0]);
-        if (t2 < duration) diaKbl.set(keyTexts[1], 'opacity', values[1]);
-        if (t3 < duration) diaKbl.set(keyTexts[2], 'opacity', values[1]);
-        if (t4 < duration) diaKbl.set(keyTexts[3], 'opacity', values[2]);
-        diaKbl.set('100.000%', 'opacity', values[2]);
-      }
-    }
-    const diaList = diaKbl.toString();
-    if (diaList) {
-      assign(dialogue, { animationName: `ASS-${uuid()}` });
-      keyframes += getKeyframeString(dialogue.animationName, diaList);
-    }
-    slices.forEach((slice) => {
-      const sliceTag = this.styles[slice.style].tag;
-      slice.fragments.forEach((fragment) => {
-        if (!fragment.tag.t || !fragment.tag.t.length) {
-          return;
-        }
-        const kbl = new KeyframeBlockList();
-        const fromTag = assign({}, sliceTag, fragment.tag);
-        // TODO: accel is not implemented yet
-        mergeT(fragment.tag.t).forEach(({ t1, t2, tag }) => {
-          if (tag.fs) {
-            const from = `${this.scale * getRealFontSize(fromTag.fn, fromTag.fs)}px`;
-            const to = `${this.scale * getRealFontSize(tag.fn, fromTag.fs)}px`;
-            kbl.setT({ t1, t2, duration, prop: 'font-size', from, to });
-          }
-          if (tag.fsp) {
-            const from = `${this.scale * fromTag.fsp}px`;
-            const to = `${this.scale * tag.fsp}px`;
-            kbl.setT({ t1, t2, duration, prop: 'letter-spacing', from, to });
-          }
-          const hasAlpha = (
-            tag.a1 !== undefined
-            && tag.a1 === tag.a2
-            && tag.a2 === tag.a3
-            && tag.a3 === tag.a4
-          );
-          if (tag.c1 || (tag.a1 && !hasAlpha)) {
-            const from = color2rgba(fromTag.a1 + fromTag.c1);
-            const to = color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1));
-            kbl.setT({ t1, t2, duration, prop: 'color', from, to });
-          }
-          if (hasAlpha) {
-            const from = 1 - parseInt(fromTag.a1, 16) / 255;
-            const to = 1 - parseInt(tag.a1, 16) / 255;
-            kbl.setT({ t1, t2, duration, prop: 'opacity', from, to });
-          }
-          const hasStroke = strokeTags.some((x) => (
-            tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || sliceTag[x])
-          ));
-          if (hasStroke) {
-            const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
-            const from = createCSSStroke(fromTag, scale);
-            const to = createCSSStroke(assign({}, fromTag, tag), scale);
-            kbl.setT({ t1, t2, duration, prop: 'text-shadow', from, to });
-          }
-          const hasTransfrom = transformTags.some((x) => (
-            tag[x] !== undefined
-            && tag[x] !== (fragment.tag[x] || sliceTag[x])
-          ));
-          if (hasTransfrom) {
-            const toTag = assign({}, fromTag, tag);
-            if (fragment.drawing) {
-              // scales will be handled inside svg
-              assign(toTag, {
-                p: 0,
-                fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
-                fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
-              });
-              assign(fromTag, { fscx: 100, fscy: 100 });
-            }
-            const from = createTransform(fromTag);
-            const to = createTransform(toTag);
-            kbl.setT({ t1, t2, duration, prop: 'transform', from, to });
-          }
-        });
-        const list = kbl.toString();
-        assign(fragment, { animationName: `ASS-${uuid()}` });
-        keyframes += getKeyframeString(fragment.animationName, list);
-      });
-    });
-  });
-  return keyframes;
+function createEffectKeyframes({ effect, duration }) {
+  // TODO: when effect and move both exist, its behavior is weird, for now only move works.
+  const { name, delay, lefttoright, y1 } = effect;
+  const y2 = effect.y2 || this._.resampledRes.height;
+  if (name === 'banner') {
+    const tx = this.scale * (duration / delay) * (lefttoright ? 1 : -1);
+    return [0, `${tx}px`].map((x, i) => ({
+      offset: i,
+      transform: `translateX(${x})`,
+    }));
+  }
+  if (/^scroll/.test(name)) {
+    const updown = /up/.test(name) ? -1 : 1;
+    const dp = (y2 - y1) / (duration / delay);
+    return [y1, y2]
+      .map((y) => this.scale * y * updown)
+      .map((y, i) => ({
+        offset: Math.min(i, dp),
+        transform: `translateY${y}`,
+      }));
+  }
+  return [];
 }
 
-export function createAnimation(name, duration, delay) {
-  return (
-    `animation-name:${name};`
-    + `animation-duration:${duration}s;`
-    + `animation-delay:${delay}s;`
-    + 'animation-timing-function:linear;'
-    + 'animation-iteration-count:1;'
-    + 'animation-fill-mode:forwards;'
-  );
+function createMoveKeyframes({ move, duration, dialogue }) {
+  const { x1, y1, x2, y2, t1, t2 } = move;
+  const t = [t1, t2 || duration];
+  const pos = dialogue.pos || { x: 0, y: 0 };
+  return [[x1, y1], [x2, y2]]
+    .map(([x, y]) => [this.scale * (x - pos.x), this.scale * (y - pos.y)])
+    .map(([x, y], index) => ({
+      offset: Math.min(t[index] / duration, 1),
+      transform: `translate(${x}px, ${y}px)`,
+    }));
+}
+
+function createFadeKeyframes({ fade, duration }) {
+  if (fade.type === 'fad') {
+    const { t1, t2 } = fade;
+    const kfs = [[0, 0]];
+    if (t1 < duration) {
+      kfs.push([t1 / duration, 1]);
+      if (t1 + t2 < duration) {
+        kfs.push([(duration - t2) / duration, 1]);
+      }
+      kfs.push([1, 0]);
+    } else {
+      kfs.push([1, duration / t1]);
+    }
+    return kfs.map(([offset, opacity]) => ({ offset, opacity }));
+  }
+  const { a1, a2, a3, t1, t2, t3, t4 } = fade;
+  const opacities = [a1, a2, a3].map((a) => 1 - a / 255);
+  return [0, t1, t2, t3, t4, duration]
+    .map((t) => t / duration)
+    .map((t, i) => ({ offset: t, opacity: opacities[i >> 1] }))
+    .filter(({ offset }) => offset <= 1);
+}
+
+function createTransformKeyframes({ fromTag, tag, fragment }) {
+  const hasTransfrom = transformTags.some((x) => (
+    tag[x] !== undefined && tag[x] !== fromTag[x]
+  ));
+  if (!hasTransfrom) return null;
+  const toTag = assign({}, fromTag, tag);
+  if (fragment.drawing) {
+    // scales will be handled inside svg
+    assign(toTag, {
+      p: 0,
+      fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
+      fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
+    });
+    assign(fromTag, { fscx: 100, fscy: 100 });
+  }
+  return [
+    'transform',
+    createTransform(fromTag),
+    createTransform(toTag),
+  ];
+}
+
+export function setKeyframes(dialogue) {
+  const { start, end, effect, move, fade, slices } = dialogue;
+  const duration = (end - start) * 1000;
+  const keyframes = [
+    ...(effect && !move ? createEffectKeyframes.call(this, { effect, duration }) : []),
+    ...(move ? createMoveKeyframes.call(this, { move, duration, dialogue }) : []),
+    ...(fade ? createFadeKeyframes({ fade, duration }) : []),
+  ];
+  if (keyframes.length) {
+    assign(dialogue, { keyframes });
+    // const delay = Math.min(0, dialogue.start - this.video.currentTime) * 1000;
+    // const animation = $div.animate(keyframes, { duration, delay, fill: 'forwards' });
+    // animation.pause();
+  }
+  slices.forEach((slice) => {
+    const sliceTag = this.styles[slice.style].tag;
+    slice.fragments.forEach((fragment) => {
+      if (!fragment.tag.t || !fragment.tag.t.length) {
+        return;
+      }
+      const fromTag = assign({}, sliceTag, fragment.tag);
+      const kfs = mergeT(fragment.tag.t).map(({ t1, t2, tag }) => {
+        const hasAlpha = (
+          tag.a1 !== undefined
+          && tag.a1 === tag.a2
+          && tag.a2 === tag.a3
+          && tag.a3 === tag.a4
+        );
+        return [
+          tag.fs && [
+            'font-size',
+            `${this.scale * getRealFontSize(fromTag.fn, fromTag.fs)}px`,
+            `${this.scale * getRealFontSize(tag.fn, fromTag.fs)}px`,
+          ],
+          tag.fsp && [
+            'letter-spacing',
+            `${this.scale * fromTag.fsp}px`,
+            `${this.scale * tag.fsp}px`,
+          ],
+          (tag.c1 || (tag.a1 && !hasAlpha)) && [
+            'color',
+            color2rgba(fromTag.a1 + fromTag.c1),
+            color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1)),
+          ],
+          hasAlpha && [
+            'opacity',
+            1 - parseInt(fromTag.a1, 16) / 255,
+            1 - parseInt(tag.a1, 16) / 255,
+          ],
+          createTransformKeyframes({ fromTag, tag, fragment }),
+        ].filter((x) => x).map(([prop, from, to]) => {
+          const values = [from, from, to, to];
+          return [0, t1, t2, duration]
+            .map((t) => t / duration)
+            .map((offset, i) => ({ offset, [prop]: values[i] }));
+        });
+      }).flat(2);
+      if (kfs.length) {
+        assign(fragment, { keyframes: kfs });
+      }
+    });
+  });
 }

@@ -1,5 +1,5 @@
 import { seek } from './seek.js';
-import { getKeyframes } from '../renderer/animation.js';
+import { setKeyframes } from '../renderer/animation.js';
 
 export function resize() {
   const cw = this.video.clientWidth;
@@ -39,7 +39,9 @@ export function resize() {
   this._.$svg.style.cssText = cssText;
   this._.$svg.setAttributeNS(null, 'viewBox', `0 0 ${sw} ${sh}`);
 
-  this._.$animation.innerHTML = getKeyframes.call(this);
+  this.dialogues.forEach((dialogue) => {
+    setKeyframes.call(this, dialogue);
+  });
   seek.call(this);
 
   return this;

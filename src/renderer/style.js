@@ -1,14 +1,8 @@
-import { createAnimation } from './animation.js';
-
 export function createStyle(dialogue) {
-  const { layer, start, end, alignment, effect, pos, margin } = dialogue;
-  const { animationName, width, height, x, y } = dialogue;
-  const vct = this.video.currentTime;
+  const { layer, alignment, effect, pos, margin } = dialogue;
+  const { width, height, x, y } = dialogue;
   let cssText = '';
   if (layer) cssText += `z-index:${layer};`;
-  if (animationName) {
-    cssText += createAnimation(animationName, end - start, Math.min(0, start - vct));
-  }
   cssText += `text-align:${['right', 'left', 'center'][alignment % 3]};`;
   if (!effect) {
     const mw = this.width - this.scale * (margin.left + margin.right);

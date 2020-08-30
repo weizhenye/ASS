@@ -1,12 +1,5 @@
-const thenable = window.Promise ? Promise.resolve() : {
-  then(cb) {
-    cb();
-    return this;
-  },
-};
-
 export function playVideo($video) {
-  return ($video.play() || thenable).then(() => {
+  return $video.play().then(() => {
     // video can't play without user gesture
     if ($video.paused) {
       this.skip();

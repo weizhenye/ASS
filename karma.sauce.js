@@ -10,13 +10,13 @@ const customLaunchers = {
     platformVersion: '13.4',
     platformName: 'iOS',
   },
-  SL_Android: {
-    base: 'SauceLabs',
-    deviceName: 'Android Emulator',
-    browserName: 'Chrome',
-    platformVersion: '10.0',
-    platformName: 'Android',
-  },
+  // SL_Android: {
+  //   base: 'SauceLabs',
+  //   deviceName: 'Android Emulator',
+  //   browserName: 'Chrome',
+  //   platformVersion: '10.0',
+  //   platformName: 'Android',
+  // },
   SL_Chrome: {
     base: 'SauceLabs',
     browserName: 'chrome',

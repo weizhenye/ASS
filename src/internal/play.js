@@ -1,4 +1,5 @@
 import { framing } from './framing.js';
+import { batchAnimate } from '../utils.js';
 
 export function play() {
   const frame = () => {
@@ -7,6 +8,8 @@ export function play() {
   };
   cancelAnimationFrame(this._.requestId);
   this._.requestId = requestAnimationFrame(frame);
-  this._.$stage.classList.remove('ASS-animation-paused');
+  this._.stagings.forEach(({ $div }) => {
+    batchAnimate($div, 'play');
+  });
   return this;
 }

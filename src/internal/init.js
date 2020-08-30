@@ -20,10 +20,9 @@ export function init(source, video, options = {}) {
     $svg: createSVGEl('svg'),
     $defs: createSVGEl('defs'),
     $stage: document.createElement('div'),
-    $animation: document.createElement('style'),
   };
   this._.$svg.appendChild(this._.$defs);
-  this._.$stage.className = 'ASS-stage ASS-animation-paused';
+  this._.$stage.className = 'ASS-stage';
 
   this._.resampling = options.resampling || 'video_height';
 
@@ -63,9 +62,6 @@ export function init(source, video, options = {}) {
     $style.appendChild(document.createTextNode(GLOBAL_CSS));
     styleRoot.appendChild($style);
   }
-  this._.$animation.type = 'text/css';
-  this._.$animation.className = 'ASS-animation';
-  styleRoot.appendChild(this._.$animation);
 
   resize.call(this);
 

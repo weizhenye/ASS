@@ -52,3 +52,17 @@ export function getStyleRoot(container) {
 
 export const strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
 export const transformTags = ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'];
+
+export function initAnimation($el, keyframes, options) {
+  const animation = $el.animate(keyframes, options);
+  animation.pause();
+  return animation;
+}
+
+export function batchAnimate($el, action) {
+  // https://caniuse.com/#feat=mdn-api_element_getanimations
+  // const animations = $el.getAnimations({ subtree: true });
+  $el.animations.forEach((animation) => {
+    animation[action]();
+  });
+}
