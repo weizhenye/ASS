@@ -123,6 +123,7 @@ function getOffsets(x, y) {
     .flat();
 }
 
+// TODO: a1 === 'ff'
 export function createCSSStroke(tag, scale) {
   const bc = color2rgba(`00${tag.c3}`);
   const bx = tag.xbord * scale;

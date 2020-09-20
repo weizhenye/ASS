@@ -60,9 +60,7 @@ export function initAnimation($el, keyframes, options) {
 }
 
 export function batchAnimate($el, action) {
-  // https://caniuse.com/#feat=mdn-api_element_getanimations
-  // const animations = $el.getAnimations({ subtree: true });
-  $el.animations.forEach((animation) => {
+  ($el.animations || []).forEach((animation) => {
     animation[action]();
   });
 }

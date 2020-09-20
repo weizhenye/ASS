@@ -24,7 +24,7 @@ export function setTransformOrigin(dialogue) {
   }
   for (let i = $div.childNodes.length - 1; i >= 0; i--) {
     const node = $div.childNodes[i];
-    if (node.dataset.hasRotate === 'true') {
+    if (node._hasRotate) {
       // It's not extremely precise for offsets are round the value to an integer.
       const tox = org.x - x - node.offsetLeft;
       const toy = org.y - y - node.offsetTop;

@@ -85,7 +85,7 @@ export function createDialogue(dialogue) {
       const hasRotate = /"fr[xyz]":[^0]/.test(JSON.stringify(tag));
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
-        $span.dataset.hasRotate = hasRotate;
+        $span._hasRotate = hasRotate;
         if (drawing) {
           const obj = createDrawing.call(this, fragment, sliceTag);
           $span.style.cssText = obj.cssText;
@@ -108,7 +108,12 @@ export function createDialogue(dialogue) {
           $span.style.setProperty(key, value);
         });
         if (fragment.keyframes) {
-          $div.animations.push(initAnimation($span, fragment.keyframes, animationOptions));
+          const animation = initAnimation(
+            $span,
+            fragment.keyframes,
+            assign({}, animationOptions, { duration: fragment.duration }),
+          );
+          $div.animations.push(animation);
         }
         df.appendChild($span);
       });

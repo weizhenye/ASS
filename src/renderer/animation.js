@@ -97,6 +97,7 @@ function createTransformKeyframes({ fromTag, tag, fragment }) {
   ];
 }
 
+// TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
 export function setKeyframes(dialogue) {
   const { start, end, effect, move, fade, slices } = dialogue;
   const duration = (end - start) * 1000;
@@ -104,12 +105,9 @@ export function setKeyframes(dialogue) {
     ...(effect && !move ? createEffectKeyframes.call(this, { effect, duration }) : []),
     ...(move ? createMoveKeyframes.call(this, { move, duration, dialogue }) : []),
     ...(fade ? createFadeKeyframes({ fade, duration }) : []),
-  ];
+  ].sort((a, b) => a.offset - b.offset);
   if (keyframes.length) {
     assign(dialogue, { keyframes });
-    // const delay = Math.min(0, dialogue.start - this.video.currentTime) * 1000;
-    // const animation = $div.animate(keyframes, { duration, delay, fill: 'forwards' });
-    // animation.pause();
   }
   slices.forEach((slice) => {
     const sliceTag = this.styles[slice.style].tag;
@@ -118,7 +116,9 @@ export function setKeyframes(dialogue) {
         return;
       }
       const fromTag = assign({}, sliceTag, fragment.tag);
-      const kfs = mergeT(fragment.tag.t).map(({ t1, t2, tag }) => {
+      const tTags = mergeT(fragment.tag.t);
+      const fDuration = Math.max(duration, ...tTags.map(({ t2 }) => t2));
+      const kfs = tTags.map(({ t1, t2, tag }) => {
         const hasAlpha = (
           tag.a1 !== undefined
           && tag.a1 === tag.a2
@@ -129,7 +129,7 @@ export function setKeyframes(dialogue) {
           tag.fs && [
             'font-size',
             `${this.scale * getRealFontSize(fromTag.fn, fromTag.fs)}px`,
-            `${this.scale * getRealFontSize(tag.fn, fromTag.fs)}px`,
+            `${this.scale * getRealFontSize(tag.fn, tag.fs)}px`,
           ],
           tag.fsp && [
             'letter-spacing',
@@ -148,14 +148,15 @@ export function setKeyframes(dialogue) {
           ],
           createTransformKeyframes({ fromTag, tag, fragment }),
         ].filter((x) => x).map(([prop, from, to]) => {
-          const values = [from, from, to, to];
-          return [0, t1, t2, duration]
-            .map((t) => t / duration)
+          const values = [from, to];
+          // TODO: t1 < 0
+          return [Math.max(0, t1), t2]
+            .map((t) => t / fDuration)
             .map((offset, i) => ({ offset, [prop]: values[i] }));
         });
-      }).flat(2);
+      }).flat(2).sort((a, b) => a.offset - b.offset);
       if (kfs.length) {
-        assign(fragment, { keyframes: kfs });
+        assign(fragment, { keyframes: kfs, duration: fDuration });
       }
     });
   });

@@ -7,6 +7,7 @@
     "no-bitwise": 0,
     "no-mixed-operators": 0,
     "no-plusplus": 0,
+    "no-underscore-dangle": 0,
     "object-curly-newline": ["error", {
       "ObjectExpression": { "multiline": true, "consistent": true },
       "ObjectPattern": { "multiline": true, "consistent": true }
