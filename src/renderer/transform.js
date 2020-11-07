@@ -10,17 +10,15 @@ export function createTransform(tag) {
   ].join(' ');
 }
 
-export function setTransformOrigin(dialogue) {
+export function setTransformOrigin(dialogue, scale) {
   const { alignment, width, height, x, y, $div } = dialogue;
-  let { org } = dialogue;
-  if (!org) {
-    org = { x: 0, y: 0 };
-    if (alignment % 3 === 1) org.x = x;
-    if (alignment % 3 === 2) org.x = x + width / 2;
-    if (alignment % 3 === 0) org.x = x + width;
-    if (alignment <= 3) org.y = y + height;
-    if (alignment >= 4 && alignment <= 6) org.y = y + height / 2;
-    if (alignment >= 7) org.y = y;
+  const org = {};
+  if (dialogue.org) {
+    org.x = dialogue.org.x * scale;
+    org.y = dialogue.org.y * scale;
+  } else {
+    org.x = [x + width, x, x + width / 2][alignment % 3];
+    org.y = [y + height, y + height / 2, y][(alignment - 1) / 3 | 0];
   }
   for (let i = $div.childNodes.length - 1; i >= 0; i--) {
     const node = $div.childNodes[i];

@@ -13,7 +13,7 @@ export function renderer(dialogue) {
   assign(dialogue, { width, height });
   assign(dialogue, getPosition.call(this, dialogue));
   $div.style.cssText = createStyle.call(this, dialogue);
-  setTransformOrigin(dialogue);
+  setTransformOrigin(dialogue, this.scale);
   setClipPath.call(this, dialogue);
   return dialogue;
 }
