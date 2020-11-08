@@ -11,14 +11,14 @@ export function createTransform(tag) {
 }
 
 export function setTransformOrigin(dialogue, scale) {
-  const { alignment, width, height, x, y, $div } = dialogue;
+  const { align, width, height, x, y, $div } = dialogue;
   const org = {};
   if (dialogue.org) {
     org.x = dialogue.org.x * scale;
     org.y = dialogue.org.y * scale;
   } else {
-    org.x = [x + width, x, x + width / 2][alignment % 3];
-    org.y = [y + height, y + height / 2, y][(alignment - 1) / 3 | 0];
+    org.x = [x, x + width / 2, x + width][align.h];
+    org.y = [y + height, y + height / 2, y][align.v];
   }
   for (let i = $div.childNodes.length - 1; i >= 0; i--) {
     const node = $div.childNodes[i];

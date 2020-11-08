@@ -1,17 +1,17 @@
 export function createStyle(dialogue) {
-  const { layer, alignment, effect, pos, margin } = dialogue;
+  const { layer, align, effect, pos, margin } = dialogue;
   const { width, height, x, y } = dialogue;
   let cssText = '';
   if (layer) cssText += `z-index:${layer};`;
-  cssText += `text-align:${['right', 'left', 'center'][alignment % 3]};`;
+  cssText += `text-align:${['left', 'center', 'right'][align.h]};`;
   if (!effect) {
     const mw = this.width - this.scale * (margin.left + margin.right);
     cssText += `max-width:${mw}px;`;
     if (!pos) {
-      if (alignment % 3 === 1) {
+      if (align.h === 0) {
         cssText += `margin-left:${this.scale * margin.left}px;`;
       }
-      if (alignment % 3 === 0) {
+      if (align.h === 2) {
         cssText += `margin-right:${this.scale * margin.right}px;`;
       }
       if (width > this.width - this.scale * (margin.left + margin.right)) {
@@ -20,6 +20,6 @@ export function createStyle(dialogue) {
       }
     }
   }
-  cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
+  cssText += `width:${width}px;height:${height}px;transform:translate(${x}px,${y}px);`;
   return cssText;
 }

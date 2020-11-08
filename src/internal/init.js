@@ -1,4 +1,5 @@
 import { compile } from 'ass-compiler';
+import { assign } from 'ass-compiler/src/utils';
 import { bindEvents } from './events.js';
 import { play } from './play.js';
 import { resize } from './resize.js';
@@ -51,7 +52,14 @@ export function init(source, video, options = {}) {
     height: height || video.videoHeight,
   };
   this.styles = styles;
-  this.dialogues = dialogues;
+  this.dialogues = dialogues.map((dia) => assign(dia, {
+    align: {
+      // 0: left, 1: center, 2: right
+      h: (dia.alignment + 2) % 3,
+      // 0: top, 1: center, 2: bottom
+      v: (dia.alignment - 1) / 3 | 0,
+    },
+  }));
 
   const styleRoot = getStyleRoot(this.container);
   let $style = styleRoot.querySelector('#ASS-global-style');
