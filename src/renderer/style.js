@@ -20,6 +20,6 @@ export function createStyle(dialogue) {
       }
     }
   }
-  cssText += `width:${width}px;height:${height}px;transform:translate(${x}px,${y}px);`;
+  cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
   return cssText;
 }
