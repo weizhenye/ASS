@@ -88,15 +88,14 @@ export function createDialogue(dialogue) {
         $span._hasRotate = hasRotate;
         if (drawing) {
           const obj = createDrawing.call(this, fragment, sliceTag);
+          if (!obj) return;
           $span.style.cssText = obj.cssText;
           $span.appendChild(obj.$svg);
         } else {
           if (idx) {
             df.appendChild(document.createElement('br'));
           }
-          if (!content) {
-            return;
-          }
+          if (!content) return;
           $span.textContent = content;
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
             $span.dataset.stroke = content;

@@ -3,6 +3,7 @@ import { uuid, createSVGEl } from '../utils.js';
 import { createSVGStroke } from './stroke.js';
 
 export function createDrawing(fragment, styleTag) {
+  if (!fragment.drawing.d) return null;
   const tag = assign({}, styleTag, fragment.tag);
   const { minX, minY, width, height } = fragment.drawing;
   const baseScale = this.scale / (1 << (tag.p - 1));
