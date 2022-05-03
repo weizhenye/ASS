@@ -5,9 +5,9 @@ function allocate(dialogue) {
   const vertical = this.scale * margin.vertical | 0;
   const vct = this.video.currentTime * 100;
   this._.space[layer] = this._.space[layer] || {
-    left: { width: new Uint16Array(stageHeight + 1), end: new Uint16Array(stageHeight + 1) },
-    center: { width: new Uint16Array(stageHeight + 1), end: new Uint16Array(stageHeight + 1) },
-    right: { width: new Uint16Array(stageHeight + 1), end: new Uint16Array(stageHeight + 1) },
+    left: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
+    center: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
+    right: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
   };
   const channel = this._.space[layer];
   const alignH = ['right', 'left', 'center'][alignment % 3];
