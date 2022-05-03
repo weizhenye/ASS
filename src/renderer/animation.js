@@ -1,5 +1,5 @@
 import { assign } from 'ass-compiler/src/utils.js';
-import { color2rgba, transformTags } from '../utils.js';
+import { color2rgba } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
 import { createTransform } from './transform.js';
 
@@ -76,10 +76,6 @@ function createFadeKeyframes({ fade, duration }) {
 }
 
 function createTransformKeyframes({ fromTag, tag, fragment }) {
-  const hasTransfrom = transformTags.some((x) => (
-    tag[x] !== undefined && tag[x] !== fromTag[x]
-  ));
-  if (!hasTransfrom) return null;
   const toTag = assign({}, fromTag, tag);
   if (fragment.drawing) {
     // scales will be handled inside svg
@@ -90,11 +86,7 @@ function createTransformKeyframes({ fromTag, tag, fragment }) {
     });
     assign(fromTag, { fscx: 100, fscy: 100 });
   }
-  return [
-    'transform',
-    createTransform(fromTag),
-    createTransform(toTag),
-  ];
+  return { transform: createTransform(toTag) };
 }
 
 // TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
@@ -116,45 +108,34 @@ export function setKeyframes(dialogue) {
         return;
       }
       const fromTag = assign({}, sliceTag, fragment.tag);
-      const tTags = mergeT(fragment.tag.t);
+      const tTags = mergeT(fragment.tag.t).sort((a, b) => a.t2 - b.t2 || a.t1 - b.t1);
+      if (tTags[0].t1 > 0) {
+        tTags.unshift({ t1: 0, t2: tTags[0].t1, tag: fromTag });
+      }
+      tTags.reduce((prevTag, curr) => {
+        const tag = assign({}, prevTag, curr.tag);
+        assign(curr.tag, tag);
+        return tag;
+      }, {});
       const fDuration = Math.max(duration, ...tTags.map(({ t2 }) => t2));
-      const kfs = tTags.map(({ t1, t2, tag }) => {
+      const kfs = tTags.map(({ t2, tag }) => {
         const hasAlpha = (
           tag.a1 !== undefined
           && tag.a1 === tag.a2
           && tag.a2 === tag.a3
           && tag.a3 === tag.a4
         );
-        return [
-          tag.fs && [
-            'font-size',
-            `${this.scale * getRealFontSize(fromTag.fn, fromTag.fs)}px`,
-            `${this.scale * getRealFontSize(tag.fn, tag.fs)}px`,
-          ],
-          tag.fsp && [
-            'letter-spacing',
-            `${this.scale * fromTag.fsp}px`,
-            `${this.scale * tag.fsp}px`,
-          ],
-          (tag.c1 || (tag.a1 && !hasAlpha)) && [
-            'color',
-            color2rgba(fromTag.a1 + fromTag.c1),
-            color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1)),
-          ],
-          hasAlpha && [
-            'opacity',
-            1 - parseInt(fromTag.a1, 16) / 255,
-            1 - parseInt(tag.a1, 16) / 255,
-          ],
-          createTransformKeyframes({ fromTag, tag, fragment }),
-        ].filter((x) => x).map(([prop, from, to]) => {
-          const values = [from, to];
-          // TODO: t1 < 0
-          return [Math.max(0, t1), t2]
-            .map((t) => t / fDuration)
-            .map((offset, i) => ({ offset, [prop]: values[i] }));
-        });
-      }).flat(2).sort((a, b) => a.offset - b.offset);
+        return {
+          offset: t2 / fDuration,
+          ...(tag.fs && { 'font-size': `${this.scale * getRealFontSize(tag.fn, tag.fs)}px` }),
+          ...(tag.fsp && { 'letter-spacing': `${this.scale * tag.fsp}px` }),
+          ...((tag.c1 || (tag.a1 && !hasAlpha)) && {
+            color: color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1)),
+          }),
+          ...(hasAlpha && { opacity: 1 - parseInt(tag.a1, 16) / 255 }),
+          ...createTransformKeyframes({ fromTag, tag, fragment }),
+        };
+      }).sort((a, b) => a.offset - b.offset);
       if (kfs.length) {
         assign(fragment, { keyframes: kfs, duration: fDuration });
       }
