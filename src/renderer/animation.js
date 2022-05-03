@@ -52,16 +52,28 @@ function createMoveKeyframes({ move, duration, dialogue }) {
     }));
 }
 
-function createFadeKeyframes({ fade, duration }) {
+export function createFadeKeyframes(fade, duration) {
   if (fade.type === 'fad') {
     const { t1, t2 } = fade;
-    const kfs = [[0, 0]];
+    const kfs = [];
+    if (t1) {
+      kfs.push([0, 0]);
+    }
     if (t1 < duration) {
-      kfs.push([t1 / duration, 1]);
+      if (t2 <= duration) {
+        kfs.push([t1 / duration, 1]);
+      }
       if (t1 + t2 < duration) {
         kfs.push([(duration - t2) / duration, 1]);
       }
-      kfs.push([1, 0]);
+      if (t2 > duration) {
+        kfs.push([0, (t2 - duration) / t2]);
+      } else if (t1 + t2 > duration) {
+        kfs.push([(t1 + 0.5) / duration, 1 - (t1 + t2 - duration) / t2]);
+      }
+      if (t2) {
+        kfs.push([1, 0]);
+      }
     } else {
       kfs.push([1, duration / t1]);
     }
@@ -96,7 +108,7 @@ export function setKeyframes(dialogue) {
   const keyframes = [
     ...(effect && !move ? createEffectKeyframes.call(this, { effect, duration }) : []),
     ...(move ? createMoveKeyframes.call(this, { move, duration, dialogue }) : []),
-    ...(fade ? createFadeKeyframes({ fade, duration }) : []),
+    ...(fade ? createFadeKeyframes(fade, duration) : []),
   ].sort((a, b) => a.offset - b.offset);
   if (keyframes.length) {
     assign(dialogue, { keyframes });
