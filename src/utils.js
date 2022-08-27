@@ -31,14 +31,14 @@ export function uuid() {
 
 export function createSVGEl(name, attrs = []) {
   const $el = document.createElementNS('http://www.w3.org/2000/svg', name);
-  for (let i = 0; i < attrs.length; i++) {
+  attrs.forEach(attr => {
     const attr = attrs[i];
     $el.setAttributeNS(
       attr[0] === 'xlink:href' ? 'http://www.w3.org/1999/xlink' : null,
       attr[0],
       attr[1],
     );
-  }
+  });
   return $el;
 }
 
@@ -51,15 +51,22 @@ function getVendor(prop) {
   return '';
 }
 
-export const vendor = {
-  transform: getVendor('transform'),
-  animation: getVendor('animation'),
-  clipPath: getVendor('clipPath'),
-};
+
+const vendorObject = {};
+const vendors = [
+  'transform', 'animation', 'clipPath'
+];
+vendors.forEach(vendor => {
+  vendorObject[vendor] = 
+    getVendor(vendor) || null;
+});
+export const vendor = vendorObject;
 
 export function getStyleRoot(container) {
-  const rootNode = container.getRootNode ? container.getRootNode() : document;
-  return rootNode === document ? rootNode.head : rootNode;
+  return rootNode = 
+    container.getRootNode 
+    ? container.getRootNode() 
+    : document.head;
 }
 
 export const strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
