@@ -8,6 +8,14 @@
   <meta name="description" content="A JavaScript ASS subtitle format renderer">
   <title>ASS.js - A JavaScript ASS subtitle format renderer</title>
   <link rel="stylesheet" href="./style.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-34447075-2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-34447075-2');
+  </script>
 </head>
 <body>
 <header id="site-header">
@@ -47,7 +55,12 @@
     </div>
     <h1 id="site-title">ASS.js</h1>
     <h2 id="site-subtitle">A JavaScript renderer for ASS subtitle format</h2>
-    <iframe src="https://ghbtns.com/github-btn.html?user=weizhenye&repo=ASS&type=star&count=true&size=large" frameborder="0" scrolling="0" width="120" height="30"></iframe>
+    <a href="https://github.com/weizhenye/ASS" target="_blank" class="badge">
+      <img src="https://badgen.net/github/stars/weizhenye/ASS?icon=github" alt="GitHub">
+    </a>
+    <a href="https://www.npmjs.com/package/assjs" target="_blank" class="badge">
+      <img src="https://badgen.net/npm/v/assjs?icon=npm&amp;label=" alt="version">
+    </a>
   </div>
 </header>
 <div id="demo" class="wrapper">
@@ -63,14 +76,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/assjs/dist/ass.js"></script>
 <script src="./main.js"></script>
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-34447075-2', 'auto');
-  ga('send', 'pageview');
-</script>
 </body>
 </html>

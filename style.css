@@ -18,6 +18,9 @@ video {
   background: #d7bcf0;
   padding: 1em 0;
 }
+.badge {
+  text-decoration: none;
+}
 #site-title {
   font-size: 3em;
   font-weight: normal;
