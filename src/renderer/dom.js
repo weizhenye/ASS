@@ -46,7 +46,7 @@ export function createDialogue(dialogue) {
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
         cssText += (tag.u || tag.s) ? `text-decoration:${tag.u ? 'underline' : ''} ${tag.s ? 'line-through' : ''};` : '';
-        cssText += tag.fsp ? `letter-spacing:${tag.fsp}px;` : '';
+        cssText += tag.fsp ? `letter-spacing:${this.scale * tag.fsp}px;` : '';
         // TODO: (tag.q === 0) and (tag.q === 3) are not implemented yet,
         // for now just handle it as (tag.q === 1)
         if (tag.q === 1 || tag.q === 0 || tag.q === 3) {
