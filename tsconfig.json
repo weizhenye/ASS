@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ESNext",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./types",
+    "allowJs": true,
+  },
+  "include": [
+    "src/index.js"
+  ]
+}

@@ -6,44 +6,44 @@ export function createSVGStroke(tag, id, scale) {
   const isOpaque = tag.a1 !== 'FF';
   const blur = tag.blur || tag.be || 0;
   const $filter = createSVGEl('filter', [['id', id]]);
-  $filter.appendChild(createSVGEl('feGaussianBlur', [
+  $filter.append(createSVGEl('feGaussianBlur', [
     ['stdDeviation', hasBorder ? 0 : blur],
     ['in', 'SourceGraphic'],
     ['result', 'sg_b'],
   ]));
-  $filter.appendChild(createSVGEl('feFlood', [
+  $filter.append(createSVGEl('feFlood', [
     ['flood-color', color2rgba(tag.a1 + tag.c1)],
     ['result', 'c1'],
   ]));
-  $filter.appendChild(createSVGEl('feComposite', [
+  $filter.append(createSVGEl('feComposite', [
     ['operator', 'in'],
     ['in', 'c1'],
     ['in2', 'sg_b'],
     ['result', 'main'],
   ]));
   if (hasBorder) {
-    $filter.appendChild(createSVGEl('feMorphology', [
+    $filter.append(createSVGEl('feMorphology', [
       ['radius', `${tag.xbord * scale} ${tag.ybord * scale}`],
       ['operator', 'dilate'],
       ['in', 'SourceGraphic'],
       ['result', 'dil'],
     ]));
-    $filter.appendChild(createSVGEl('feGaussianBlur', [
+    $filter.append(createSVGEl('feGaussianBlur', [
       ['stdDeviation', blur],
       ['in', 'dil'],
       ['result', 'dil_b'],
     ]));
-    $filter.appendChild(createSVGEl('feComposite', [
+    $filter.append(createSVGEl('feComposite', [
       ['operator', 'out'],
       ['in', 'dil_b'],
       ['in2', 'SourceGraphic'],
       ['result', 'dil_b_o'],
     ]));
-    $filter.appendChild(createSVGEl('feFlood', [
+    $filter.append(createSVGEl('feFlood', [
       ['flood-color', color2rgba(tag.a3 + tag.c3)],
       ['result', 'c3'],
     ]));
-    $filter.appendChild(createSVGEl('feComposite', [
+    $filter.append(createSVGEl('feComposite', [
       ['operator', 'in'],
       ['in', 'c3'],
       ['in2', 'dil_b_o'],
@@ -51,36 +51,36 @@ export function createSVGStroke(tag, id, scale) {
     ]));
   }
   if (hasShadow && (hasBorder || isOpaque)) {
-    $filter.appendChild(createSVGEl('feOffset', [
+    $filter.append(createSVGEl('feOffset', [
       ['dx', tag.xshad * scale],
       ['dy', tag.yshad * scale],
       ['in', hasBorder ? 'dil' : 'SourceGraphic'],
       ['result', 'off'],
     ]));
-    $filter.appendChild(createSVGEl('feGaussianBlur', [
+    $filter.append(createSVGEl('feGaussianBlur', [
       ['stdDeviation', blur],
       ['in', 'off'],
       ['result', 'off_b'],
     ]));
     if (!isOpaque) {
-      $filter.appendChild(createSVGEl('feOffset', [
+      $filter.append(createSVGEl('feOffset', [
         ['dx', tag.xshad * scale],
         ['dy', tag.yshad * scale],
         ['in', 'SourceGraphic'],
         ['result', 'sg_off'],
       ]));
-      $filter.appendChild(createSVGEl('feComposite', [
+      $filter.append(createSVGEl('feComposite', [
         ['operator', 'out'],
         ['in', 'off_b'],
         ['in2', 'sg_off'],
         ['result', 'off_b_o'],
       ]));
     }
-    $filter.appendChild(createSVGEl('feFlood', [
+    $filter.append(createSVGEl('feFlood', [
       ['flood-color', color2rgba(tag.a4 + tag.c4)],
       ['result', 'c4'],
     ]));
-    $filter.appendChild(createSVGEl('feComposite', [
+    $filter.append(createSVGEl('feComposite', [
       ['operator', 'in'],
       ['in', 'c4'],
       ['in2', isOpaque ? 'off_b' : 'off_b_o'],
@@ -89,13 +89,13 @@ export function createSVGStroke(tag, id, scale) {
   }
   const $merge = createSVGEl('feMerge', []);
   if (hasShadow && (hasBorder || isOpaque)) {
-    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'shadow']]));
+    $merge.append(createSVGEl('feMergeNode', [['in', 'shadow']]));
   }
   if (hasBorder) {
-    $merge.appendChild(createSVGEl('feMergeNode', [['in', 'border']]));
+    $merge.append(createSVGEl('feMergeNode', [['in', 'border']]));
   }
-  $merge.appendChild(createSVGEl('feMergeNode', [['in', 'main']]));
-  $filter.appendChild($merge);
+  $merge.append(createSVGEl('feMergeNode', [['in', 'main']]));
+  $filter.append($merge);
   return $filter;
 }
 
@@ -119,8 +119,7 @@ function getOffsets(x, y) {
   return Array.from({ length: Math.ceil(ny) - 1 }, (_, i) => i + 1).concat(ny)
     .map((n) => [(ny - n) / ny * nx, n])
     .map(([i, j]) => (x > y ? [j, i] : [i, j]))
-    .map(get4QuadrantPoints)
-    .flat();
+    .flatMap(get4QuadrantPoints);
 }
 
 // TODO: a1 === 'ff'
@@ -137,11 +136,11 @@ export function createCSSStroke(tag, scale) {
     { key: 'border-width', value: `${Math.min(bx, by) * 2}px` },
     { key: 'border-color', value: bc },
     { key: 'border-opacity', value: alpha2opacity(tag.a3) },
-    { key: 'border-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join() },
+    { key: 'border-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join(',') },
     { key: 'shadow-offset', value: `${sx}px, ${sy}px` },
     { key: 'shadow-color', value: sc },
     { key: 'shadow-opacity', value: alpha2opacity(tag.a4) },
-    { key: 'shadow-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join() },
+    { key: 'shadow-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join(',') },
     { key: 'blur', value: `blur(${blur}px)` },
   ].map((kv) => Object.assign(kv, { key: `--ass-${kv.key}` }));
 }

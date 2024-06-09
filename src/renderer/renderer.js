@@ -1,19 +1,18 @@
-import { assign } from 'ass-compiler/src/utils.js';
-import { setClipPath } from './clip.js';
+import { getClipPath } from './clip.js';
 import { createDialogue } from './dom.js';
 import { getPosition } from './position.js';
 import { createStyle } from './style.js';
 import { setTransformOrigin } from './transform.js';
 
-export function renderer(dialogue) {
-  const $div = createDialogue.call(this, dialogue);
-  assign(dialogue, { $div });
-  this._.$stage.appendChild($div);
+export function renderer(dialogue, store) {
+  const $div = createDialogue(dialogue, store);
+  Object.assign(dialogue, { $div });
+  store.box.append($div);
   const { width, height } = $div.getBoundingClientRect();
-  assign(dialogue, { width, height });
-  assign(dialogue, getPosition.call(this, dialogue));
-  $div.style.cssText = createStyle.call(this, dialogue);
-  setTransformOrigin(dialogue, this.scale);
-  setClipPath.call(this, dialogue);
+  Object.assign(dialogue, { width, height });
+  Object.assign(dialogue, getPosition(dialogue, store));
+  $div.style.cssText = createStyle(dialogue, store);
+  setTransformOrigin(dialogue, store.scale);
+  Object.assign(dialogue, getClipPath(dialogue, store));
   return dialogue;
 }

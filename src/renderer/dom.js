@@ -1,4 +1,3 @@
-import { assign } from 'ass-compiler/src/utils.js';
 import { color2rgba, transformTags, initAnimation } from '../utils.js';
 import { createDrawing } from './drawing.js';
 import { getRealFontSize } from './font-size.js';
@@ -12,30 +11,31 @@ function encodeText(text, q) {
     .replace(/\\n/g, q === 2 ? '\n' : ' ');
 }
 
-export function createDialogue(dialogue) {
+export function createDialogue(dialogue, store) {
+  const { video, styles, info } = store;
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
   const df = document.createDocumentFragment();
   const { slices, start, end } = dialogue;
   const animationOptions = {
     duration: (end - start) * 1000,
-    delay: Math.min(0, start - this.video.currentTime) * 1000,
+    delay: Math.min(0, start - video.currentTime) * 1000,
     fill: 'forwards',
   };
   $div.animations = [];
   slices.forEach((slice) => {
-    const sliceTag = this.styles[slice.style].tag;
-    const borderStyle = this.styles[slice.style].style.BorderStyle;
+    const sliceTag = styles[slice.style].tag;
+    const borderStyle = styles[slice.style].style.BorderStyle;
     slice.fragments.forEach((fragment) => {
       const { text, drawing } = fragment;
-      const tag = assign({}, sliceTag, fragment.tag);
+      const tag = { ...sliceTag, ...fragment.tag };
       let cssText = 'display:inline-block;';
       const cssVars = [];
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
-        cssText += `font-size:${this.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
+        cssText += `font-size:${store.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
-        const scale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
+        const scale = /yes/i.test(info.ScaledBorderAndShadow) ? store.scale : 1;
         if (borderStyle === 1) {
           cssVars.push(...createCSSStroke(tag, scale));
         }
@@ -78,22 +78,24 @@ export function createDialogue(dialogue) {
         }
       }
       if (drawing && tag.pbo) {
-        const pbo = this.scale * -tag.pbo * (tag.fscy || 100) / 100;
+        const pbo = store.scale * -tag.pbo * (tag.fscy || 100) / 100;
         cssText += `vertical-align:${pbo}px;`;
       }
 
-      const hasRotate = /"fr[xyz]":[^0]/.test(JSON.stringify(tag));
+      const hasRotate = /"fr[x-z]":[^0]/.test(JSON.stringify(tag));
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
-        $span._hasRotate = hasRotate;
+        if (hasRotate) {
+          $span.dataset.hasRotate = '';
+        }
         if (drawing) {
-          const obj = createDrawing.call(this, fragment, sliceTag);
+          const obj = createDrawing(fragment, sliceTag, store);
           if (!obj) return;
           $span.style.cssText = obj.cssText;
-          $span.appendChild(obj.$svg);
+          $span.append(obj.$svg);
         } else {
           if (idx) {
-            df.appendChild(document.createElement('br'));
+            df.append(document.createElement('br'));
           }
           if (!content) return;
           $span.textContent = content;
@@ -110,17 +112,17 @@ export function createDialogue(dialogue) {
           const animation = initAnimation(
             $span,
             fragment.keyframes,
-            assign({}, animationOptions, { duration: fragment.duration }),
+            { ...animationOptions, duration: fragment.duration },
           );
           $div.animations.push(animation);
         }
-        df.appendChild($span);
+        df.append($span);
       });
     });
   });
   if (dialogue.keyframes) {
     $div.animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
   }
-  $div.appendChild(df);
+  $div.append(df);
   return $div;
 }

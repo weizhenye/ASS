@@ -1,9 +1,8 @@
-import { assign } from 'ass-compiler/src/utils.js';
 import { createSVGEl, uuid, vendor } from '../utils.js';
 
-export function createClipPath(clip) {
-  const sw = this._.scriptRes.width;
-  const sh = this._.scriptRes.height;
+export function createClipPath(clip, store) {
+  const sw = store.scriptRes.width;
+  const sh = store.scriptRes.height;
   let d = '';
   if (clip.dots !== null) {
     let { x1, y1, x2, y2 } = clip.dots;
@@ -27,28 +26,26 @@ export function createClipPath(clip) {
     ['id', id],
     ['clipPathUnits', 'objectBoundingBox'],
   ]);
-  $clipPath.appendChild(createSVGEl('path', [
+  $clipPath.append(createSVGEl('path', [
     ['d', d],
     ['transform', `scale(${scale})`],
     ['clip-rule', 'evenodd'],
   ]));
-  this._.$defs.appendChild($clipPath);
+  store.defs.append($clipPath);
   return {
     $clipPath,
     cssText: `${vendor.clipPath}clip-path:url(#${id});`,
   };
 }
 
-export function setClipPath(dialogue) {
-  if (!dialogue.clip) {
-    return;
-  }
+export function getClipPath(dialogue, store) {
+  if (!dialogue.clip) return {};
   const $fobb = document.createElement('div');
-  this._.$stage.insertBefore($fobb, dialogue.$div);
-  $fobb.appendChild(dialogue.$div);
+  store.box.insertBefore($fobb, dialogue.$div);
+  $fobb.append(dialogue.$div);
   $fobb.className = 'ASS-fix-objectBoundingBox';
-  const { cssText, $clipPath } = createClipPath.call(this, dialogue.clip);
-  this._.$defs.appendChild($clipPath);
+  const { cssText, $clipPath } = createClipPath(dialogue.clip, store);
+  store.defs.append($clipPath);
   $fobb.style.cssText = cssText;
-  assign(dialogue, { $div: $fobb, $clipPath });
+  return { $div: $fobb, $clipPath };
 }

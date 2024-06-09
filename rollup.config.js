@@ -1,31 +1,29 @@
-import fs from 'fs';
-import csso from 'csso';
+import { readFileSync } from 'node:fs';
+import { minify } from 'csso';
 import replace from '@rollup/plugin-replace';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
+/** @type {import('rollup').RollupOptions} */
 export default {
   input: 'src/index.js',
   output: [
     {
       file: 'dist/ass.js',
-      format: 'umd',
-      name: 'ASS',
+      format: 'esm',
     },
     {
       file: 'dist/ass.min.js',
-      format: 'umd',
-      name: 'ASS',
-      plugins: [terser()],
-    },
-    {
-      file: 'dist/ass.esm.js',
       format: 'esm',
+      plugins: [terser()],
     },
   ],
   plugins: [
     replace({
-      __GLOBAL_CSS__: csso.minify(fs.readFileSync('./src/global.css')).css,
+      preventAssignment: true,
+      values: {
+        __GLOBAL_CSS__: minify(readFileSync('./src/global.css', 'utf8')).css,
+      },
     }),
     nodeResolve(),
   ],

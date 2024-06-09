@@ -20,9 +20,9 @@ export function setTransformOrigin(dialogue, scale) {
     org.x = [x, x + width / 2, x + width][align.h];
     org.y = [y + height, y + height / 2, y][align.v];
   }
-  for (let i = $div.childNodes.length - 1; i >= 0; i--) {
+  for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
     const node = $div.childNodes[i];
-    if (node._hasRotate) {
+    if (node.dataset.hasRotate === '') {
       // It's not extremely precise for offsets are round the value to an integer.
       const tox = org.x - x - node.offsetLeft;
       const toy = org.y - y - node.offsetTop;

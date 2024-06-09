@@ -7,8 +7,6 @@
 [![File size](https://badgen.net/bundlephobia/minzip/assjs?icon=https://api.iconify.design/ant-design:file-zip-outline.svg?color=white)](https://bundlephobia.com/result?p=assjs)
 [![jsDelivr](https://badgen.net/jsdelivr/hits/npm/assjs?icon=https://api.iconify.design/simple-icons:jsdelivr.svg?color=white)](https://www.jsdelivr.com/package/npm/assjs)
 
-[![Browser compatibility](https://saucelabs.com/browser-matrix/assjs.svg)](https://saucelabs.com/u/assjs)
-
 ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renders subtitles on HTML5 video.
 
 [Demo](https://ass.js.org/)
@@ -23,28 +21,26 @@ npm install assjs
 
 CDN: [jsDelivr](https://www.jsdelivr.com/package/npm/assjs), [unpkg](https://unpkg.com/assjs/)
 
-ASS.js only targets for latest modern browsers, if you need support IE 10 or 11, please use [v0.0.11](https://github.com/weizhenye/ASS/tree/v0.0.11).
-
 ## Usage
 
 ```html
-<div id="container" style="position:relative;">
-  <video id="video" src="./example.mp4" style="position:absolute;"></video>
+<div id="container" style="position: relative;">
+  <video
+    id="video"
+    src="./example.mp4"
+    style="position: absolute; width: 100%; height: 100%;"
+  ></video>
+  <!-- ASS will be added here -->
 </div>
-<video id="video" src="example.mp4"></video>
+```
 
-<script src="dist/ass.min.js"></script>
-<script>
-fetch('/path/to/example.ass')
-  .then(res => res.text())
-  .then((text) => {
-    const ass = new ASS(
-      text,
-      document.getElementById('video'),
-      { container: document.getElementById('container') },
-    );
-  });
-</script>
+```js
+import ASS from 'assjs';
+
+const content = await fetch('/path/to/example.ass').then((res) => res.text());
+const ass = new ASS(content, document.querySelector('#video'), {
+  container: document.querySelector('#container'),
+});
 ```
 
 ## API
@@ -52,22 +48,13 @@ fetch('/path/to/example.ass')
 #### Initialization
 
 ```js
-const ass = new ASS(text, video, {
+const ass = new ASS(content, video, {
   // Subtitles will display in the container.
-  // The container will be created automatically if it's not provided.
   container: document.getElementById('my-container'),
 
   // see resampling API below
   resampling: 'video_width',
 });
-```
-
-#### Resize
-
-If you change the size of video, you should call it.
-
-```js
-ass.resize();
 ```
 
 #### Show

@@ -1,15 +1,16 @@
-function allocate(dialogue) {
+function allocate(dialogue, store) {
+  const { video, space, scale } = store;
   const { layer, margin, width, height, alignment, end } = dialogue;
-  const stageWidth = this.width - (this.scale * (margin.left + margin.right) | 0);
-  const stageHeight = this.height;
-  const vertical = this.scale * margin.vertical | 0;
-  const vct = this.video.currentTime * 100;
-  this._.space[layer] = this._.space[layer] || {
+  const stageWidth = store.width - Math.trunc(scale * (margin.left + margin.right));
+  const stageHeight = store.height;
+  const vertical = Math.trunc(scale * margin.vertical);
+  const vct = video.currentTime * 100;
+  space[layer] = space[layer] || {
     left: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
     center: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
     right: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
   };
-  const channel = this._.space[layer];
+  const channel = space[layer];
   const alignH = ['right', 'left', 'center'][alignment % 3];
   const willCollide = (y) => {
     const lw = channel.left.width[y];
@@ -47,65 +48,64 @@ function allocate(dialogue) {
     return false;
   };
   if (alignment <= 3) {
-    for (let i = stageHeight - vertical - 1; i > vertical; i--) {
+    for (let i = stageHeight - vertical - 1; i > vertical; i -= 1) {
       if (find(i)) break;
     }
   } else if (alignment >= 7) {
-    for (let i = vertical + 1; i < stageHeight - vertical; i++) {
+    for (let i = vertical + 1; i < stageHeight - vertical; i += 1) {
       if (find(i)) break;
     }
   } else {
-    for (let i = (stageHeight - height) >> 1; i < stageHeight - vertical; i++) {
+    for (let i = (stageHeight - height) >> 1; i < stageHeight - vertical; i += 1) {
       if (find(i)) break;
     }
   }
   if (alignment > 3) {
     result -= height - 1;
   }
-  for (let i = result; i < result + height; i++) {
+  for (let i = result; i < result + height; i += 1) {
     channel[alignH].width[i] = width;
     channel[alignH].end[i] = end * 100;
   }
   return result;
 }
 
-export function getPosition(dialogue) {
+export function getPosition(dialogue, store) {
+  const { scale } = store;
   const { effect, move, align, width, height, margin, slices } = dialogue;
   let x = 0;
   let y = 0;
   if (effect) {
     if (effect.name === 'banner') {
-      x = effect.lefttoright ? -width : this.width;
+      x = effect.lefttoright ? -width : store.width;
       y = [
-        this.height - height - margin.vertical,
-        (this.height - height) / 2,
+        store.height - height - margin.vertical,
+        (store.height - height) / 2,
         margin.vertical,
       ][align.v];
     }
   } else if (dialogue.pos || move) {
     const pos = dialogue.pos || { x: 0, y: 0 };
-    const sx = this.scale * pos.x;
-    const sy = this.scale * pos.y;
+    const sx = scale * pos.x;
+    const sy = scale * pos.y;
     x = [sx, sx - width / 2, sx - width][align.h];
     y = [sy - height, sy - height / 2, sy][align.v];
   } else {
     x = [
       0,
-      (this.width - width) / 2,
-      this.width - width - this.scale * margin.right,
+      (store.width - width) / 2,
+      store.width - width - scale * margin.right,
     ][align.h];
     const hasT = slices.some((slice) => (
       slice.fragments.some(({ animationName }) => animationName)
     ));
-    if (hasT) {
-      y = [
-        this.height - height - margin.vertical,
-        (this.height - height) / 2,
+    y = hasT
+      ? [
+        store.height - height - margin.vertical,
+        (store.height - height) / 2,
         margin.vertical,
-      ][align.v];
-    } else {
-      y = allocate.call(this, dialogue);
-    }
+      ][align.v]
+      : allocate(dialogue, store);
   }
   return { x, y };
 }

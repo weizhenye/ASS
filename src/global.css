@@ -1,13 +1,4 @@
-.ASS-container {
-  position: relative;
-  overflow: hidden;
-}
-.ASS-container video {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.ASS-stage {
+.ASS-box {
   overflow: hidden;
   pointer-events: none;
   position: absolute;
@@ -37,6 +28,7 @@
   opacity: var(--ass-shadow-opacity);
 }
 .ASS-dialogue [data-stroke]::after {
+  color: transparent;
   -webkit-text-stroke: var(--ass-border-width) var(--ass-border-color);
   text-shadow: var(--ass-border-delta);
   opacity: var(--ass-border-opacity);

@@ -1,12 +1,12 @@
-import { assign } from 'ass-compiler/src/utils.js';
 import { uuid, createSVGEl } from '../utils.js';
 import { createSVGStroke } from './stroke.js';
 
-export function createDrawing(fragment, styleTag) {
+export function createDrawing(fragment, styleTag, store) {
   if (!fragment.drawing.d) return null;
-  const tag = assign({}, styleTag, fragment.tag);
+  const { scale, info } = store;
+  const tag = { ...styleTag, ...fragment.tag };
   const { minX, minY, width, height } = fragment.drawing;
-  const baseScale = this.scale / (1 << (tag.p - 1));
+  const baseScale = scale / (1 << (tag.p - 1));
   const scaleX = (tag.fscx ? tag.fscx / 100 : 1) * baseScale;
   const scaleY = (tag.fscy ? tag.fscy / 100 : 1) * baseScale;
   const blur = tag.blur || tag.be || 0;
@@ -19,19 +19,19 @@ export function createDrawing(fragment, styleTag) {
     ['height', vbh],
     ['viewBox', `${-vbx} ${-vby} ${vbw} ${vbh}`],
   ]);
-  const strokeScale = /Yes/i.test(this.info.ScaledBorderAndShadow) ? this.scale : 1;
+  const strokeScale = /yes/i.test(info.ScaledBorderAndShadow) ? scale : 1;
   const filterId = `ASS-${uuid()}`;
   const $defs = createSVGEl('defs');
-  $defs.appendChild(createSVGStroke(tag, filterId, strokeScale));
-  $svg.appendChild($defs);
+  $defs.append(createSVGStroke(tag, filterId, strokeScale));
+  $svg.append($defs);
   const symbolId = `ASS-${uuid()}`;
   const $symbol = createSVGEl('symbol', [
     ['id', symbolId],
     ['viewBox', `${minX} ${minY} ${width} ${height}`],
   ]);
-  $symbol.appendChild(createSVGEl('path', [['d', fragment.drawing.d]]));
-  $svg.appendChild($symbol);
-  $svg.appendChild(createSVGEl('use', [
+  $symbol.append(createSVGEl('path', [['d', fragment.drawing.d]]));
+  $svg.append($symbol);
+  $svg.append(createSVGEl('use', [
     ['width', width * scaleX],
     ['height', height * scaleY],
     ['xlink:href', `#${symbolId}`],
