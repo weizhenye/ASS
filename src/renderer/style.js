@@ -1,6 +1,5 @@
 export function createStyle(dialogue, store) {
-  const { layer, align, effect, pos, margin } = dialogue;
-  const { width, height, x, y } = dialogue;
+  const { layer, align, effect, pos, margin, width } = dialogue;
   let cssText = '';
   if (layer) cssText += `z-index:${layer};`;
   cssText += `text-align:${['left', 'center', 'right'][align.h]};`;
@@ -20,6 +19,5 @@ export function createStyle(dialogue, store) {
       }
     }
   }
-  cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
   return cssText;
 }

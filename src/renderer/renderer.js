@@ -7,17 +7,16 @@ import { setTransformOrigin } from './transform.js';
 export function renderer(dialogue, store) {
   const $div = createDialogue(dialogue, store);
   Object.assign(dialogue, { $div });
-
-  // Apply max width to the $div, to make sure it line breaks
-  // properly before measuring it:
-  const mw = store.width - store.scale * (dialogue.margin.left + dialogue.margin.right);
-  $div.style.cssText = `max-width:${mw}px`;
-
   store.box.append($div);
-  const { width, height } = $div.getBoundingClientRect();
-  Object.assign(dialogue, { width, height });
-  Object.assign(dialogue, getPosition(dialogue, store));
-  $div.style.cssText = createStyle(dialogue, store);
+  const { width } = $div.getBoundingClientRect();
+  Object.assign(dialogue, { width });
+  $div.style.cssText += createStyle(dialogue, store);
+  // height may be changed after createStyle
+  const { height } = $div.getBoundingClientRect();
+  Object.assign(dialogue, { height });
+  const { x, y } = getPosition(dialogue, store);
+  Object.assign(dialogue, { x, y });
+  $div.style.cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);
   Object.assign(dialogue, getClipPath(dialogue, store));
   return dialogue;
