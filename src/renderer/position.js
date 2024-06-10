@@ -48,15 +48,18 @@ function allocate(dialogue, store) {
     return false;
   };
   if (alignment <= 3) {
-    for (let i = stageHeight - vertical - 1; i > vertical; i -= 1) {
+    result = stageHeight - vertical - 1;
+    for (let i = result; i > vertical; i -= 1) {
       if (find(i)) break;
     }
   } else if (alignment >= 7) {
-    for (let i = vertical + 1; i < stageHeight - vertical; i += 1) {
+    result = vertical + 1;
+    for (let i = result; i < stageHeight - vertical; i += 1) {
       if (find(i)) break;
     }
   } else {
-    for (let i = (stageHeight - height) >> 1; i < stageHeight - vertical; i += 1) {
+    result = (stageHeight - height) >> 1;
+    for (let i = result; i < stageHeight - vertical; i += 1) {
       if (find(i)) break;
     }
   }
