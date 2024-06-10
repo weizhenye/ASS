@@ -1,163 +1,123 @@
-'use strict';
-var TEST_VIDEO_FILE = './test.mp4';
-var TEST_ASS_FILE = 'https://raw.githubusercontent.com/Aegisub/Aegisub/master/docs/specs/ass-format-tests.ass';
-var $ = function(s) {return document.querySelectorAll(s)};
-var courl = (
-  (window.URL && window.URL.createObjectURL) ||
-  (window.webkitURL && window.webkitURL.createObjectURL) ||
-  window.createObjectURL ||
-  window.createBlobURL
-);
-var ass;
-var content = '';
-var video = document.createElement('video');
+/* eslint-disable no-param-reassign */
+import ASS from 'https://cdn.jsdelivr.net/npm/assjs@0.1/dist/ass.js';
+
+const TEST_VIDEO_FILE = './test.mp4';
+const TEST_ASS_FILE = 'https://raw.githubusercontent.com/Aegisub/Aegisub/master/docs/specs/ass-format-tests.ass';
+const $ = function $(s) { return document.querySelectorAll(s); };
+
+let ass;
+let content = '';
+const video = document.createElement('video');
 video.controls = true;
-var videoReady = false,
-    ASSReady = false;
-var dropVideo = $('#drop-video')[0],
-    dropASS = $('#drop-ASS')[0];
-dropVideo.ondragleave = dropASS.ondragleave = function() {this.style.borderColor = '#ccc';};
-dropVideo.ondragover = dropASS.ondragover = function(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  this.style.borderColor = '#888';
-};
-dropVideo.ondrop = function(e) {
-  e.preventDefault();
-  this.style.borderColor = '#ccc';
-  video.src = courl(e.dataTransfer.files[0]);
-};
-$('#drop-video input')[0].onchange = function() {
-  video.src = courl(this.files[0]);
-};
-dropASS.ondrop = function(e) {
-  e.preventDefault();
-  this.style.borderColor = '#ccc';
-  loadASS(e.dataTransfer.files[0]);
-};
-$('#drop-ASS input')[0].onchange = function() {
-  loadASS(this.files[0]);
-};
-$('#init-video')[0].onclick = function() {
-  this.disabled = true;
-  video.src = TEST_VIDEO_FILE;
-};
-$('#init-ass')[0].onclick = function() {
-  var that = this;
-  this.disabled = true;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', TEST_ASS_FILE, true);
-  xhr.send(null);
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
-        assOnLoaded(xhr.responseText);
-      } else {
-        showMessage('error', 'failed to fetch test file.');
-        that.disabled = false;
-      }
-    }
-  }
-};
-video.onloadedmetadata = function() {
-  videoReady = true;
-  $('#init-video')[0].disabled = true;
-  showMessage('success', 'video is loaded.');
-  dropVideo.style.display = 'none';
-  $('#demo')[0].insertBefore(video, dropVideo);
-  if (videoReady && ASSReady) init();
-};
-video.onerror = function(e) {
-  videoReady = false;
-  $('#init-video')[0].disabled = false;
-  showMessage('error', 'failed to load video.');
-};
-$('#controls-resize')[0].onclick = function() {
-  if (video.clientWidth === 960) {
-    video.style.width = '640px';
-    video.style.height = '360px';
-    $('#info')[0].style.display = 'inline-block';
-  } else {
-    video.style.width = '960px';
-    video.style.height = '540px';
-    $('#info')[0].style.display = 'none';
-  }
-  ass.resize();
-};
-$('#controls-show')[0].onclick = function() {
-  ass.show();
-};
-$('#controls-hide')[0].onclick = function() {
-  ass.hide();
-};
-$('#controls-destroy')[0].onclick = function() {
-  ass.destroy();
-};
-var $rs = Array.prototype.slice.apply($('input[name="resampling"]'));
-$rs.forEach(function($r) {
-  $r.onclick = function() {
-    ass.resampling = this.id.match(/resampling-(.*)/)[1];
-  };
-});
-var loadASS = function(file) {
-  var reader = new FileReader(file);
-  if (!/\.ass$/i.test(file.name)) {
-    showMessage('error', 'only supports ASS format.');
-    return;
-  }
-  reader.readAsText(file);
-  reader.onload = function(ev) {
-    assOnLoaded(ev.target.result);
-  };
-};
-var assOnLoaded = function(data) {
-  content = data;
-  showMessage('success', 'ASS file is loaded.');
-  $('#init-ass')[0].disabled = true;
-  $('#drop-ASS .drop-text')[0].innerHTML = 'ASS file is loaded';
-  dropASS.style.border = '10px solid #ccc';
-  ASSReady = true;
-  if (videoReady && ASSReady) init();
-};
-var init = function() {
+video.muted = true;
+const dropVideo = $('#drop-video')[0];
+const dropASS = $('#drop-ASS')[0];
+
+function init() {
   ass = new ASS(content, video);
+  console.log(ass);
   dropASS.style.display = 'none';
   $('#controls-resize')[0].disabled = false;
   $('#controls-show')[0].disabled = false;
   $('#controls-hide')[0].disabled = false;
   $('#controls-destroy')[0].disabled = false;
-  var info = document.createElement('div'),
-      dl = document.createElement('dl'),
-      dt = document.createElement('dt');
-  info.id = 'info';
-  dt.textContent = '[Script Info]';
-  dl.appendChild(dt);
-  for (var i in ass.info) {
-    var dd = document.createElement('dd');
-    dd.innerHTML = i + ': <strong>' + ass.info[i] + '</strong>';
-    dl.appendChild(dd);
-  }
-  info.appendChild(dl);
-  $('#demo')[0].appendChild(info);
-};
-var messageNode = $('#message')[0];
-var showMessage = function(type, msg) {
-  messageNode.textContent = msg;
-  messageNode.className = type + ' transition';
-  messageNode.style.opacity = 0;
-  messageNode.addEventListener('transitionend', function() {
-    messageNode.textContent = '';
-    messageNode.className = '';
-    messageNode.style.opacity = 1;
+}
+function assOnLoaded(data) {
+  const { dataset } = $('#main')[0];
+  content = data;
+  $('#init-ass')[0].disabled = true;
+  $('#info')[0].textContent = content;
+  dropASS.dataset.drop = '';
+  dataset.assReady = '';
+  if (dataset.videoReady === '' && dataset.assReady === '') init();
+}
+
+function onDragLeave(event) {
+  Reflect.deleteProperty(event.target.dataset, 'dragging');
+}
+dropVideo.addEventListener('dragleave', onDragLeave);
+dropASS.addEventListener('dragleave', onDragLeave);
+
+function onDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
+  event.target.dataset.dragging = '';
+}
+dropVideo.addEventListener('dragover', onDragOver);
+dropASS.addEventListener('dragover', onDragOver);
+
+function loadVideo(event) {
+  event.preventDefault();
+  const [file] = (event.dataTransfer || event.target).files;
+  video.src = window.URL.createObjectURL(file);
+}
+dropVideo.addEventListener('drop', loadVideo);
+$('#drop-video input')[0].addEventListener('change', loadVideo);
+
+function loadASS(event) {
+  event.preventDefault();
+  const [file] = (event.dataTransfer || event.target).files;
+  if (!/\.ass$/i.test(file.name)) return;
+  file.text().then(assOnLoaded);
+}
+dropASS.addEventListener('drop', loadASS);
+$('#drop-ASS input')[0].addEventListener('change', loadASS);
+
+$('#init-video')[0].addEventListener('click', (event) => {
+  event.target.disabled = true;
+  video.src = TEST_VIDEO_FILE;
+});
+video.addEventListener('loadedmetadata', () => {
+  const { dataset } = $('#main')[0];
+  dataset.videoReady = '';
+  $('#init-video')[0].disabled = true;
+  dropVideo.style.display = 'none';
+  $('#container')[0].append(video);
+  if (dataset.videoReady === '' && dataset.assReady === '') init();
+});
+video.addEventListener('error', () => {
+  Reflect.deleteProperty($('#main')[0].dataset, 'videoReady');
+  $('#init-video')[0].disabled = false;
+});
+
+$('#init-ass')[0].addEventListener('click', (event) => {
+  event.target.disabled = true;
+  fetch(TEST_ASS_FILE)
+    .then((res) => res.text())
+    .then((text) => assOnLoaded(text))
+    .catch(() => {
+      event.target.disabled = false;
+    });
+});
+
+$('#controls-resize')[0].addEventListener('click', () => {
+  const { dataset } = $('#main')[0];
+  dataset.size = (dataset.size === 'lg' ? 'sm' : 'lg');
+});
+$('#controls-show')[0].addEventListener('click', () => {
+  ass.show();
+});
+$('#controls-hide')[0].addEventListener('click', () => {
+  ass.hide();
+});
+$('#controls-destroy')[0].addEventListener('click', () => {
+  ass.destroy();
+});
+[...$('input[name="resampling"]')].forEach((el) => {
+  el.addEventListener('click', (event) => {
+    ass.resampling = event.target.dataset.value;
   });
-};
-document.onkeypress = function(e) {
+});
+
+document.addEventListener('keypress', (event) => {
   if (!ass.video) return;
-  var key = e.keyCode || e.which,
-      aen = document.activeElement.nodeName.toLowerCase();
+  const aen = document.activeElement.nodeName.toLowerCase();
   if (aen === 'textarea' || aen === 'input') return;
-  if (key === 32) {
-    e.preventDefault();
-    video.paused ? video.play() : video.pause();
+  if (event.code !== 'Space') return;
+  event.preventDefault();
+  if (video.paused) {
+    video.play();
+  } else {
+    video.pause();
   }
-};
+});

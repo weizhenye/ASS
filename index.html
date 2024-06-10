@@ -2,12 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-  <meta name="renderer" content="webkit">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="description" content="A JavaScript ASS subtitle format renderer">
   <title>ASS.js - A JavaScript ASS subtitle format renderer</title>
-  <link rel="stylesheet" href="./style.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-34447075-2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -16,65 +13,157 @@
 
     gtag('config', 'UA-34447075-2');
   </script>
+  <style>
+    body, dl, dd, h1, h2 {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      color: #333;
+      font-size: 16px;
+    }
+    .wrapper {
+      width: 960px;
+      margin: auto;
+    }
+    #drop-video {
+      flex: 1 1 100%;
+    }
+    #container video {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+    }
+    #container {
+      display: none;
+      min-width: 0;
+      flex: 1 1 100%;
+      position: relative;
+    }
+    #main[data-video-ready] #drop-video {
+      display: none;
+    }
+    #main[data-video-ready] #container {
+      display: flex;
+    }
+    #drop-ASS {
+      flex: 0 0 320px;
+    }
+    #info {
+      display: none;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      flex: 0 0 320px;
+      height: 360px;
+      margin: 0;
+      overflow: auto;
+    }
+    #main[data-ass-ready] #drop-ASS {
+      display: none;
+    }
+    #main[data-ass-ready] #info {
+      display: flex;
+    }
+    .drop-area {
+      font-size: 2em;
+      text-align: center;
+      box-sizing: border-box;
+      border: 8px dashed #ccc;
+      height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .drop-area[data-dragging] {
+      border-color: #888;
+    }
+    .drop-area[data-drop] {
+      border-style: solid;
+    }
+    .drop-area input {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    #main[data-size="lg"] {
+      height: 540px;
+    }
+    #main[data-size="lg"] #info {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-<header id="site-header">
-  <div class="wrapper">
-    <div class="pull-right">
-      <fieldset class="pull-right">
-        <legend title="When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves.">Resampling</legend>
-        <label title="Script resolution will set to video resolution based on video width. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 640x360, and scale = 1280 / 640 = 2.">
-          <input type="radio" name="resampling" id="resampling-video_width" autocomplete="off">
-          video_width
-        </label><br>
-        <label title="Script resolution will set to video resolution based on video height. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.">
-          <input type="radio" name="resampling" id="resampling-video_height" autocomplete="off" checked>
-          video_height
-        </label><br>
-        <label title="Script resolution will not change but scale is based on script width. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.">
-          <input type="radio" name="resampling" id="resampling-script_width" autocomplete="off">
-          script_width
-        </label><br>
-        <label title="Script resolution will not change but scale is based on script height. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 720 / 480 = 1.5. Script area will be centered in video area.">
-          <input type="radio" name="resampling" id="resampling-script_height" autocomplete="off">
-          script_height
-        </label>
-      </fieldset>
+<header style="background: #d7bcf0; padding: 1em 0;">
+  <div class="wrapper" style="display: flex;">
+    <div style="margin-right: auto;">
+      <h1 style="font-size: 3em; font-weight: normal;">ASS.js</h1>
+      <h2 style="font-size: 1em; font-weight: normal; margin-bottom: 1em;">
+        A JavaScript renderer for ASS subtitle format
+      </h2>
+      <a href="https://github.com/weizhenye/ASS" target="_blank" style="text-decoration: none;">
+        <img src="https://badgen.net/github/stars/weizhenye/ASS?icon=github" alt="GitHub">
+      </a>
+      <a href="https://www.npmjs.com/package/assjs" target="_blank" style="text-decoration: none;">
+        <img src="https://badgen.net/npm/v/assjs" alt="version">
+      </a>
+    </div>
+    <div>
       <fieldset>
         <legend>Initialization</legend>
-        <button id="init-video" autocomplete="off">load sample video</button>
-        <button id="init-ass" autocomplete="off">load sample ASS</button>
-      </fieldset><br>
+        <button id="init-video">load sample video</button>
+        <button id="init-ass">load sample ASS</button>
+      </fieldset>
       <fieldset>
         <legend>Controls</legend>
-        <button id="controls-resize" autocomplete="off" disabled>resize</button>
-        <button id="controls-show" autocomplete="off" disabled>show</button>
-        <button id="controls-hide" autocomplete="off" disabled>hide</button>
-        <button id="controls-destroy" autocomplete="off" disabled>destroy</button>
+        <button id="controls-resize" disabled data-size="640">resize</button>
+        <button id="controls-show" disabled>show</button>
+        <button id="controls-hide" disabled>hide</button>
+        <button id="controls-destroy" disabled>destroy</button>
       </fieldset>
     </div>
-    <h1 id="site-title">ASS.js</h1>
-    <h2 id="site-subtitle">A JavaScript renderer for ASS subtitle format</h2>
-    <a href="https://github.com/weizhenye/ASS" target="_blank" class="badge">
-      <img src="https://badgen.net/github/stars/weizhenye/ASS?icon=github" alt="GitHub">
-    </a>
-    <a href="https://www.npmjs.com/package/assjs" target="_blank" class="badge">
-      <img src="https://badgen.net/npm/v/assjs?icon=npm&amp;label=" alt="version">
-    </a>
+    <fieldset>
+      <legend
+        title="When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves.">
+        Resampling</legend>
+      <label title="Script resolution will set to video resolution based on video width. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 640x360, and scale = 1280 / 640 = 2.">
+        <input type="radio" name="resampling" data-value="video_width">
+        video_width
+      </label><br>
+      <label title="Script resolution will set to video resolution based on video height. For example, video resolution is 1280x720 and script resolution is 640x480, script resolution will set to 853.33x480, and scale = 720 / 480 = 1.5.">
+        <input type="radio" name="resampling" data-value="video_height" checked>
+        video_height
+      </label><br>
+      <label title="Script resolution will not change but scale is based on script width. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 1280 / 640 = 2. This may causes top and bottom subs disappear from video area.">
+        <input type="radio" name="resampling" data-value="script_width">
+        script_width
+      </label><br>
+      <label title="Script resolution will not change but scale is based on script height. For example, video resolution is 1280x720 and script resolution is 640x480, scale = 720 / 480 = 1.5. Script area will be centered in video area.">
+        <input type="radio" name="resampling" data-value="script_height">
+        script_height
+      </label>
+    </fieldset>
   </div>
 </header>
-<div id="demo" class="wrapper">
+<main id="main" data-size="sm" class="wrapper" style="display: flex; margin-top: 1em;">
   <div id="drop-video" class="drop-area">
-    <div class="drop-text">Select or drag a video file here</div>
-    <input type="file">
-  </div><div id="drop-ASS" class="drop-area">
-    <div class="drop-text">and ASS file here</div>
+    <span>Select or drag a video file here</span>
     <input type="file">
   </div>
-</div>
-<div id="message"></div>
+  <div id="container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/assjs/dist/ass.js"></script>
-<script src="./main.js"></script>
+  <div id="drop-ASS" class="drop-area">
+    <span>and ASS file here</span>
+    <input type="file">
+  </div>
+  <pre id="info"></pre>
+</main>
+
+<script type="module" src="./main.js"></script>
 </body>
 </html>
