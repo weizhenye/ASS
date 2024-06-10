@@ -59,9 +59,11 @@ export function createDialogue(dialogue, store) {
         cssText += tag.i ? 'font-style:italic;' : '';
         cssText += (tag.u || tag.s) ? `text-decoration:${tag.u ? 'underline' : ''} ${tag.s ? 'line-through' : ''};` : '';
         cssText += tag.fsp ? `letter-spacing:${store.scale * tag.fsp}px;` : '';
-        // TODO: (tag.q === 0) and (tag.q === 3) are not implemented yet,
-        // for now just handle it as (tag.q === 1)
-        if (tag.q === 1 || tag.q === 0 || tag.q === 3) {
+        // TODO: q0 and q3 is same for now, at least better than nothing.
+        if (tag.q === 0 || tag.q === 3) {
+          cssText += 'text-wrap:balance;';
+        }
+        if (tag.q === 1) {
           cssText += 'word-break:break-all;white-space:normal;';
         }
         if (tag.q === 2) {
