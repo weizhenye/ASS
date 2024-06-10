@@ -130,8 +130,6 @@ export default class ASS {
 
     addGlobalStyle(container);
 
-    this.resampling = resampling;
-
     this.#play = createPlay(this.#store);
     this.#pause = createPause(this.#store);
     this.#seek = createSeek(this.#store);
@@ -142,6 +140,8 @@ export default class ASS {
     video.addEventListener('seeking', this.#seek);
 
     this.#resize = createResize(this, this.#store);
+    this.#resize();
+    this.resampling = resampling;
 
     const observer = new ResizeObserver(this.#resize);
     observer.observe(video);

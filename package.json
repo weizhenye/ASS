@@ -12,8 +12,9 @@
   "scripts": {
     "dev": "rollup -c -w",
     "lint": "eslint src test",
-    "unit": "vitest",
+    "unit": "vitest run",
     "test": "npm run lint && npm run unit",
+    "coverage": "vitest run --coverage",
     "build": "rollup -c",
     "postbuild": "tsc && api-extractor run --local",
     "preversion": "npm test",
@@ -37,11 +38,11 @@
   "homepage": "https://ass.js.org/",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.0",
-    "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
     "@vitest/browser": "^1.6.0",
+    "@vitest/coverage-istanbul": "^1.6.0",
     "ass-compiler": "^0.1.11",
     "csso": "^5.0.5",
     "eslint": "^8.57.0",

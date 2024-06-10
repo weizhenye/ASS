@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { createFadeKeyframes } from '../../src/renderer/animation.js';
 
 describe('render animation', () => {

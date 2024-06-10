@@ -1,74 +1,64 @@
+import { describe, it, expect } from 'vitest';
 import ASS from '../../src/index.js';
-import { $video } from '../index.js';
 
 describe('resampling API', () => {
-  beforeEach(function () {
-    if (!$video.videoWidth || !$video.videoHeight) {
-      this.skip();
-    }
-  });
-
-  it('should handle `video_width`', () => {
+  it('should handle `video_width`', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
       { resampling: 'video_width' },
     );
-    expect(ass.scale).to.equal(0.5);
-    expect(ass.width).to.equal(640);
-    expect(ass.height).to.equal(360);
-    expect(ass._.$stage.style.top).to.equal('0px');
-    expect(ass._.$stage.style.left).to.equal('0px');
+    const $box = document.querySelector('.ASS-box');
+    expect($box.clientWidth).to.equal(640);
+    expect($box.clientHeight).to.equal(360);
 
     ass.destroy();
   });
 
-  it('should handle `video_height`', () => {
+  it('should handle `video_height`', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
       { resampling: 'video_height' },
     );
-    expect(ass.scale).to.equal(0.375);
-    expect(ass.width).to.equal(640);
-    expect(ass.height).to.equal(360);
-    expect(ass._.$stage.style.top).to.equal('0px');
-    expect(ass._.$stage.style.left).to.equal('0px');
+    const $box = document.querySelector('.ASS-box');
+    expect($box.clientWidth).to.equal(640);
+    expect($box.clientHeight).to.equal(360);
 
     ass.destroy();
   });
 
-  it('should handle `script_width`', () => {
+  it('should handle `script_width`', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
       { resampling: 'script_width' },
     );
-    expect(ass.scale).to.equal(0.5);
-    expect(ass.width).to.equal(640);
-    expect(ass.height).to.equal(480);
-    expect(ass._.$stage.style.top).to.equal('-60px');
-    expect(ass._.$stage.style.left).to.equal('0px');
+    const $box = document.querySelector('.ASS-box');
+    expect($box.clientWidth).to.equal(640);
+    expect($box.clientHeight).to.equal(480);
+    expect($box.style.top).to.equal('-60px');
+    expect($box.style.left).to.equal('0px');
 
     ass.destroy();
   });
 
-  it('should handle `script_height`', () => {
+  it('should handle `script_height`', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
       { resampling: 'script_height' },
     );
-    expect(ass.scale).to.equal(0.375);
-    expect(ass.width).to.equal(480);
-    expect(ass.height).to.equal(360);
-    expect(ass._.$stage.style.top).to.equal('0px');
-    expect(ass._.$stage.style.left).to.equal('80px');
+    const $box = document.querySelector('.ASS-box');
+    expect($box.clientWidth).to.equal(480);
+    expect($box.clientHeight).to.equal(360);
+    expect($box.style.top).to.equal('0px');
+    expect($box.style.left).to.equal('80px');
 
     ass.destroy();
   });
 
-  it('should default resampling to `video_height`', () => {
+  it('should default resampling to `video_height`', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
@@ -78,19 +68,24 @@ describe('resampling API', () => {
     ass.destroy();
   });
 
-  it('should support to set resampling after initializing', () => {
+  it('should support to set resampling after initializing', ({ $video }) => {
     const ass = new ASS(
       '[Script Info]\nPlayResX: 1280\nPlayResY: 960',
       $video,
     );
+    const $box = document.querySelector('.ASS-box');
+
     ass.resampling = 'video_height';
-    expect(ass.scale).to.equal(0.375);
+    expect($box.clientWidth).to.equal(640);
+    expect($box.clientHeight).to.equal(360);
 
     ass.resampling = 'unknown';
-    expect(ass.scale).to.equal(0.375);
+    expect($box.clientWidth).to.equal(640);
+    expect($box.clientHeight).to.equal(360);
 
-    ass.resampling = 'video_width';
-    expect(ass.scale).to.equal(0.5);
+    ass.resampling = 'script_height';
+    expect($box.clientWidth).to.equal(480);
+    expect($box.clientHeight).to.equal(360);
 
     ass.destroy();
   });

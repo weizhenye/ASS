@@ -1,37 +1,14 @@
-export function playVideo($video) {
-  return $video.play().then(() => {
-    // video can't play without user gesture
-    if ($video.paused) {
-      this.skip();
-    }
-  }, () => { this.skip(); });
-}
+import { beforeEach } from 'vitest';
+import mp4 from './fixtures/2fa3fe_90_640x360.mp4';
 
-// eslint-disable-next-line import/no-mutable-exports
-export let $video = null;
+const $video = document.createElement('video');
+$video.src = mp4;
+$video.muted = true;
+$video.style.width = '640px';
+$video.style.height = '360px';
+document.body.append($video);
+// TODO: video is not loaded, video.videoWidth is still 0
 
-beforeEach((done) => {
-  let iid = 0;
-  $video = document.createElement('video');
-  const handler = () => {
-    $video.removeEventListener('canplaythrough', handler);
-    clearInterval(iid);
-    done();
-  };
-  $video.addEventListener('canplaythrough', handler);
-  iid = setInterval(() => {
-    if ($video.videoWidth) {
-      handler();
-    }
-  }, 100);
-  document.body.appendChild($video);
-  $video.src = '/base/test/fixtures/2fa3fe_90_640x360.mp4';
-  $video.muted = true;
-  $video.style.width = '640px';
-  $video.style.height = '360px';
-});
-
-afterEach(() => {
-  document.body.removeChild($video);
-  $video = null;
+beforeEach((context) => {
+  context.$video = $video;
 });

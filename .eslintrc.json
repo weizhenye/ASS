@@ -28,6 +28,9 @@
     "unicorn/no-array-reduce": 0,
     "unicorn/no-for-loop": 0,
     "unicorn/no-null": 0,
+    "unicorn/numeric-separators-style": 0,
+    "unicorn/prefer-spread": 0,
+    "unicorn/prefer-string-raw": 0,
     "unicorn/prefer-string-replace-all": 0,
     "unicorn/prevent-abbreviations": 0
   }
