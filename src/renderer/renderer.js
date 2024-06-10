@@ -10,7 +10,7 @@ export function renderer(dialogue, store) {
 
   // Apply max width to the $div, to make sure it line breaks
   // properly before measuring it:
-  const mw = this.width - this.scale * (dialogue.margin.left + dialogue.margin.right);
+  const mw = store.width - store.scale * (dialogue.margin.left + dialogue.margin.right);
   $div.style.cssText = `max-width:${mw}px`;
 
   store.box.append($div);
