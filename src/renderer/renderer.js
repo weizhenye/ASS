@@ -7,6 +7,12 @@ import { setTransformOrigin } from './transform.js';
 export function renderer(dialogue, store) {
   const $div = createDialogue(dialogue, store);
   Object.assign(dialogue, { $div });
+
+  // Apply max width to the $div, to make sure it line breaks
+  // properly before measuring it:
+  const mw = this.width - this.scale * (dialogue.margin.left + dialogue.margin.right);
+  $div.style.cssText = `max-width:${mw}px`;
+
   store.box.append($div);
   const { width, height } = $div.getBoundingClientRect();
   Object.assign(dialogue, { width, height });
