@@ -106,8 +106,8 @@ export default class ASS {
     const { info, width, height, styles, dialogues } = compile(content);
     this.#store.info = info;
     this.#store.scriptRes = {
-      width: width || video.videoWidth,
-      height: height || video.videoHeight,
+      width: width || video.videoWidth || video.clientWidth,
+      height: height || video.videoHeight || video.clientHeight,
     };
     this.#store.styles = styles;
     this.#store.dialogues = dialogues.map((dia) => Object.assign(dia, {
