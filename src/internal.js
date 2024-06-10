@@ -17,7 +17,7 @@ export function clear(store) {
 
 function framing(store) {
   const { video, dialogues, actives, resampledRes } = store;
-  const vct = video.currentTime;
+  const vct = video.currentTime - store.delay;
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
     let { end } = dia;
@@ -51,7 +51,7 @@ export function createSeek(store) {
   return function seek() {
     clear(store);
     const { video, dialogues } = store;
-    const vct = video.currentTime;
+    const vct = video.currentTime - store.delay;
     store.index = (() => {
       let from = 0;
       const to = dialogues.length - 1;

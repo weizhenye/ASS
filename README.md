@@ -75,6 +75,15 @@ ass.hide();
 ass.destroy();
 ```
 
+#### Delay
+
+```js
+// Subtitles will be 5s later
+ass.delay = 5;
+// Subtitles will be 3s earlier
+ass.delay = -3;
+```
+
 #### Resampling
 
 When script resolution(PlayResX and PlayResY) don't match the video resolution, this API defines how it behaves. However, drawings and clips will be always depending on script origin resolution.

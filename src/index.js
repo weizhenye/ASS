@@ -58,6 +58,7 @@ export default class ASS {
     /** record dialogues' position */
     space: [],
     requestId: 0,
+    delay: 0,
   };
 
   #play;
@@ -208,8 +209,16 @@ export default class ASS {
     }
   }
 
-  /** @type {number} Subtitle delay. TODO: not implement yet */
-  delay = 0;
+  /** @type {number} Subtitle delay in seconds. */
+  get delay() {
+    return this.#store.delay;
+  }
+
+  set delay(d) {
+    if (typeof d !== 'number') return;
+    this.#store.delay = d;
+    this.#seek();
+  }
 
   // addDialogue(dialogue) {
   // }

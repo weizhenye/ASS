@@ -19,7 +19,7 @@ export function createDialogue(dialogue, store) {
   const { slices, start, end } = dialogue;
   const animationOptions = {
     duration: (end - start) * 1000,
-    delay: Math.min(0, start - video.currentTime) * 1000,
+    delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
     fill: 'forwards',
   };
   $div.animations = [];
