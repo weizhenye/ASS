@@ -1,11 +1,11 @@
 # ASS.js
 
-[![GitHub Action](https://github.com/weizhenye/ASS/workflows/CI/badge.svg)](https://github.com/weizhenye/ASS/actions)
-[![Coverage](https://badgen.net/codecov/c/github/weizhenye/ASS?icon=codecov)](https://codecov.io/gh/weizhenye/ASS)
-[![NPM version](https://badgen.net/npm/v/assjs?icon=npm)](https://www.npmjs.com/package/assjs)
-[![License](https://badgen.net/npm/license/assjs?icon=https://api.iconify.design/octicon:law.svg?color=white)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
-[![File size](https://badgen.net/bundlephobia/minzip/assjs?icon=https://api.iconify.design/ant-design:file-zip-outline.svg?color=white)](https://bundlephobia.com/result?p=assjs)
-[![jsDelivr](https://badgen.net/jsdelivr/hits/npm/assjs?icon=https://api.iconify.design/simple-icons:jsdelivr.svg?color=white)](https://www.jsdelivr.com/package/npm/assjs)
+[![GitHub Action](https://img.shields.io/github/actions/workflow/status/weizhenye/ASS/ci.yml?logo=github)](https://github.com/weizhenye/ASS/actions)
+[![Codecov](https://img.shields.io/codecov/c/gh/weizhenye/ASS?logo=codecov)](https://codecov.io/gh/weizhenye/ASS)
+[![License](https://img.shields.io/npm/l/assjs)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/assjs?logo=npm)](https://www.npmjs.com/package/assjs)
+[![jsDelivr](https://img.shields.io/jsdelivr/npm/hm/assjs?logo=jsdelivr)](https://www.jsdelivr.com/package/npm/assjs)
+[![File size](https://img.shields.io/bundlejs/size/assjs)](https://bundlephobia.com/result?p=assjs)
 
 ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renders subtitles on HTML5 video.
 
@@ -42,6 +42,8 @@ const ass = new ASS(content, document.querySelector('#video'), {
   container: document.querySelector('#container'),
 });
 ```
+
+If you click the native fullscreen button in video element, only `<video>` will be fullscreened, so ASS will not show. You should use a custom button and call `document.querySelector('#container').requestFullscreen()` to ensure ASS is contained.
 
 ## API
 
