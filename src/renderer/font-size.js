@@ -1,14 +1,15 @@
+// https://github.com/weizhenye/ASS/wiki/Font-Size-in-ASS
+
 export const $fixFontSize = document.createElement('div');
 $fixFontSize.className = 'ASS-fix-font-size';
-$fixFontSize.textContent = 'M';
+$fixFontSize.textContent = '0';
 
 const cache = Object.create(null);
 
 export function getRealFontSize(fn, fs) {
-  const key = `${fn}-${fs}`;
-  if (!cache[key]) {
-    $fixFontSize.style.cssText = `line-height:normal;font-size:${fs}px;font-family:"${fn}",Arial;`;
-    cache[key] = fs * fs / $fixFontSize.clientHeight;
+  if (!cache[fn]) {
+    $fixFontSize.style.fontFamily = `font-family:"${fn}",Arial;`;
+    cache[fn] = fs * 2048 / $fixFontSize.clientHeight;
   }
-  return cache[key];
+  return cache[fn];
 }

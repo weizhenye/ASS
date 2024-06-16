@@ -34,6 +34,8 @@
   opacity: var(--ass-border-opacity);
 }
 .ASS-fix-font-size {
+  font-size: 2048px;
+  line-height: normal;
   position: absolute;
   visibility: hidden;
 }
