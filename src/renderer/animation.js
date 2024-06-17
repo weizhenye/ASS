@@ -125,6 +125,7 @@ export function setKeyframes(dialogue, store) {
       }
       tTags.reduce((prevTag, curr) => {
         const tag = { ...prevTag, ...curr.tag };
+        tag.t = null;
         Object.assign(curr.tag, tag);
         return tag;
       }, {});
