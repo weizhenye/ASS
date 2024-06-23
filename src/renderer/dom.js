@@ -22,7 +22,7 @@ export function createDialogue(dialogue, store) {
     delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
     fill: 'forwards',
   };
-  $div.animations = [];
+  const animations = [];
   slices.forEach((slice) => {
     const sliceTag = styles[slice.style].tag;
     const borderStyle = styles[slice.style].style.BorderStyle;
@@ -33,7 +33,7 @@ export function createDialogue(dialogue, store) {
       const cssVars = [];
       if (!drawing) {
         cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
-        cssText += `font-size:${store.scale * getRealFontSize(tag.fn, tag.fs)}px;`;
+        cssText += `font-size:calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px);`;
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
         const scale = /yes/i.test(info.ScaledBorderAndShadow) ? store.scale : 1;
         if (borderStyle === 1) {
@@ -58,7 +58,7 @@ export function createDialogue(dialogue, store) {
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
         cssText += (tag.u || tag.s) ? `text-decoration:${tag.u ? 'underline' : ''} ${tag.s ? 'line-through' : ''};` : '';
-        cssText += tag.fsp ? `letter-spacing:${store.scale * tag.fsp}px;` : '';
+        cssText += tag.fsp ? `letter-spacing:calc(var(--ass-scale) * ${tag.fsp}px);` : '';
         // TODO: q0 and q3 is same for now, at least better than nothing.
         if (tag.q === 0 || tag.q === 3) {
           cssText += 'text-wrap:balance;';
@@ -80,8 +80,8 @@ export function createDialogue(dialogue, store) {
         }
       }
       if (drawing && tag.pbo) {
-        const pbo = store.scale * -tag.pbo * (tag.fscy || 100) / 100;
-        cssText += `vertical-align:${pbo}px;`;
+        const pbo = -tag.pbo * (tag.fscy || 100) / 100;
+        cssText += `vertical-align:calc(var(--ass-scale) * ${pbo}px);`;
       }
 
       const hasRotate = /"fr[x-z]":[^0]/.test(JSON.stringify(tag));
@@ -116,15 +116,16 @@ export function createDialogue(dialogue, store) {
             fragment.keyframes,
             { ...animationOptions, duration: fragment.duration },
           );
-          $div.animations.push(animation);
+          animations.push(animation);
         }
         df.append($span);
       });
     });
   });
   if (dialogue.keyframes) {
-    $div.animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
+    animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
   }
+  dialogue.animations = animations;
   $div.append(df);
   return $div;
 }

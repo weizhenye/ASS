@@ -76,8 +76,8 @@ export function initAnimation($el, keyframes, options) {
   return animation;
 }
 
-export function batchAnimate($el, action) {
-  ($el.animations || []).forEach((animation) => {
+export function batchAnimate(dia, action) {
+  (dia.animations || []).forEach((animation) => {
     animation[action]();
   });
 }

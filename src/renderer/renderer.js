@@ -3,6 +3,7 @@ import { createDialogue } from './dom.js';
 import { getPosition } from './position.js';
 import { createStyle } from './style.js';
 import { setTransformOrigin } from './transform.js';
+import { getScrollEffect } from './scroll.js';
 
 export function renderer(dialogue, store) {
   const $div = createDialogue(dialogue, store);
@@ -10,7 +11,7 @@ export function renderer(dialogue, store) {
   store.box.append($div);
   const { width } = $div.getBoundingClientRect();
   Object.assign(dialogue, { width });
-  $div.style.cssText += createStyle(dialogue, store);
+  $div.style.cssText += createStyle(dialogue);
   // height may be changed after createStyle
   const { height } = $div.getBoundingClientRect();
   Object.assign(dialogue, { height });
@@ -19,5 +20,8 @@ export function renderer(dialogue, store) {
   $div.style.cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);
   Object.assign(dialogue, getClipPath(dialogue, store));
+  if (dialogue.effect?.name?.startsWith('scroll')) {
+    Object.assign(dialogue, getScrollEffect(dialogue, store));
+  }
   return dialogue;
 }

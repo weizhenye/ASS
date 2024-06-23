@@ -15,39 +15,37 @@ function mergeT(ts) {
   }, []);
 }
 
-function createEffectKeyframes({ effect, duration }, store) {
+export function createEffectKeyframes({ effect, duration }) {
   // TODO: when effect and move both exist, its behavior is weird, for now only move works.
-  const { name, delay, lefttoright, y1 } = effect;
-  const y2 = effect.y2 || store.resampledRes.height;
+  const { name, delay, leftToRight } = effect;
   if (name === 'banner') {
-    const tx = store.scale * (duration / delay) * (lefttoright ? 1 : -1);
-    return [0, `${tx}px`].map((x, i) => ({
+    const tx = (duration / (delay || 1)) * (leftToRight ? 1 : -1);
+    return [0, `calc(var(--ass-scale) * ${tx}px)`].map((x, i) => ({
       offset: i,
       transform: `translateX(${x})`,
     }));
   }
   if (name.startsWith('scroll')) {
+    // speed is 1000px/s when delay=1
     const updown = /up/.test(name) ? -1 : 1;
-    const dp = (y2 - y1) / (duration / delay);
-    return [y1, y2]
-      .map((y) => store.scale * y * updown)
-      .map((y, i) => ({
-        offset: Math.min(i, dp),
-        transform: `translateY${y}`,
-      }));
+    const y = duration / (delay || 1) * updown;
+    return [
+      { offset: 0, transform: 'translateY(-100%)' },
+      { offset: 1, transform: `translateY(calc(var(--ass-scale) * ${y}px))` },
+    ];
   }
   return [];
 }
 
-function createMoveKeyframes({ move, duration, dialogue }, store) {
+function createMoveKeyframes({ move, duration, dialogue }) {
   const { x1, y1, x2, y2, t1, t2 } = move;
   const t = [t1, t2 || duration];
   const pos = dialogue.pos || { x: 0, y: 0 };
   return [[x1, y1], [x2, y2]]
-    .map(([x, y]) => [store.scale * (x - pos.x), store.scale * (y - pos.y)])
+    .map(([x, y]) => [(x - pos.x), (y - pos.y)])
     .map(([x, y], index) => ({
       offset: Math.min(t[index] / duration, 1),
-      transform: `translate(${x}px, ${y}px)`,
+      transform: `translate(calc(var(--ass-scale) * ${x}px), calc(var(--ass-scale) * ${y}px))`,
     }));
 }
 
@@ -105,8 +103,8 @@ export function setKeyframes(dialogue, store) {
   const { start, end, effect, move, fade, slices } = dialogue;
   const duration = (end - start) * 1000;
   const keyframes = [
-    ...(effect && !move ? createEffectKeyframes({ effect, duration }, store) : []),
-    ...(move ? createMoveKeyframes({ move, duration, dialogue }, store) : []),
+    ...(effect && !move ? createEffectKeyframes({ effect, duration }) : []),
+    ...(move ? createMoveKeyframes({ move, duration, dialogue }) : []),
     ...(fade ? createFadeKeyframes(fade, duration) : []),
   ].sort((a, b) => a.offset - b.offset);
   if (keyframes.length > 0) {
@@ -140,8 +138,8 @@ export function setKeyframes(dialogue, store) {
         // TODO: border and shadow, should animate CSS vars
         return {
           offset: t2 / fDuration,
-          ...(tag.fs && { 'font-size': `${store.scale * getRealFontSize(tag.fn, tag.fs)}px` }),
-          ...(tag.fsp && { 'letter-spacing': `${store.scale * tag.fsp}px` }),
+          ...(tag.fs && { 'font-size': `calc(calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px)` }),
+          ...(tag.fsp && { 'letter-spacing': `calc(calc(var(--ass-scale) * ${tag.fsp}px)` }),
           ...((tag.c1 || (tag.a1 && !hasAlpha)) && {
             color: color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1)),
           }),

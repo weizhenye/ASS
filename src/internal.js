@@ -16,16 +16,11 @@ export function clear(store) {
 }
 
 function framing(store) {
-  const { video, dialogues, actives, resampledRes } = store;
+  const { video, dialogues, actives } = store;
   const vct = video.currentTime - store.delay;
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
-    let { end } = dia;
-    if (dia.effect && /scroll/.test(dia.effect.name)) {
-      const { y1, y2, delay } = dia.effect;
-      const duration = ((y2 || resampledRes.height) - y1) / (1000 / delay);
-      end = Math.min(end, dia.start + duration);
-    }
+    const { end } = dia;
     if (end < vct) {
       dia.$div.remove();
       dia.$clipPath?.remove();
@@ -39,7 +34,7 @@ function framing(store) {
     if (vct < dialogues[store.index].end) {
       const dia = renderer(dialogues[store.index], store);
       if (!video.paused) {
-        batchAnimate(dia.$div, 'play');
+        batchAnimate(dia, 'play');
       }
       actives.push(dia);
     }
@@ -81,8 +76,8 @@ export function createPlay(store) {
     };
     cancelAnimationFrame(store.requestId);
     store.requestId = requestAnimationFrame(frame);
-    store.actives.forEach(({ $div }) => {
-      batchAnimate($div, 'play');
+    store.actives.forEach((dia) => {
+      batchAnimate(dia, 'play');
     });
   };
 }
@@ -91,8 +86,8 @@ export function createPause(store) {
   return function pause() {
     cancelAnimationFrame(store.requestId);
     store.requestId = 0;
-    store.actives.forEach(({ $div }) => {
-      batchAnimate($div, 'pause');
+    store.actives.forEach((dia) => {
+      batchAnimate(dia, 'pause');
     });
   };
 }
@@ -135,6 +130,7 @@ export function createResize(that, store) {
       + `left:${(cw - bw) / 2}px;`
     );
     box.style.cssText = cssText;
+    box.style.setProperty('--ass-scale', store.scale);
     svg.style.cssText = cssText;
     svg.setAttributeNS(null, 'viewBox', `0 0 ${sw} ${sh}`);
 
