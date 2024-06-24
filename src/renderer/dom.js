@@ -125,7 +125,6 @@ export function createDialogue(dialogue, store) {
   if (dialogue.keyframes) {
     animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
   }
-  dialogue.animations = animations;
   $div.append(df);
-  return $div;
+  return { $div, animations };
 }

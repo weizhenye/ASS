@@ -2,14 +2,16 @@
 
 export const $fixFontSize = document.createElement('div');
 $fixFontSize.className = 'ASS-fix-font-size';
-$fixFontSize.textContent = '0';
+const $span = document.createElement('span');
+$span.textContent = '0';
+$fixFontSize.append($span);
 
 const cache = Object.create(null);
 
 export function getRealFontSize(fn, fs) {
   if (!cache[fn]) {
     $fixFontSize.style.fontFamily = `font-family:"${fn}",Arial;`;
-    cache[fn] = fs * 2048 / $fixFontSize.clientHeight;
+    cache[fn] = fs * 2048 / $span.clientHeight;
   }
   return cache[fn];
 }

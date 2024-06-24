@@ -37,19 +37,6 @@ export function createSVGEl(name, attrs = []) {
   return $el;
 }
 
-function getVendor(prop) {
-  const { style } = document.body;
-  const Prop = prop.replace(/^\w/, (x) => x.toUpperCase());
-  if (prop in style) return '';
-  if (`webkit${Prop}` in style) return '-webkit-';
-  if (`moz${Prop}` in style) return '-moz-';
-  return '';
-}
-
-export const vendor = {
-  clipPath: getVendor('clipPath'),
-};
-
 const GLOBAL_CSS = '__GLOBAL_CSS__';
 /**
  * @param {HTMLElement} container

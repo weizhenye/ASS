@@ -36,8 +36,14 @@
 .ASS-fix-font-size {
   font-size: 2048px;
   line-height: normal;
+  width: 0;
+  height: 0;
   position: absolute;
   visibility: hidden;
+  overflow: hidden;
+}
+.ASS-fix-font-size span {
+  position: absolute;
 }
 .ASS-fix-objectBoundingBox {
   width: 100%;

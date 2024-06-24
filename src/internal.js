@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { renderer } from './renderer/renderer.js';
-import { setKeyframes } from './renderer/animation.js';
 import { batchAnimate } from './utils.js';
 
 export function clear(store) {
@@ -93,7 +92,7 @@ export function createPause(store) {
 }
 
 export function createResize(that, store) {
-  const { video, box, svg, dialogues } = store;
+  const { video, box, svg } = store;
   return function resize() {
     const cw = video.clientWidth;
     const ch = video.clientHeight;
@@ -133,10 +132,6 @@ export function createResize(that, store) {
     box.style.setProperty('--ass-scale', store.scale);
     svg.style.cssText = cssText;
     svg.setAttributeNS(null, 'viewBox', `0 0 ${sw} ${sh}`);
-
-    dialogues.forEach((dialogue) => {
-      setKeyframes(dialogue, store);
-    });
 
     createSeek(store)();
   };

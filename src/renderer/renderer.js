@@ -6,8 +6,8 @@ import { setTransformOrigin } from './transform.js';
 import { getScrollEffect } from './scroll.js';
 
 export function renderer(dialogue, store) {
-  const $div = createDialogue(dialogue, store);
-  Object.assign(dialogue, { $div });
+  const { $div, animations } = createDialogue(dialogue, store);
+  Object.assign(dialogue, { $div, animations });
   store.box.append($div);
   const { width } = $div.getBoundingClientRect();
   Object.assign(dialogue, { width });

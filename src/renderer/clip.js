@@ -1,4 +1,4 @@
-import { createSVGEl, uuid, vendor } from '../utils.js';
+import { createSVGEl, uuid } from '../utils.js';
 
 export function createClipPath(clip, store) {
   const sw = store.scriptRes.width;
@@ -34,7 +34,7 @@ export function createClipPath(clip, store) {
   store.defs.append($clipPath);
   return {
     $clipPath,
-    cssText: `${vendor.clipPath}clip-path:url(#${id});`,
+    cssText: `clip-path:url(#${id});`,
   };
 }
 

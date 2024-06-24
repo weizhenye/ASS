@@ -99,7 +99,7 @@ function createTransformKeyframes({ fromTag, tag, fragment }) {
 }
 
 // TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
-export function setKeyframes(dialogue, store) {
+export function setKeyframes(dialogue, styles) {
   const { start, end, effect, move, fade, slices } = dialogue;
   const duration = (end - start) * 1000;
   const keyframes = [
@@ -111,7 +111,7 @@ export function setKeyframes(dialogue, store) {
     Object.assign(dialogue, { keyframes });
   }
   slices.forEach((slice) => {
-    const sliceTag = store.styles[slice.style].tag;
+    const sliceTag = styles[slice.style].tag;
     slice.fragments.forEach((fragment) => {
       if (!fragment.tag.t || fragment.tag.t.length === 0) {
         return;
