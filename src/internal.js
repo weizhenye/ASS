@@ -3,12 +3,9 @@ import { renderer } from './renderer/renderer.js';
 import { batchAnimate } from './utils.js';
 
 export function clear(store) {
-  const { box, defs } = store;
+  const { box } = store;
   while (box.lastChild) {
     box.lastChild.remove();
-  }
-  while (defs.lastChild) {
-    defs.lastChild.remove();
   }
   store.actives = [];
   store.space = [];
@@ -22,7 +19,6 @@ function framing(store) {
     const { end } = dia;
     if (end < vct) {
       dia.$div.remove();
-      dia.$clipPath?.remove();
       actives.splice(i, 1);
     }
   }
@@ -131,7 +127,6 @@ export function createResize(that, store) {
     box.style.cssText = cssText;
     box.style.setProperty('--ass-scale', store.scale);
     svg.style.cssText = cssText;
-    svg.setAttributeNS(null, 'viewBox', `0 0 ${sw} ${sh}`);
 
     createSeek(store)();
   };

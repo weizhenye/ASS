@@ -45,7 +45,7 @@
 .ASS-fix-font-size span {
   position: absolute;
 }
-.ASS-fix-objectBoundingBox {
+.ASS-clip-area {
   width: 100%;
   height: 100%;
   position: absolute;

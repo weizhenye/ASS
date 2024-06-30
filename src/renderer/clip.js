@@ -1,8 +1,7 @@
-import { createSVGEl, uuid } from '../utils.js';
+import { createSVGEl } from '../utils.js';
 
-export function createClipPath(clip, store) {
-  const sw = store.scriptRes.width;
-  const sh = store.scriptRes.height;
+function addClipPath($defs, clip, id, sw, sh) {
+  if ($defs.querySelector(`#${id}`)) return;
   let d = '';
   if (clip.dots !== null) {
     let { x1, y1, x2, y2 } = clip.dots;
@@ -21,7 +20,6 @@ export function createClipPath(clip, store) {
   if (clip.inverse) {
     d += `M0,0L0,${scale},${scale},${scale},${scale},0,0,0Z`;
   }
-  const id = `ASS-${uuid()}`;
   const $clipPath = createSVGEl('clipPath', [
     ['id', id],
     ['clipPathUnits', 'objectBoundingBox'],
@@ -31,21 +29,18 @@ export function createClipPath(clip, store) {
     ['transform', `scale(${scale})`],
     ['clip-rule', 'evenodd'],
   ]));
-  store.defs.append($clipPath);
-  return {
-    $clipPath,
-    cssText: `clip-path:url(#${id});`,
-  };
+  $defs.append($clipPath);
 }
 
 export function getClipPath(dialogue, store) {
-  if (!dialogue.clip) return {};
-  const $fobb = document.createElement('div');
-  store.box.insertBefore($fobb, dialogue.$div);
-  $fobb.append(dialogue.$div);
-  $fobb.className = 'ASS-fix-objectBoundingBox';
-  const { cssText, $clipPath } = createClipPath(dialogue.clip, store);
-  store.defs.append($clipPath);
-  $fobb.style.cssText = cssText;
-  return { $div: $fobb, $clipPath };
+  const { id, clip } = dialogue;
+  if (!clip) return {};
+  const { width, height } = store.scriptRes;
+  addClipPath(store.defs, clip, id, width, height);
+  const $clipArea = document.createElement('div');
+  store.box.insertBefore($clipArea, dialogue.$div);
+  $clipArea.append(dialogue.$div);
+  $clipArea.className = 'ASS-clip-area';
+  $clipArea.style.clipPath = `url(#${id})`;
+  return { $div: $clipArea };
 }

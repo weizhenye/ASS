@@ -10,7 +10,7 @@ const cache = Object.create(null);
 
 export function getRealFontSize(fn, fs) {
   if (!cache[fn]) {
-    $fixFontSize.style.fontFamily = `font-family:"${fn}",Arial;`;
+    $fixFontSize.style.fontFamily = `"${fn}",Arial`;
     cache[fn] = fs * 2048 / $span.clientHeight;
   }
   return cache[fn];

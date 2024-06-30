@@ -3,7 +3,7 @@ import { compile } from 'ass-compiler';
 import { setKeyframes } from './renderer/animation.js';
 import { $fixFontSize } from './renderer/font-size.js';
 import { clear, createResize, createPlay, createPause, createSeek } from './internal.js';
-import { createSVGEl, addGlobalStyle } from './utils.js';
+import { createSVGEl, addGlobalStyle, uuid } from './utils.js';
 
 /**
  * @typedef {Object} ASSOption
@@ -26,7 +26,6 @@ export default class ASS {
     video: null,
     /** the box to display subtitles */
     box: document.createElement('div'),
-    // TODO: 是否可以动态添加
     /** use for \clip */
     svg: createSVGEl('svg'),
     /** use for \clip */
@@ -112,6 +111,7 @@ export default class ASS {
     };
     this.#store.styles = styles;
     this.#store.dialogues = dialogues.map((dia) => Object.assign(dia, {
+      id: `ASS-${uuid()}`,
       align: {
         // 0: left, 1: center, 2: right
         h: (dia.alignment + 2) % 3,
@@ -122,7 +122,8 @@ export default class ASS {
 
     container.append($fixFontSize);
 
-    const { svg, defs, box } = this.#store;
+    const { svg, defs, scriptRes, box } = this.#store;
+    svg.setAttributeNS(null, 'viewBox', `0 0 ${scriptRes.width} ${scriptRes.height}`);
 
     svg.append(defs);
     container.append(svg);
