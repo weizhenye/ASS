@@ -32,8 +32,9 @@ export function createDialogue(dialogue, store) {
       let cssText = 'display:inline-block;';
       const cssVars = [];
       if (!drawing) {
-        cssText += `line-height:normal;font-family:"${tag.fn}",Arial;`;
+        cssText += `font-family:"${tag.fn}",Arial;`;
         cssText += `font-size:calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px);`;
+        cssText += `line-height:calc(var(--ass-scale) * ${tag.fs}px);`;
         cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
         const scale = /yes/i.test(info.ScaledBorderAndShadow) ? store.scale : 1;
         if (borderStyle === 1) {
@@ -64,7 +65,7 @@ export function createDialogue(dialogue, store) {
           cssText += 'text-wrap:balance;';
         }
         if (tag.q === 1) {
-          cssText += 'word-break:break-all;white-space:normal;';
+          cssText += 'word-break:break-word;white-space:normal;';
         }
         if (tag.q === 2) {
           cssText += 'word-break:normal;white-space:nowrap;';

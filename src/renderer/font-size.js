@@ -6,12 +6,13 @@ const $span = document.createElement('span');
 $span.textContent = '0';
 $fixFontSize.append($span);
 
-const cache = Object.create(null);
+const unitsPerEm = 2048;
+const lineSpacing = Object.create(null);
 
 export function getRealFontSize(fn, fs) {
-  if (!cache[fn]) {
-    $fixFontSize.style.fontFamily = `"${fn}",Arial`;
-    cache[fn] = fs * 2048 / $span.clientHeight;
+  if (!lineSpacing[fn]) {
+    $span.style.fontFamily = fn;
+    lineSpacing[fn] = $span.clientHeight;
   }
-  return cache[fn];
+  return fs * unitsPerEm / lineSpacing[fn];
 }
