@@ -95,7 +95,7 @@ function createTransformKeyframes({ fromTag, tag, fragment }) {
     });
     Object.assign(fromTag, { fscx: 100, fscy: 100 });
   }
-  return { transform: createTransform(toTag) };
+  return Object.fromEntries(createTransform(toTag));
 }
 
 // TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?

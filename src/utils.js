@@ -55,7 +55,6 @@ export function addGlobalStyle(container) {
 }
 
 export const strokeTags = ['c3', 'a3', 'c4', 'a4', 'xbord', 'ybord', 'xshad', 'yshad', 'blur', 'be'];
-export const transformTags = ['fscx', 'fscy', 'frx', 'fry', 'frz', 'fax', 'fay'];
 
 export function initAnimation($el, keyframes, options) {
   const animation = $el.animate(keyframes, options);

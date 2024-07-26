@@ -1,13 +1,31 @@
+export const rotateTags = ['frx', 'fry', 'frz'];
+export const scaleTags = ['fscx', 'fscy'];
+export const skewTags = ['fax', 'fay'];
+
+if (window.CSS.registerProperty) {
+  [...rotateTags, ...skewTags].forEach((tag) => {
+    window.CSS.registerProperty({
+      name: `--ass-tag-${tag}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 0,
+    });
+  });
+  scaleTags.forEach((tag) => {
+    window.CSS.registerProperty({
+      name: `--ass-tag-${tag}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 1,
+    });
+  });
+}
+
 export function createTransform(tag) {
   return [
-    // TODO: I don't know why perspective is 314, it just performances well.
-    'perspective(314px)',
-    `rotateY(${tag.fry || 0}deg)`,
-    `rotateX(${tag.frx || 0}deg)`,
-    `rotateZ(${-tag.frz || 0}deg)`,
-    `scale(${tag.p ? 1 : (tag.fscx || 100) / 100},${tag.p ? 1 : (tag.fscy || 100) / 100})`,
-    `skew(${tag.fax || 0}rad,${tag.fay || 0}rad)`,
-  ].join(' ');
+    ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),
+    ...scaleTags.map((x) => ([`--ass-tag-${x}`, tag.p ? 1 : (tag[x] || 100) / 100])),
+  ];
 }
 
 export function setTransformOrigin(dialogue, scale) {
@@ -22,7 +40,7 @@ export function setTransformOrigin(dialogue, scale) {
   }
   for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
     const node = $div.childNodes[i];
-    if (node.dataset.hasRotate === '') {
+    if (node.dataset.rotate === '') {
       // It's not extremely precise for offsets are round the value to an integer.
       const tox = org.x - x - node.offsetLeft;
       const toy = org.y - y - node.offsetTop;

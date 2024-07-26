@@ -98,7 +98,7 @@ export function getPosition(dialogue, store) {
       store.width - width - scale * margin.right,
     ][align.h];
     const hasT = slices.some((slice) => (
-      slice.fragments.some(({ animationName }) => animationName)
+      slice.fragments.some(({ keyframes }) => keyframes?.length)
     ));
     y = hasT
       ? [
@@ -108,5 +108,6 @@ export function getPosition(dialogue, store) {
       ][align.v]
       : allocate(dialogue, store);
   }
+  // TODO: use % for x and y
   return { x, y };
 }

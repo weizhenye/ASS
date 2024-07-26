@@ -100,32 +100,33 @@ There are four valid values, we suppose video resolution is 1280x720 and script 
 ass.resampling = 'video_width';
 ```
 
+## Browser Compatibility
+
+ASS.js uses many Web APIs to render subtitles, some features will be disabled if you use a old browser.
+
+| Feature | Web API | Chrome | Firefox | Safari |
+| - | - | - | - | - |
+| `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 3.5 | 13.1 |
+| Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
+| Animations<br>(`\t`, `\move`, `\fade`, Effect) | [Web Animations API](https://caniuse.com/web-animation) | 36 | 33 | 13.1 |
+| Animations<br>(`\t`, `\move`, `\fade`, Effect) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
+| `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
+
 ## TODO
 
-Items with <del>strikethrough</del> means they won't be supported.
-
 * [Script Info]
-  * ~~Synch Point~~
-  * ~~PlayDepth~~
-  * __WrapStyle__: 0, 3
+  * __WrapStyle__: 3
   * __Collisions__: Reverse
 * [Events]
-  * ~~Picture~~
-  * ~~Sound~~
-  * ~~Movie~~
-  * ~~Command~~
   * __Dialogue__
     + __Effect__
-      - ~~Karaoke~~: as an effect type is obsolete
       - __Scroll up__: fadeawayheight
       - __Scroll down__: fadeawayheight
       - __Banner__: fadeawaywidth
     + __Text__ (override codes)
       - __\k, \kf, \ko, \kt, \K__: Karaoke
-      - __\q__: 0, 3
+      - __\q__: 3
       - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \\[i]clip
-* ~~[Fonts]~~
-* ~~[Graphics]~~
 
 ## Known issues
 

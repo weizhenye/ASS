@@ -33,6 +33,25 @@
   text-shadow: var(--ass-border-delta);
   opacity: var(--ass-border-opacity);
 }
+.ASS-dialogue [data-rotate] {
+  /* https://github.com/libass/libass/issues/805 */
+  transform: perspective(312.5px)
+    rotateY(calc(var(--ass-tag-fry) * 1deg))
+    rotateX(calc(var(--ass-tag-frx) * 1deg))
+    rotateZ(calc(var(--ass-tag-frz) * -1deg));
+}
+.ASS-dialogue [data-text][data-rotate] {
+  transform-style: preserve-3d;
+  word-break: normal;
+  white-space: nowrap;
+}
+.ASS-dialogue [data-scale],
+.ASS-dialogue [data-skew] {
+  display: inline-block;
+  transform: scale(var(--ass-tag-fscx), var(--ass-tag-fscy))
+    skew(calc(var(--ass-tag-fax) * 1rad), calc(var(--ass-tag-fay) * 1rad));
+  transform-origin: var(--ass-align-h) var(--ass-align-v);
+}
 .ASS-fix-font-size {
   font-size: 2048px;
   font-family: Arial;

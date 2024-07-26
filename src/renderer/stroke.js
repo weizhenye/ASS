@@ -133,14 +133,14 @@ export function createCSSStroke(tag, scale) {
   const blur = tag.blur || tag.be || 0;
   const deltaOffsets = getOffsets(bx, by);
   return [
-    { key: 'border-width', value: `${Math.min(bx, by) * 2}px` },
-    { key: 'border-color', value: bc },
-    { key: 'border-opacity', value: alpha2opacity(tag.a3) },
-    { key: 'border-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join(',') },
-    { key: 'shadow-offset', value: `${sx}px, ${sy}px` },
-    { key: 'shadow-color', value: sc },
-    { key: 'shadow-opacity', value: alpha2opacity(tag.a4) },
-    { key: 'shadow-delta', value: deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join(',') },
-    { key: 'blur', value: `blur(${blur}px)` },
-  ].map((kv) => Object.assign(kv, { key: `--ass-${kv.key}` }));
+    ['border-width', `${Math.min(bx, by) * 2}px`],
+    ['border-color', bc],
+    ['border-opacity', alpha2opacity(tag.a3)],
+    ['border-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join(',')],
+    ['shadow-offset', `${sx}px, ${sy}px`],
+    ['shadow-color', sc],
+    ['shadow-opacity', alpha2opacity(tag.a4)],
+    ['shadow-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join(',')],
+    ['blur', `blur(${blur}px)`],
+  ].map(([k, v]) => [`--ass-${k}`, v]);
 }

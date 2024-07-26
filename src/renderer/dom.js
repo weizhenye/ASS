@@ -1,8 +1,8 @@
-import { color2rgba, transformTags, initAnimation } from '../utils.js';
+import { color2rgba, initAnimation } from '../utils.js';
 import { createDrawing } from './drawing.js';
 import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
-import { createTransform } from './transform.js';
+import { rotateTags, scaleTags, skewTags, createTransform } from './transform.js';
 
 function encodeText(text, q) {
   return text
@@ -16,7 +16,7 @@ export function createDialogue(dialogue, store) {
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
   const df = document.createDocumentFragment();
-  const { slices, start, end } = dialogue;
+  const { align, slices, start, end } = dialogue;
   const animationOptions = {
     duration: (end - start) * 1000,
     delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
@@ -30,7 +30,10 @@ export function createDialogue(dialogue, store) {
       const { text, drawing } = fragment;
       const tag = { ...sliceTag, ...fragment.tag };
       let cssText = 'display:inline-block;';
-      const cssVars = [];
+      const cssVars = [
+        ['--ass-align-h', ['left', 'center', 'right'][align.h]],
+        ['--ass-align-v', ['bottom', 'center', 'top'][align.v]],
+      ];
       if (!drawing) {
         cssText += `font-family:"${tag.fn}",Arial;`;
         cssText += `font-size:calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px);`;
@@ -71,45 +74,55 @@ export function createDialogue(dialogue, store) {
           cssText += 'word-break:normal;white-space:nowrap;';
         }
       }
-      const hasTransfrom = transformTags.some((x) => (
-        /^fsc[xy]$/.test(x) ? tag[x] !== 100 : !!tag[x]
-      ));
-      if (hasTransfrom) {
-        cssText += `transform:${createTransform(tag)};`;
-        if (!drawing) {
-          cssText += 'transform-style:preserve-3d;word-break:normal;white-space:nowrap;';
-        }
-      }
       if (drawing && tag.pbo) {
         const pbo = -tag.pbo * (tag.fscy || 100) / 100;
         cssText += `vertical-align:calc(var(--ass-scale) * ${pbo}px);`;
       }
 
-      const hasRotate = /"fr[x-z]":[^0]/.test(JSON.stringify(tag));
+      cssVars.push(...createTransform(tag));
+      const hasRotate = rotateTags.some((x) => tag[x] || tag.t?.[x]);
+      const hasScale = scaleTags.some((x) => tag[x] !== 100 || tag.t?.[x] !== 100);
+      const hasSkew = skewTags.some((x) => tag[x] || tag.t?.[x]);
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
+        const $ssspan = document.createElement('span');
+        if (hasScale || hasSkew) {
+          if (hasScale) {
+            $ssspan.dataset.scale = '';
+          }
+          if (hasSkew) {
+            $ssspan.dataset.skew = '';
+          }
+          $ssspan.textContent = content;
+        }
         if (hasRotate) {
-          $span.dataset.hasRotate = '';
+          $span.dataset.rotate = '';
         }
         if (drawing) {
+          $span.dataset.drawing = '';
           const obj = createDrawing(fragment, sliceTag, store);
           if (!obj) return;
           $span.style.cssText = obj.cssText;
           $span.append(obj.$svg);
         } else {
+          $span.dataset.text = '';
           if (idx) {
             df.append(document.createElement('br'));
           }
           if (!content) return;
-          $span.textContent = content;
+          if (hasScale || hasSkew) {
+            $span.append($ssspan);
+          } else {
+            $span.textContent = content;
+          }
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
             $span.dataset.stroke = content;
           }
         }
         // TODO: maybe it can be optimized
         $span.style.cssText += cssText;
-        cssVars.forEach(({ key, value }) => {
-          $span.style.setProperty(key, value);
+        cssVars.forEach(([k, v]) => {
+          $span.style.setProperty(k, v);
         });
         if (fragment.keyframes) {
           const animation = initAnimation(
