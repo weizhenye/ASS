@@ -88,12 +88,12 @@ export function createPause(store) {
 }
 
 export function createResize(that, store) {
-  const { video, box, svg } = store;
+  const { video, box, svg, layoutRes } = store;
   return function resize() {
     const cw = video.clientWidth;
     const ch = video.clientHeight;
-    const vw = video.videoWidth || cw;
-    const vh = video.videoHeight || ch;
+    const vw = layoutRes.width || video.videoWidth || cw;
+    const vh = layoutRes.height || video.videoHeight || ch;
     const sw = store.scriptRes.width;
     const sh = store.scriptRes.height;
     let rw = sw;

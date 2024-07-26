@@ -38,8 +38,10 @@ export default class ASS {
     scale: 1,
     width: 0,
     height: 0,
-    /** resolution from ASS file, it's PlayResX and PlayResY  */
+    /** resolution from ASS file, it's PlayResX and PlayResY */
     scriptRes: {},
+    /** resolution from ASS file, it's LayoutResX and LayoutResY */
+    layoutRes: {},
     /** resolution after resampling */
     resampledRes: {},
     /** current index of dialogues to match currentTime */
@@ -105,9 +107,13 @@ export default class ASS {
 
     const { info, width, height, styles, dialogues } = compile(content);
     this.#store.info = info;
+    this.#store.layoutRes = {
+      width: info.LayoutResX * 1 || video.videoWidth || video.clientWidth,
+      height: info.LayoutResY * 1 || video.videoHeight || video.clientHeight,
+    };
     this.#store.scriptRes = {
-      width: width || video.videoWidth || video.clientWidth,
-      height: height || video.videoHeight || video.clientHeight,
+      width: width || this.#store.layoutRes.width,
+      height: height || this.#store.layoutRes.height,
     };
     this.#store.styles = styles;
     this.#store.dialogues = dialogues.map((dia) => Object.assign(dia, {
@@ -115,7 +121,7 @@ export default class ASS {
       align: {
         // 0: left, 1: center, 2: right
         h: (dia.alignment + 2) % 3,
-        // 0: top, 1: center, 2: bottom
+        // 0: bottom, 1: center, 2: top
         v: Math.trunc((dia.alignment - 1) / 3),
       },
     }));
