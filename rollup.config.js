@@ -17,6 +17,17 @@ export default {
       format: 'esm',
       plugins: [terser()],
     },
+    {
+      file: 'dist/ass.global.js',
+      format: 'iife',
+      name: 'ASS',
+    },
+    {
+      file: 'dist/ass.global.min.js',
+      format: 'iife',
+      name: 'ASS',
+      plugins: [terser()],
+    },
   ],
   plugins: [
     replace({

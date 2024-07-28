@@ -21,16 +21,26 @@ npm install assjs
 
 CDN: [jsDelivr](https://www.jsdelivr.com/package/npm/assjs), [unpkg](https://unpkg.com/assjs/)
 
+ASS.js can be used as a JavaScript module:
+
+```html
+<script type="module">
+import ASS from '/path/to/assjs/dist/ass.min.js';
+</script>
+```
+
+or a classic script:
+
+```html
+<script src="/path/to/assjs/dist/ass.global.min.js">
+```
+
 ## Usage
 
 ```html
-<div id="container" style="position: relative;">
-  <video
-    id="video"
-    src="./example.mp4"
-    style="position: absolute; width: 100%; height: 100%;"
-  ></video>
-  <!-- ASS will be added here -->
+<div id="player">
+  <video id="video" src="./example.mp4"></video>
+  <div id="ass-container"></div>
 </div>
 ```
 
@@ -39,11 +49,20 @@ import ASS from 'assjs';
 
 const content = await fetch('/path/to/example.ass').then((res) => res.text());
 const ass = new ASS(content, document.querySelector('#video'), {
-  container: document.querySelector('#container'),
+  container: document.querySelector('#ass-container'),
 });
 ```
 
-If you click the native fullscreen button in video element, only `<video>` will be fullscreened, so ASS will not show. You should use a custom button and call `document.querySelector('#container').requestFullscreen()` to ensure ASS is contained.
+`new ASS()` will create some elements and append to the container, and sync the render area's size with the video element. **You should set styles yourself to make sure the container is overlap on the video and match the position.** For example:
+
+```html
+<div id="player" style="position: relative;">
+  <video id="video" src="./example.mp4" style="position: absolute; top: 0; left: 0;"></video>
+  <div id="ass-container" style="position: absolute; top: 0; left: 0;"></div>
+</div>
+```
+
+If you click the native fullscreen button in video element, only `<video>` will be fullscreened, so ASS will not show. You should use a custom button and call `document.querySelector('#player').requestFullscreen()` to ensure ASS is contained.
 
 ## API
 
