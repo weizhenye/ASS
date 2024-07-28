@@ -43,21 +43,12 @@ export function createSeek(store) {
     const { video, dialogues } = store;
     const vct = video.currentTime - store.delay;
     store.index = (() => {
-      let from = 0;
-      const to = dialogues.length - 1;
-      while (from + 1 < to && vct > dialogues[(to + from) >> 1].end) {
-        from = (to + from) >> 1;
-      }
-      if (!from) return 0;
-      for (let i = from; i < to; i += 1) {
-        if (
-          dialogues[i].end > vct && vct >= dialogues[i].start
-          || (i && dialogues[i - 1].end < vct && vct < dialogues[i].start)
-        ) {
+      for (let i = 0; i < dialogues.length; i += 1) {
+        if (vct < dialogues[i].end) {
           return i;
         }
       }
-      return to;
+      return dialogues.length - 1;
     })();
     framing(store);
   };
