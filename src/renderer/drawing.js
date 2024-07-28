@@ -3,10 +3,9 @@ import { createSVGStroke } from './stroke.js';
 
 export function createDrawing(fragment, styleTag, store) {
   if (!fragment.drawing.d) return null;
-  const { scale, info } = store;
   const tag = { ...styleTag, ...fragment.tag };
   const { minX, minY, width, height } = fragment.drawing;
-  const baseScale = scale / (1 << (tag.p - 1));
+  const baseScale = store.scale / (1 << (tag.p - 1));
   const scaleX = (tag.fscx ? tag.fscx / 100 : 1) * baseScale;
   const scaleY = (tag.fscy ? tag.fscy / 100 : 1) * baseScale;
   const blur = tag.blur || tag.be || 0;
@@ -19,7 +18,7 @@ export function createDrawing(fragment, styleTag, store) {
     ['height', vbh],
     ['viewBox', `${-vbx} ${-vby} ${vbw} ${vbh}`],
   ]);
-  const strokeScale = /yes/i.test(info.ScaledBorderAndShadow) ? scale : 1;
+  const strokeScale = store.sbas ? store.scale : 1;
   const filterId = `ASS-${uuid()}`;
   const $defs = createSVGEl('defs');
   $defs.append(createSVGStroke(tag, filterId, strokeScale));

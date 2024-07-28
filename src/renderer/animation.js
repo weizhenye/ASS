@@ -1,5 +1,6 @@
 import { color2rgba } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
+import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
 
 // TODO: multi \t can't be merged directly
@@ -98,8 +99,36 @@ function createTransformKeyframes({ fromTag, tag, fragment }) {
   return Object.fromEntries(createTransform(toTag));
 }
 
+export function createAnimatableVars(tag) {
+  return [
+    ['real-fs', getRealFontSize(tag.fn, tag.fs)],
+    ['tag-fs', tag.fs],
+    ['tag-fsp', tag.fsp],
+    ['fill-color', color2rgba(tag.a1 + tag.c1)],
+  ]
+    .filter(([, v]) => v)
+    .map(([k, v]) => [`--ass-${k}`, v]);
+}
+
+if (window.CSS.registerProperty) {
+  ['real-fs', 'tag-fs', 'tag-fsp'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: '0',
+    });
+  });
+  window.CSS.registerProperty({
+    name: '--ass-fill-color',
+    syntax: '<color>',
+    inherits: true,
+    initialValue: 'transparent',
+  });
+}
+
 // TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
-export function setKeyframes(dialogue, styles) {
+export function setKeyframes(dialogue, store) {
   const { start, end, effect, move, fade, slices } = dialogue;
   const duration = (end - start) * 1000;
   const keyframes = [
@@ -111,7 +140,7 @@ export function setKeyframes(dialogue, styles) {
     Object.assign(dialogue, { keyframes });
   }
   slices.forEach((slice) => {
-    const sliceTag = styles[slice.style].tag;
+    const sliceTag = store.styles[slice.style].tag;
     slice.fragments.forEach((fragment) => {
       if (!fragment.tag.t || fragment.tag.t.length === 0) {
         return;
@@ -128,25 +157,19 @@ export function setKeyframes(dialogue, styles) {
         return tag;
       }, {});
       const fDuration = Math.max(duration, ...tTags.map(({ t2 }) => t2));
-      const kfs = tTags.map(({ t2, tag }) => {
-        const hasAlpha = (
-          tag.a1 !== undefined
-          && tag.a1 === tag.a2
-          && tag.a2 === tag.a3
-          && tag.a3 === tag.a4
-        );
-        // TODO: border and shadow, should animate CSS vars
-        return {
-          offset: t2 / fDuration,
-          ...(tag.fs && { 'font-size': `calc(calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px)` }),
-          ...(tag.fsp && { 'letter-spacing': `calc(calc(var(--ass-scale) * ${tag.fsp}px)` }),
-          ...((tag.c1 || (tag.a1 && !hasAlpha)) && {
-            color: color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1)),
-          }),
-          ...(hasAlpha && { opacity: 1 - Number.parseInt(tag.a1, 16) / 255 }),
-          ...createTransformKeyframes({ fromTag, tag, fragment }),
-        };
-      }).sort((a, b) => a.offset - b.offset);
+      const kfs = tTags.map(({ t2, tag }) => ({
+        offset: t2 / fDuration,
+        ...Object.fromEntries(createAnimatableVars({
+          ...tag,
+          a1: tag.a1 || fromTag.a1,
+          c1: tag.c1 || fromTag.c1,
+        })),
+        ...Object.fromEntries(createCSSStroke(
+          { ...fromTag, ...tag },
+          store.sbas ? store.scale : 1,
+        )),
+        ...createTransformKeyframes({ fromTag, tag, fragment }),
+      })).sort((a, b) => a.offset - b.offset);
       if (kfs.length > 0) {
         Object.assign(fragment, { keyframes: kfs, duration: fDuration });
       }

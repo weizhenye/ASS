@@ -46,8 +46,8 @@ export default class ASS {
     resampledRes: {},
     /** current index of dialogues to match currentTime */
     index: 0,
-    /** @type {import('ass-compiler').ScriptInfo} */
-    info: {},
+    /** @type {boolean} ScaledBorderAndShadow */
+    sbas: true,
     /** @type {import('ass-compiler').CompiledASSStyle} */
     styles: {},
     /** @type {import('ass-compiler').Dialogue[]} */
@@ -106,7 +106,7 @@ export default class ASS {
     if (!container) throw new Error('Missing container.');
 
     const { info, width, height, styles, dialogues } = compile(content);
-    this.#store.info = info;
+    this.#store.sbas = /yes/i.test(info.ScaledBorderAndShadow);
     this.#store.layoutRes = {
       width: info.LayoutResX * 1 || video.videoWidth || video.clientWidth,
       height: info.LayoutResY * 1 || video.videoHeight || video.clientHeight,
@@ -153,7 +153,7 @@ export default class ASS {
     this.resampling = resampling;
 
     dialogues.forEach((dialogue) => {
-      setKeyframes(dialogue, styles);
+      setKeyframes(dialogue, this.#store);
     });
 
     const observer = new ResizeObserver(this.#resize);

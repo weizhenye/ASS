@@ -130,6 +130,7 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | Animations<br>(`\t`, `\move`, `\fade`, Effect) | [Web Animations API](https://caniuse.com/web-animation) | 36 | 33 | 13.1 |
 | Animations<br>(`\t`, `\move`, `\fade`, Effect) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
+| `\bord0` when BorderStyle=3 | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
 
 ## TODO
 

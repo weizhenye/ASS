@@ -118,14 +118,10 @@ export function createResize(that, store) {
     store.height = bh;
     store.resampledRes = { width: rw, height: rh };
 
-    const cssText = (
-      `width:${bw}px;`
-      + `height:${bh}px;`
-      + `top:${(ch - bh) / 2}px;`
-      + `left:${(cw - bw) / 2}px;`
-    );
+    const cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
     box.style.cssText = cssText;
     box.style.setProperty('--ass-scale', store.scale);
+    box.style.setProperty('--ass-scale-stroke', store.sbas ? store.scale : 1);
     svg.style.cssText = cssText;
 
     createSeek(store)();

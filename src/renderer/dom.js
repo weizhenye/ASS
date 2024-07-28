@@ -1,6 +1,6 @@
-import { color2rgba, initAnimation } from '../utils.js';
+import { initAnimation } from '../utils.js';
 import { createDrawing } from './drawing.js';
-import { getRealFontSize } from './font-size.js';
+import { createAnimatableVars } from './animation.js';
 import { createCSSStroke } from './stroke.js';
 import { rotateTags, scaleTags, skewTags, createTransform } from './transform.js';
 
@@ -12,11 +12,17 @@ function encodeText(text, q) {
 }
 
 export function createDialogue(dialogue, store) {
-  const { video, styles, info } = store;
+  const { video, styles } = store;
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
   const df = document.createDocumentFragment();
   const { align, slices, start, end } = dialogue;
+  [
+    ['--ass-align-h', ['left', 'center', 'right'][align.h]],
+    ['--ass-align-v', ['bottom', 'center', 'top'][align.v]],
+  ].forEach(([k, v]) => {
+    $div.style.setProperty(k, v);
+  });
   const animationOptions = {
     duration: (end - start) * 1000,
     delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
@@ -29,50 +35,17 @@ export function createDialogue(dialogue, store) {
     slice.fragments.forEach((fragment) => {
       const { text, drawing } = fragment;
       const tag = { ...sliceTag, ...fragment.tag };
-      let cssText = 'display:inline-block;';
-      const cssVars = [
-        ['--ass-align-h', ['left', 'center', 'right'][align.h]],
-        ['--ass-align-v', ['bottom', 'center', 'top'][align.v]],
-      ];
+      let cssText = '';
+      const cssVars = [];
       if (!drawing) {
-        cssText += `font-family:"${tag.fn}",Arial;`;
-        cssText += `font-size:calc(var(--ass-scale) * ${getRealFontSize(tag.fn, tag.fs)}px);`;
-        cssText += `line-height:calc(var(--ass-scale) * ${tag.fs}px);`;
-        cssText += `color:${color2rgba(tag.a1 + tag.c1)};`;
-        const scale = /yes/i.test(info.ScaledBorderAndShadow) ? store.scale : 1;
-        if (borderStyle === 1) {
-          cssVars.push(...createCSSStroke(tag, scale));
-        }
-        if (borderStyle === 3) {
-          // TODO: \bord0\shad16
-          const bc = color2rgba(tag.a3 + tag.c3);
-          const bx = tag.xbord * scale;
-          const by = tag.ybord * scale;
-          const sc = color2rgba(tag.a4 + tag.c4);
-          const sx = tag.xshad * scale;
-          const sy = tag.yshad * scale;
-          cssText += (
-            `${bx || by ? `background-color:${bc};` : ''}`
-            + `border:0 solid ${bc};`
-            + `border-width:${bx}px ${by}px;`
-            + `margin:${-bx}px ${-by}px;`
-            + `box-shadow:${sx}px ${sy}px ${sc};`
-          );
-        }
+        cssVars.push(...createAnimatableVars(tag));
+        const scale = store.sbas ? store.scale : 1;
+        cssVars.push(...createCSSStroke(tag, scale));
+
+        cssText += `font-family:"${tag.fn}";`;
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
         cssText += (tag.u || tag.s) ? `text-decoration:${tag.u ? 'underline' : ''} ${tag.s ? 'line-through' : ''};` : '';
-        cssText += tag.fsp ? `letter-spacing:calc(var(--ass-scale) * ${tag.fsp}px);` : '';
-        // TODO: q0 and q3 is same for now, at least better than nothing.
-        if (tag.q === 0 || tag.q === 3) {
-          cssText += 'text-wrap:balance;';
-        }
-        if (tag.q === 1) {
-          cssText += 'word-break:break-word;white-space:normal;';
-        }
-        if (tag.q === 2) {
-          cssText += 'word-break:normal;white-space:nowrap;';
-        }
       }
       if (drawing && tag.pbo) {
         const pbo = -tag.pbo * (tag.fscy || 100) / 100;
@@ -80,12 +53,16 @@ export function createDialogue(dialogue, store) {
       }
 
       cssVars.push(...createTransform(tag));
-      const hasRotate = rotateTags.some((x) => tag[x] || tag.t?.[x]);
-      const hasScale = scaleTags.some((x) => tag[x] !== 100 || tag.t?.[x] !== 100);
-      const hasSkew = skewTags.some((x) => tag[x] || tag.t?.[x]);
+      const tags = [tag, ...(tag.t || []).map((t) => t.tag)];
+      const hasRotate = rotateTags.some((x) => tags.some((t) => t[x]));
+      const hasScale = scaleTags.some((x) => tags.some((t) => t[x] !== undefined && t[x] !== 100));
+      const hasSkew = skewTags.some((x) => tags.some((t) => t[x]));
+
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
+        $span.dataset.wrapStyle = tag.q;
+        $span.dataset.borderStyle = borderStyle;
         if (hasScale || hasSkew) {
           if (hasScale) {
             $ssspan.dataset.scale = '';
@@ -115,11 +92,11 @@ export function createDialogue(dialogue, store) {
           } else {
             $span.textContent = content;
           }
+          const el = hasScale || hasSkew ? $ssspan : $span;
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
-            $span.dataset.stroke = content;
+            el.dataset.text = content;
           }
         }
-        // TODO: maybe it can be optimized
         $span.style.cssText += cssText;
         cssVars.forEach(([k, v]) => {
           $span.style.setProperty(k, v);

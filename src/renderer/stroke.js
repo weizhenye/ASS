@@ -128,19 +128,54 @@ export function createCSSStroke(tag, scale) {
   const bx = tag.xbord * scale;
   const by = tag.ybord * scale;
   const sc = color2rgba(`00${tag.c4}`);
-  const sx = tag.xshad * scale;
-  const sy = tag.yshad * scale;
   const blur = tag.blur || tag.be || 0;
+  // TODO: is there any way to remove this hack?
   const deltaOffsets = getOffsets(bx, by);
   return [
     ['border-width', `${Math.min(bx, by) * 2}px`],
     ['border-color', bc],
     ['border-opacity', alpha2opacity(tag.a3)],
     ['border-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join(',')],
-    ['shadow-offset', `${sx}px, ${sy}px`],
     ['shadow-color', sc],
     ['shadow-opacity', alpha2opacity(tag.a4)],
     ['shadow-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join(',')],
-    ['blur', `blur(${blur}px)`],
+    ['tag-blur', blur],
+    ['tag-xbord', tag.xbord],
+    ['tag-ybord', tag.ybord],
+    ['tag-xshad', tag.xshad],
+    ['tag-yshad', tag.yshad],
   ].map(([k, v]) => [`--ass-${k}`, v]);
+}
+
+if (window.CSS.registerProperty) {
+  window.CSS.registerProperty({
+    name: '--ass-border-width',
+    syntax: '<length>',
+    inherits: true,
+    initialValue: '0px',
+  });
+  ['border-color', 'shadow-color'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<color>',
+      inherits: true,
+      initialValue: 'transparent',
+    });
+  });
+  ['border-opacity', 'shadow-opacity'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: '1',
+    });
+  });
+  ['blur', 'xbord', 'ybord', 'xshad', 'yshad'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-tag-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: '0',
+    });
+  });
 }
