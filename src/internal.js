@@ -48,7 +48,7 @@ export function createSeek(store) {
           return i;
         }
       }
-      return dialogues.length - 1;
+      return (dialogues.length || 1) - 1;
     })();
     framing(store);
   };

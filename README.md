@@ -53,7 +53,7 @@ const ass = new ASS(content, document.querySelector('#video'), {
 });
 ```
 
-`new ASS()` will create some elements and append to the container, and sync the render area's size with the video element. **You should set styles yourself to make sure the container is overlap on the video and match the position.** For example:
+`new ASS()` will append several elements to the container, and sync the render area's size with the video element. **You should set styles yourself to make sure the container is overlap on the video and match the position.** For example:
 
 ```html
 <div id="player" style="position: relative;">
@@ -127,7 +127,6 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | - | - | - | - | - |
 | `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 3.5 | 13.1 |
 | Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
-| Animations<br>(`\t`, `\move`, `\fade`, Effect) | [Web Animations API](https://caniuse.com/web-animation) | 36 | 33 | 13.1 |
 | Animations<br>(`\t`, `\move`, `\fade`, Effect) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
 | `\bord0` when BorderStyle=3 | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
