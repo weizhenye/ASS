@@ -124,7 +124,6 @@
   transform-origin: var(--ass-align-h) var(--ass-align-v);
 }
 .ASS-fix-font-size {
-  font-size: 2048px;
   font-family: Arial;
   line-height: normal;
   width: 0;
