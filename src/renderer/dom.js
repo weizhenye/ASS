@@ -18,8 +18,8 @@ export function createDialogue(dialogue, store) {
   const df = document.createDocumentFragment();
   const { align, slices, start, end } = dialogue;
   [
-    ['--ass-align-h', ['left', 'center', 'right'][align.h]],
-    ['--ass-align-v', ['bottom', 'center', 'top'][align.v]],
+    ['--ass-align-h', ['0%', '50%', '100%'][align.h]],
+    ['--ass-align-v', ['100%', '50%', '0%'][align.v]],
   ].forEach(([k, v]) => {
     $div.style.setProperty(k, v);
   });

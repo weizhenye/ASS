@@ -6,8 +6,10 @@
 }
 .ASS-dialogue {
   font-size: 0;
+  width: max-content;
   position: absolute;
   z-index: 0;
+  transform: translate(calc(var(--ass-align-h) * -1), calc(var(--ass-align-v) * -1));
 }
 .ASS-dialogue span {
   display: inline-block;

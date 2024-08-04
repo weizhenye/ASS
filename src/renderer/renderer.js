@@ -17,7 +17,7 @@ export function renderer(dialogue, store) {
   Object.assign(dialogue, { height });
   const { x, y } = getPosition(dialogue, store);
   Object.assign(dialogue, { x, y });
-  $div.style.cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
+  $div.style.cssText += `left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);
   Object.assign(dialogue, getClipPath(dialogue, store));
   if (dialogue.effect?.name?.startsWith('scroll')) {

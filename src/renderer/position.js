@@ -109,5 +109,8 @@ export function getPosition(dialogue, store) {
       : allocate(dialogue, store);
   }
   // TODO: use % for x and y
-  return { x, y };
+  return {
+    x: x + [0, width / 2, width][align.h],
+    y: y + [height, height / 2, 0][align.v],
+  };
 }
