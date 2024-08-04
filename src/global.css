@@ -35,6 +35,13 @@
 }
 .ASS-dialogue [data-border-style="1"] {
   position: relative;
+  /* for \bord0\blur4 */
+  filter: blur(calc(
+    var(--ass-tag-blur)
+    * calc(1 - sign(var(--ass-tag-xbord)))
+    * calc(1 - sign(var(--ass-tag-ybord)))
+    * 1px
+  ));
 }
 .ASS-dialogue [data-border-style="1"]::before,
 .ASS-dialogue [data-border-style="1"]::after {
