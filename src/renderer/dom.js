@@ -91,9 +91,9 @@ export function createDialogue(dialogue, store) {
             $span.textContent = content;
           }
           const el = hasScale || hasSkew ? $ssspan : $span;
+          el.dataset.text = content;
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
             el.dataset.borderStyle = borderStyle;
-            el.dataset.text = content;
           }
         }
         $span.style.cssText += cssText;
