@@ -128,7 +128,7 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 
 | Feature | Web API | Chrome | Firefox | Safari |
 | - | - | - | - | - |
-| `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 3.5 | 13.1 |
+| `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 54 | 13.1 |
 | Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
 | Animations (`\t`) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
@@ -149,7 +149,7 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
     + __Text__ (override codes)
       - __\k, \kf, \ko, \kt, \K__: Karaoke
       - __\q__: 3
-      - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a, \\[i]clip
+      - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a
 
 ## Known issues
 

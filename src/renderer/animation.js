@@ -2,6 +2,7 @@ import { color2rgba } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
+import { createRectClip } from './clip.js';
 
 // TODO: multi \t can't be merged directly
 function mergeT(ts) {
@@ -145,11 +146,13 @@ export function setKeyframes(dialogue, store) {
       if (!fragment.tag.t || fragment.tag.t.length === 0) {
         return;
       }
-      const fromTag = { ...sliceTag, ...fragment.tag };
+      const fromTag = {
+        ...sliceTag,
+        ...fragment.tag,
+        ...(dialogue.clip?.dots && { clip: dialogue.clip }),
+      };
       const tTags = mergeT(fragment.tag.t).sort((a, b) => a.t2 - b.t2 || a.t1 - b.t1);
-      if (tTags[0].t1 > 0) {
-        tTags.unshift({ t1: 0, t2: tTags[0].t1, tag: fromTag });
-      }
+      tTags.unshift({ t1: 0, t2: tTags[0].t1, tag: fromTag });
       tTags.reduce((prevTag, curr) => {
         const tag = { ...prevTag, ...curr.tag };
         tag.t = null;
@@ -169,6 +172,9 @@ export function setKeyframes(dialogue, store) {
           store.sbas ? store.scale : 1,
         )),
         ...createTransformKeyframes({ fromTag, tag, fragment }),
+        ...(tag.clip?.dots && {
+          clipPath: createRectClip(tag.clip, store.scriptRes.width, store.scriptRes.height),
+        }),
       })).sort((a, b) => a.offset - b.offset);
       if (kfs.length > 0) {
         Object.assign(fragment, { keyframes: kfs, duration: fDuration });
