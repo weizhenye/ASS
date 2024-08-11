@@ -32,7 +32,10 @@ import ASS from '/path/to/assjs/dist/ass.min.js';
 or a classic script:
 
 ```html
-<script src="/path/to/assjs/dist/ass.global.min.js">
+<script src="/path/to/assjs/dist/ass.global.min.js"></script>
+<script>
+console.log(window.ASS);
+</script>
 ```
 
 ## Usage
@@ -127,9 +130,10 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | - | - | - | - | - |
 | `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 3.5 | 13.1 |
 | Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
-| Animations<br>(`\t`, `\move`, `\fade`, Effect) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
+| Animations (`\t`) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
-| `\bord0` when BorderStyle=3 | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
+| BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
+| `\blur` with `\bord0` | [sign()](https://caniuse.com/mdn-css_types_sign) | - | 118 | 15.4 |
 
 ## TODO
 
