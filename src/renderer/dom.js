@@ -62,7 +62,6 @@ export function createDialogue(dialogue, store) {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
         $span.dataset.wrapStyle = tag.q;
-        $span.dataset.borderStyle = borderStyle;
         if (hasScale || hasSkew) {
           if (hasScale) {
             $ssspan.dataset.scale = '';
@@ -82,7 +81,6 @@ export function createDialogue(dialogue, store) {
           $span.style.cssText = obj.cssText;
           $span.append(obj.$svg);
         } else {
-          $span.dataset.text = '';
           if (idx) {
             df.append(document.createElement('br'));
           }
@@ -94,6 +92,7 @@ export function createDialogue(dialogue, store) {
           }
           const el = hasScale || hasSkew ? $ssspan : $span;
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
+            el.dataset.borderStyle = borderStyle;
             el.dataset.text = content;
           }
         }
