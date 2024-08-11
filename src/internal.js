@@ -79,7 +79,7 @@ export function createPause(store) {
 }
 
 export function createResize(that, store) {
-  const { video, box, svg, layoutRes } = store;
+  const { video, box, layoutRes } = store;
   return function resize() {
     const cw = video.clientWidth;
     const ch = video.clientHeight;
@@ -109,11 +109,9 @@ export function createResize(that, store) {
     store.height = bh;
     store.resampledRes = { width: rw, height: rh };
 
-    const cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
-    box.style.cssText = cssText;
+    box.style.cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
     box.style.setProperty('--ass-scale', store.scale);
     box.style.setProperty('--ass-scale-stroke', store.sbas ? store.scale : 1);
-    svg.style.cssText = cssText;
 
     createSeek(store)();
   };

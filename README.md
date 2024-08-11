@@ -128,8 +128,8 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 
 | Feature | Web API | Chrome | Firefox | Safari |
 | - | - | - | - | - |
-| `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) | 55 | 54 | 13.1 |
 | Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
+| `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) and [path()](https://caniuse.com/mdn-css_types_basic-shape_path) | 88 | 97 | 13.1 |
 | Animations (`\t`) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
 | BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
