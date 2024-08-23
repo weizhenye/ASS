@@ -15,6 +15,7 @@ export function createDialogue(dialogue, store) {
   const { video, styles } = store;
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
+  $div.dataset.wrapStyle = dialogue.q;
   const df = document.createDocumentFragment();
   const { align, slices, start, end } = dialogue;
   [
@@ -61,7 +62,6 @@ export function createDialogue(dialogue, store) {
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
-        $span.dataset.wrapStyle = tag.q;
         if (hasScale || hasSkew) {
           if (hasScale) {
             $ssspan.dataset.scale = '';
