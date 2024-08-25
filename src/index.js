@@ -122,7 +122,9 @@ export default class ASS {
       },
     }));
 
-    container.append($fixFontSize);
+    if ($fixFontSize) {
+      container.append($fixFontSize);
+    }
 
     const { box } = this.#store;
     box.className = 'ASS-box';
@@ -168,7 +170,9 @@ export default class ASS {
     video.removeEventListener('waiting', this.#pause);
     video.removeEventListener('seeking', this.#seek);
 
-    $fixFontSize.remove();
+    if ($fixFontSize) {
+      $fixFontSize.remove();
+    }
     box.remove();
     observer.unobserve(this.#store.video);
 
