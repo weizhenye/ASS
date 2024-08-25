@@ -3,7 +3,7 @@ export function createStyle(dialogue) {
   let cssText = '';
   if (layer) cssText += `z-index:${layer};`;
   cssText += `text-align:${['left', 'center', 'right'][align.h]};`;
-  if (!['banner', 'scroll up', 'scroll downn'].includes(effect?.name)) {
+  if (!effect) {
     if (q !== 2) {
       cssText += `max-width:calc(100% - var(--ass-scale) * ${margin.left + margin.right}px);`;
     }

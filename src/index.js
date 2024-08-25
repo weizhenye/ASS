@@ -113,6 +113,7 @@ export default class ASS {
     };
     this.#store.styles = styles;
     this.#store.dialogues = dialogues.map((dia) => Object.assign(dia, {
+      effect: ['banner', 'scroll up', 'scroll down'].includes(dia.effect?.name) ? dia.effect : null,
       align: {
         // 0: left, 1: center, 2: right
         h: (dia.alignment + 2) % 3,

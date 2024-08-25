@@ -75,17 +75,10 @@ function allocate(dialogue, store) {
 
 export function getPosition(dialogue, store) {
   const { scale } = store;
-  const { effect, move, align, width, height, margin, slices } = dialogue;
+  const { move, align, width, height, margin, slices } = dialogue;
   let x = 0;
   let y = 0;
-  if (effect && effect.name === 'banner') {
-    x = effect.lefttoright ? -width : store.width;
-    y = [
-      store.height - height - margin.vertical,
-      (store.height - height) / 2,
-      margin.vertical,
-    ][align.v];
-  } else if (dialogue.pos || move) {
+  if (dialogue.pos || move) {
     const pos = dialogue.pos || { x: 0, y: 0 };
     const sx = scale * pos.x;
     const sy = scale * pos.y;

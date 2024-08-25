@@ -7,36 +7,36 @@ describe('render animation', () => {
       effect: { name: 'banner', delay: 0, leftToRight: 0, fadeAwayWidth: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateX(0)' },
-      { offset: 1, transform: 'translateX(calc(var(--ass-scale) * -1000px))' },
+      { offset: 0, transform: 'translateX(100%)' },
+      { offset: 1, transform: 'translateX(calc(100% + var(--ass-scale) * -1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'banner', delay: 1, leftToRight: 0, fadeAwayWidth: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateX(0)' },
-      { offset: 1, transform: 'translateX(calc(var(--ass-scale) * -1000px))' },
+      { offset: 0, transform: 'translateX(100%)' },
+      { offset: 1, transform: 'translateX(calc(100% + var(--ass-scale) * -1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'banner', delay: 2, leftToRight: 0, fadeAwayWidth: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateX(0)' },
-      { offset: 1, transform: 'translateX(calc(var(--ass-scale) * -500px))' },
+      { offset: 0, transform: 'translateX(100%)' },
+      { offset: 1, transform: 'translateX(calc(100% + var(--ass-scale) * -500px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'banner', delay: 1, leftToRight: 1, fadeAwayWidth: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateX(0)' },
-      { offset: 1, transform: 'translateX(calc(var(--ass-scale) * 1000px))' },
+      { offset: 0, transform: 'translateX(-100%)' },
+      { offset: 1, transform: 'translateX(calc(-100% + var(--ass-scale) * 1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'banner', delay: 1, leftToRight: 0, fadeAwayWidth: 0 },
       duration: 5000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateX(0)' },
-      { offset: 1, transform: 'translateX(calc(var(--ass-scale) * -5000px))' },
+      { offset: 0, transform: 'translateX(100%)' },
+      { offset: 1, transform: 'translateX(calc(100% + var(--ass-scale) * -5000px))' },
     ]);
   });
 
@@ -45,50 +45,50 @@ describe('render animation', () => {
       effect: { name: 'scroll up', y1: 0, y2: 360, delay: 1, fadeAwayHeight: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * -1000px))' },
+      { offset: 0, transform: 'translateY(100%)' },
+      { offset: 1, transform: 'translateY(calc(100% + var(--ass-scale) * -1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll up', y1: 0, y2: 360, delay: 1, fadeAwayHeight: 0 },
       duration: 2000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * -2000px))' },
+      { offset: 0, transform: 'translateY(100%)' },
+      { offset: 1, transform: 'translateY(calc(100% + var(--ass-scale) * -2000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll up', y1: 0, y2: 360, delay: 2, fadeAwayHeight: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * -500px))' },
+      { offset: 0, transform: 'translateY(100%)' },
+      { offset: 1, transform: 'translateY(calc(100% + var(--ass-scale) * -500px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll up', y1: 0, y2: 360, delay: 0, fadeAwayHeight: 0 },
       duration: 1000,
     })).to.deep.equal([
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * -1000px))' },
+      { offset: 0, transform: 'translateY(100%)' },
+      { offset: 1, transform: 'translateY(calc(100% + var(--ass-scale) * -1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll down', y1: 0, y2: 360, delay: 1, fadeAwayHeight: 0 },
       duration: 1000,
     })).to.deep.equal([
       { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * 1000px))' },
+      { offset: 1, transform: 'translateY(calc(-100% + var(--ass-scale) * 1000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll down', y1: 0, y2: 360, delay: 1, fadeAwayHeight: 0 },
       duration: 2000,
     })).to.deep.equal([
       { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * 2000px))' },
+      { offset: 1, transform: 'translateY(calc(-100% + var(--ass-scale) * 2000px))' },
     ]);
     expect(createEffectKeyframes({
       effect: { name: 'scroll down', y1: 0, y2: 360, delay: 2, fadeAwayHeight: 0 },
       duration: 1000,
     })).to.deep.equal([
       { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: 'translateY(calc(var(--ass-scale) * 500px))' },
+      { offset: 1, transform: 'translateY(calc(-100% + var(--ass-scale) * 500px))' },
     ]);
   });
 

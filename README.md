@@ -139,17 +139,12 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 
 * [Script Info]
   * __WrapStyle__: 3
-  * __Collisions__: Reverse
 * [Events]
   * __Dialogue__
-    + __Effect__
-      - __Scroll up__: fadeawayheight
-      - __Scroll down__: fadeawayheight
-      - __Banner__: fadeawaywidth
     + __Text__ (override codes)
       - __\k, \kf, \ko, \kt, \K__: Karaoke
       - __\q__: 3
-      - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;, \2c, \2a
+      - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;
 
 ## Known issues
 

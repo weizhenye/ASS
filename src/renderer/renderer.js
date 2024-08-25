@@ -3,7 +3,7 @@ import { createDialogue } from './dom.js';
 import { getPosition } from './position.js';
 import { createStyle } from './style.js';
 import { setTransformOrigin } from './transform.js';
-import { getScrollEffect } from './scroll.js';
+import { setEffect } from './effect.js';
 
 export function renderer(dialogue, store) {
   const { $div, animations } = createDialogue(dialogue, store);
@@ -20,8 +20,8 @@ export function renderer(dialogue, store) {
   $div.style.cssText += `left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);
   Object.assign(dialogue, getClipPath(dialogue, store));
-  if (dialogue.effect?.name?.startsWith('scroll')) {
-    Object.assign(dialogue, getScrollEffect(dialogue, store));
+  if (dialogue.effect) {
+    Object.assign(dialogue, { $div: setEffect(dialogue, store) });
   }
   return dialogue;
 }

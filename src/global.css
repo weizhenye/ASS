@@ -142,8 +142,19 @@
   top: 0;
   left: 0;
 }
-.ASS-scroll-area {
+.ASS-effect-area {
   position: absolute;
+  display: flex;
   width: 100%;
+  height: fit-content;
   overflow: hidden;
+  mask-composite: intersect;
+}
+.ASS-effect-area[data-effect="banner"] {
+  flex-direction: column;
+  height: 100%;
+}
+.ASS-effect-area .ASS-dialogue {
+  position: static;
+  transform: none;
 }

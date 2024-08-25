@@ -1,4 +1,4 @@
-import { color2rgba } from '../utils.js';
+import { color2rgba, alpha2opacity, initAnimation } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
 import { createCSSStroke } from './stroke.js';
 import { createTransform } from './transform.js';
@@ -20,23 +20,18 @@ function mergeT(ts) {
 export function createEffectKeyframes({ effect, duration }) {
   // TODO: when effect and move both exist, its behavior is weird, for now only move works.
   const { name, delay, leftToRight } = effect;
-  if (name === 'banner') {
-    const tx = (duration / (delay || 1)) * (leftToRight ? 1 : -1);
-    return [0, `calc(var(--ass-scale) * ${tx}px)`].map((x, i) => ({
-      offset: i,
-      transform: `translateX(${x})`,
-    }));
-  }
-  if (name.startsWith('scroll')) {
-    // speed is 1000px/s when delay=1
-    const updown = /up/.test(name) ? -1 : 1;
-    const y = duration / (delay || 1) * updown;
-    return [
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: `translateY(calc(var(--ass-scale) * ${y}px))` },
-    ];
-  }
-  return [];
+  const translate = name === 'banner' ? 'X' : 'Y';
+  const dir = ({
+    X: leftToRight ? 1 : -1,
+    Y: /up/.test(name) ? -1 : 1,
+  })[translate];
+  const start = -100 * dir;
+  // speed is 1000px/s when delay=1
+  const distance = (duration / (delay || 1)) * dir;
+  return [
+    { offset: 0, transform: `translate${translate}(${start}%)` },
+    { offset: 1, transform: `translate${translate}(calc(${start}% + var(--ass-scale) * ${distance}px))` },
+  ];
 }
 
 function createMoveKeyframes({ move, duration, dialogue }) {
