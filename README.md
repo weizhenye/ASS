@@ -3,23 +3,40 @@
 [![GitHub Action](https://img.shields.io/github/actions/workflow/status/weizhenye/ASS/ci.yml?logo=github)](https://github.com/weizhenye/ASS/actions)
 [![Codecov](https://img.shields.io/codecov/c/gh/weizhenye/ASS?logo=codecov)](https://codecov.io/gh/weizhenye/ASS)
 [![License](https://img.shields.io/npm/l/assjs)](https://github.com/weizhenye/assjs/blob/master/LICENSE)
-[![NPM Version](https://img.shields.io/npm/v/assjs?logo=npm)](https://www.npmjs.com/package/assjs)
-[![jsDelivr](https://img.shields.io/jsdelivr/npm/hm/assjs?logo=jsdelivr)](https://www.jsdelivr.com/package/npm/assjs)
-[![File size](https://img.shields.io/bundlejs/size/assjs)](https://bundlephobia.com/result?p=assjs)
+[![File size](https://img.shields.io/bundlephobia/minzip/assjs)](https://bundlephobia.com/result?p=assjs)
 
-ASS.js uses [ass-compiler](https://github.com/weizhenye/ass-compiler) to parse ASS subtitle file format, and then renders subtitles on HTML5 video.
+<span>・</span>
+<a href="https://ass.js.org/">Online Demo</a>
+<span>・</span>
+<a href="https://github.com/weizhenye/ASS/wiki/ASS-%E5%AD%97%E5%B9%95%E6%A0%BC%E5%BC%8F%E8%A7%84%E8%8C%83">ASS specs (zh-Hans)</a>
+<span>・</span>
+<a href="https://github.com/weizhenye/ass-compiler">ass-compiler</a>
+<span>・</span>
 
-[Demo](https://ass.js.org/)
+ASS.js renders ASS subtitles on HTML5 video, with almost full ASS features.
 
-[ASS specs](https://github.com/weizhenye/ASS/wiki/ASS-%E5%AD%97%E5%B9%95%E6%A0%BC%E5%BC%8F%E8%A7%84%E8%8C%83)(zh-Hans)
+(Karaoke tags `\k`, `\kf`, `\ko`, `\kt`, `\K` are still WIP.)
+
+It's lightweight and suitable for web, **60x** smaller than WebAssembly solutions:
+| | Solution | Size |
+| - | - | - |
+| ASS.js | DOM | ![](https://img.shields.io/github/size/weizhenye/ASS/dist%2Fass.min.js?label=main)
+| [JavascriptSubtitlesOctopus](https://github.com/libass/JavascriptSubtitlesOctopus) | WebAssembly | ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus.js?branch=gh-pages&label=main) ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus-worker.js?branch=gh-pages&label=worker) ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus-worker.wasm?branch=gh-pages&label=wasm) |
+| [JASSUB](https://github.com/ThaUnknown/jassub) | WebAssembly | ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub.umd.js?label=main) ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub-worker.js?label=worker) ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub-worker.wasm?label=wasm) |
+
+WebAssembly solutions also requires to set fallback font to avoid CJK characters turning into tofu, it's a huge cost for web. In ASS.js font fallback is handled by browser, it just works.
+
+However compared to WebAssembly solutions, it's almost impossible for DOM to render exactly same result in every pixels as VSFilter or libass, ASS.js will provide best efforts to accurate rendering.
 
 ## Installation
+
+[![NPM Version](https://img.shields.io/npm/v/assjs?logo=npm)](https://www.npmjs.com/package/assjs)
+[![jsDelivr](https://img.shields.io/jsdelivr/npm/hm/assjs?logo=jsdelivr)](https://www.jsdelivr.com/package/npm/assjs)
+[![](https://img.shields.io/badge/unpkg-555?logo=unpkg)](https://unpkg.com/assjs/)
 
 ```bash
 npm install assjs
 ```
-
-CDN: [jsDelivr](https://www.jsdelivr.com/package/npm/assjs), [unpkg](https://unpkg.com/assjs/)
 
 ASS.js can be used as a JavaScript module:
 
@@ -135,20 +152,10 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
 | `\blur` with `\bord0` | [sign()](https://caniuse.com/mdn-css_types_sign) | - | 118 | 15.4 |
 
-## TODO
-
-* [Script Info]
-  * __WrapStyle__: 3
-* [Events]
-  * __Dialogue__
-    + __Text__ (override codes)
-      - __\k, \kf, \ko, \kt, \K__: Karaoke
-      - __\q__: 3
-      - __\t([&lt;t1&gt;, &lt;t2&gt;, ][&lt;accel&gt;, ]&lt;style modifiers&gt;)__: &lt;accel&gt;
-
 ## Known issues
 
 * `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
 * A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
 * When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
 * `\be` is just treated as `\blur`.
+* `\q3` is just treated as `\q1`.
