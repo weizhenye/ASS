@@ -1,23 +1,9 @@
 import { color2rgba, alpha2opacity, initAnimation } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
-import { createCSSStroke } from './stroke.js';
-import { createTransform } from './transform.js';
+// eslint-disable-next-line import/no-cycle
 import { createRectClip } from './clip.js';
 
-// TODO: multi \t can't be merged directly
-function mergeT(ts) {
-  return ts.reduceRight((results, t) => {
-    let merged = false;
-    return results
-      .map((r) => {
-        merged = t.t1 === r.t1 && t.t2 === r.t2 && t.accel === r.accel;
-        return { ...r, ...(merged ? { tag: { ...r.tag, ...t.tag } } : {}) };
-      })
-      .concat(merged ? [] : t);
-  }, []);
-}
-
-export function createEffectKeyframes({ effect, duration }) {
+export function createEffect(effect, duration) {
   // TODO: when effect and move both exist, its behavior is weird, for now only move works.
   const { name, delay, leftToRight } = effect;
   const translate = name === 'banner' ? 'X' : 'Y';
@@ -28,71 +14,58 @@ export function createEffectKeyframes({ effect, duration }) {
   const start = -100 * dir;
   // speed is 1000px/s when delay=1
   const distance = (duration / (delay || 1)) * dir;
-  return [
+  const keyframes = [
     { offset: 0, transform: `translate${translate}(${start}%)` },
     { offset: 1, transform: `translate${translate}(calc(${start}% + var(--ass-scale) * ${distance}px))` },
   ];
+  return [keyframes, { duration, fill: 'forwards' }];
 }
 
-function createMoveKeyframes({ move, duration, dialogue }) {
+function multiplyScale(v) {
+  return `calc(var(--ass-scale) * ${v}px)`;
+}
+
+export function createMove(move, duration) {
   const { x1, y1, x2, y2, t1, t2 } = move;
-  const t = [t1, t2 || duration];
-  const pos = dialogue.pos || { x: 0, y: 0 };
-  return [[x1, y1], [x2, y2]]
-    .map(([x, y]) => [(x - pos.x), (y - pos.y)])
-    .map(([x, y], index) => ({
-      offset: Math.min(t[index] / duration, 1),
-      transform: `translate(calc(var(--ass-scale) * ${x}px), calc(var(--ass-scale) * ${y}px))`,
-    }));
+  const start = `translate(${multiplyScale(x1)}, ${multiplyScale(y1)})`;
+  const end = `translate(${multiplyScale(x2)}, ${multiplyScale(y2)})`;
+  const moveDuration = Math.max(t2, duration);
+  const keyframes = [
+    { offset: 0, transform: start },
+    t1 > 0 ? { offset: t1 / moveDuration, transform: start } : null,
+    (t2 > 0 && t2 < duration) ? { offset: t2 / moveDuration, transform: end } : null,
+    { offset: 1, transform: end },
+  ].filter(Boolean);
+  const options = { duration: moveDuration, fill: 'forwards' };
+  return [keyframes, options];
 }
 
-export function createFadeKeyframes(fade, duration) {
-  if (fade.type === 'fad') {
-    const { t1, t2 } = fade;
-    const kfs = [];
-    if (t1) {
-      kfs.push([0, 0]);
-    }
-    if (t1 < duration) {
-      if (t2 <= duration) {
-        kfs.push([t1 / duration, 1]);
-      }
-      if (t1 + t2 < duration) {
-        kfs.push([(duration - t2) / duration, 1]);
-      }
-      if (t2 > duration) {
-        kfs.push([0, (t2 - duration) / t2]);
-      } else if (t1 + t2 > duration) {
-        kfs.push([(t1 + 0.5) / duration, 1 - (t1 + t2 - duration) / t2]);
-      }
-      if (t2) {
-        kfs.push([1, 0]);
-      }
-    } else {
-      kfs.push([1, duration / t1]);
-    }
-    return kfs.map(([offset, opacity]) => ({ offset, opacity }));
+export function createFadeList(fade, duration) {
+  const { type, a1, a2, a3, t1, t2, t3, t4 } = fade;
+  // \fad(<t1>, <t2>)
+  if (type === 'fad') {
+    // For example dialogue starts at 0 and ends at 5000 with \fad(4000, 4000)
+    // * <t1> means opacity from 0 to 1 in (0, 4000)
+    // * <t2> means opacity from 1 to 0 in (1000, 5000)
+    // <t1> and <t2> are overlaped in (1000, 4000), <t1> will take affect
+    // so the result is:
+    // * opacity from 0 to 1 in (0, 4000)
+    // * opacity from 0.25 to 0 in (4000, 5000)
+    const t1Keyframes = [{ offset: 0, opacity: 0 }, { offset: 1, opacity: 1 }];
+    const t2Keyframes = [{ offset: 0, opacity: 1 }, { offset: 1, opacity: 0 }];
+    return [
+      [t2Keyframes, { duration: t2, delay: duration - t2, fill: 'forwards' }],
+      [t1Keyframes, { duration: t1, composite: 'replace' }],
+    ];
   }
-  const { a1, a2, a3, t1, t2, t3, t4 } = fade;
+  // \fade(<a1>, <a2>, <a3>, <t1>, <t2>, <t3>, <t4>)
+  const fadeDuration = Math.max(duration, t4);
   const opacities = [a1, a2, a3].map((a) => 1 - a / 255);
-  return [0, t1, t2, t3, t4, duration]
-    .map((t) => t / duration)
-    .map((t, i) => ({ offset: t, opacity: opacities[i >> 1] }))
-    .filter(({ offset }) => offset <= 1);
-}
-
-function createTransformKeyframes({ fromTag, tag, fragment }) {
-  const toTag = { ...fromTag, ...tag };
-  if (fragment.drawing) {
-    // scales will be handled inside svg
-    Object.assign(toTag, {
-      p: 0,
-      fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
-      fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
-    });
-    Object.assign(fromTag, { fscx: 100, fscy: 100 });
-  }
-  return Object.fromEntries(createTransform(toTag));
+  const offsets = [0, t1, t2, t3, t4].map((t) => t / fadeDuration);
+  const keyframes = offsets.map((t, i) => ({ offset: t, opacity: opacities[i >> 1] }));
+  return [
+    [keyframes, { duration: fadeDuration, fill: 'forwards' }],
+  ];
 }
 
 export function createAnimatableVars(tag) {
@@ -123,57 +96,95 @@ if (window.CSS.registerProperty) {
   });
 }
 
-// TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
-export function setKeyframes(dialogue, store) {
-  const { start, end, effect, move, fade, slices } = dialogue;
+// use linear() to simulate accel
+function getEasing(duration, accel) {
+  if (accel === 1) return 'linear';
+  // 60fps
+  const frames = Math.ceil(duration / 1000 * 60);
+  const points = Array.from({ length: frames + 1 })
+    .map((_, i) => (i / frames) ** accel);
+  return `linear(${points.join(',')})`;
+}
+
+export function createDialogueAnimations(el, dialogue) {
+  const { start, end, effect, move, fade } = dialogue;
   const duration = (end - start) * 1000;
-  const keyframes = [
-    ...(effect && !move ? createEffectKeyframes({ effect, duration }) : []),
-    ...(move ? createMoveKeyframes({ move, duration, dialogue }) : []),
-    ...(fade ? createFadeKeyframes(fade, duration) : []),
-  ].sort((a, b) => a.offset - b.offset);
-  if (keyframes.length > 0) {
-    Object.assign(dialogue, { keyframes });
+  return [
+    effect && !move ? createEffect(effect, duration) : null,
+    move ? createMove(move, duration) : null,
+    ...(fade ? createFadeList(fade, duration) : []),
+  ]
+    .filter(Boolean)
+    .map(([keyframes, options]) => initAnimation(el, keyframes, options));
+}
+
+function createTagKeyframes(fromTag, tag, key) {
+  const value = tag[key];
+  if (value === undefined) return [];
+  if (key === 'clip') return [];
+  if (key === 'a1' || key === 'c1') {
+    return [['fill-color', color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1))]];
   }
-  slices.forEach((slice) => {
-    const sliceTag = store.styles[slice.style].tag;
-    slice.fragments.forEach((fragment) => {
-      if (!fragment.tag.t || fragment.tag.t.length === 0) {
-        return;
-      }
-      const fromTag = {
-        ...sliceTag,
-        ...fragment.tag,
-        ...(dialogue.clip?.dots && { clip: dialogue.clip }),
-      };
-      const tTags = mergeT(fragment.tag.t).sort((a, b) => a.t2 - b.t2 || a.t1 - b.t1);
-      tTags.unshift({ t1: 0, t2: tTags[0].t1, tag: fromTag });
-      tTags.reduce((prevTag, curr) => {
-        const tag = { ...prevTag, ...curr.tag };
-        tag.t = null;
-        Object.assign(curr.tag, tag);
-        return tag;
-      }, {});
-      const fDuration = Math.max(duration, ...tTags.map(({ t2 }) => t2));
-      const kfs = tTags.map(({ t2, tag }) => ({
-        offset: t2 / fDuration,
-        ...Object.fromEntries(createAnimatableVars({
-          ...tag,
-          a1: tag.a1 || fromTag.a1,
-          c1: tag.c1 || fromTag.c1,
-        })),
-        ...Object.fromEntries(createCSSStroke(
-          { ...fromTag, ...tag },
-          store.sbas ? store.scale : 1,
-        )),
-        ...createTransformKeyframes({ fromTag, tag, fragment }),
-        ...(tag.clip?.dots && {
-          clipPath: createRectClip(tag.clip, store.scriptRes.width, store.scriptRes.height),
-        }),
-      })).sort((a, b) => a.offset - b.offset);
-      if (kfs.length > 0) {
-        Object.assign(fragment, { keyframes: kfs, duration: fDuration });
-      }
+  if (key === 'c3') {
+    return [['border-color', color2rgba(`00${tag.c3}`)]];
+  }
+  if (key === 'a3') {
+    return [['border-opacity', alpha2opacity(tag.a3)]];
+  }
+  if (key === 'c4') {
+    return [['shadow-color', color2rgba(`00${tag.c4}`)]];
+  }
+  if (key === 'a4') {
+    return [['shadow-opacity', alpha2opacity(tag.a4)]];
+  }
+  if (key === 'fs') {
+    return [
+      ['real-fs', getRealFontSize(tag.fn || fromTag.fn, tag.fs)],
+      ['tag-fs', value],
+    ];
+  }
+  if (key === 'fscx' || key === 'fscy') {
+    return [[`tag-${key}`, (value || 100) / 100]];
+  }
+  return [[`tag-${key}`, value]];
+}
+
+export function createTagAnimations(el, fragment, sliceTag) {
+  const fromTag = { ...sliceTag, ...fragment.tag };
+  return (fragment.tag.t || []).map(({ t1, t2, accel, tag }) => {
+    const keyframe = Object.fromEntries(
+      Object.keys(tag)
+        .flatMap((key) => createTagKeyframes(fromTag, tag, key))
+        .map(([k, v]) => [`--ass-${k}`, v])
+        // .concat(tag.clip ? [['clipPath', ]] : [])
+        .concat([['offset', 1]]),
+    );
+    const duration = Math.max(0, t2 - t1);
+    return initAnimation(el, [keyframe], {
+      duration,
+      delay: t1,
+      fill: 'forwards',
+      easing: getEasing(duration, accel),
     });
   });
+}
+
+export function createClipAnimations(el, dialogue, store) {
+  return dialogue.slices
+    .flatMap((slice) => slice.fragments)
+    .flatMap((fragment) => fragment.tag.t || [])
+    .filter(({ tag }) => tag.clip)
+    .map(({ t1, t2, accel, tag }) => {
+      const keyframe = {
+        offset: 1,
+        clipPath: createRectClip(tag.clip, store.scriptRes.width, store.scriptRes.height),
+      };
+      const duration = Math.max(0, t2 - t1);
+      return initAnimation(el, [keyframe], {
+        duration,
+        delay: t1,
+        fill: 'forwards',
+        easing: getEasing(duration, accel),
+      });
+    });
 }

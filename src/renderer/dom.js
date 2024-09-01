@@ -1,6 +1,5 @@
-import { initAnimation } from '../utils.js';
 import { createDrawing } from './drawing.js';
-import { createAnimatableVars } from './animation.js';
+import { createAnimatableVars, createDialogueAnimations, createTagAnimations } from './animation.js';
 import { createCSSStroke } from './stroke.js';
 import { rotateTags, scaleTags, skewTags, createTransform } from './transform.js';
 
@@ -12,23 +11,18 @@ function encodeText(text, q) {
 }
 
 export function createDialogue(dialogue, store) {
-  const { video, styles } = store;
+  const { styles } = store;
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
   $div.dataset.wrapStyle = dialogue.q;
   const df = document.createDocumentFragment();
-  const { align, slices, start, end } = dialogue;
+  const { align, slices } = dialogue;
   [
     ['--ass-align-h', ['0%', '50%', '100%'][align.h]],
     ['--ass-align-v', ['100%', '50%', '0%'][align.v]],
   ].forEach(([k, v]) => {
     $div.style.setProperty(k, v);
   });
-  const animationOptions = {
-    duration: (end - start) * 1000,
-    delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
-    fill: 'forwards',
-  };
   const animations = [];
   slices.forEach((slice) => {
     const sliceTag = styles[slice.style].tag;
@@ -100,21 +94,12 @@ export function createDialogue(dialogue, store) {
         cssVars.forEach(([k, v]) => {
           $span.style.setProperty(k, v);
         });
-        if (fragment.keyframes) {
-          const animation = initAnimation(
-            $span,
-            fragment.keyframes,
-            { ...animationOptions, duration: fragment.duration },
-          );
-          animations.push(animation);
-        }
+        animations.push(...createTagAnimations($span, fragment, sliceTag));
         df.append($span);
       });
     });
   });
-  if (dialogue.keyframes) {
-    animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
-  }
+  animations.push(...createDialogueAnimations($div, dialogue));
   $div.append(df);
   return { $div, animations };
 }

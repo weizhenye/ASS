@@ -28,6 +28,9 @@ function framing(store) {
   ) {
     if (vct < dialogues[store.index].end) {
       const dia = renderer(dialogues[store.index], store);
+      (dia.animations || []).forEach((animation) => {
+        animation.currentTime = (vct - dia.start) * 1000;
+      });
       if (!video.paused) {
         batchAnimate(dia, 'play');
       }

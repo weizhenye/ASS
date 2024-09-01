@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 import { compile } from 'ass-compiler';
-import { setKeyframes } from './renderer/animation.js';
 import { $fixFontSize } from './renderer/font-size.js';
 import { clear, createResize, createPlay, createPause, createSeek } from './internal.js';
 import { addGlobalStyle } from './utils.js';
@@ -144,10 +143,6 @@ export default class ASS {
     this.#resize = createResize(this, this.#store);
     this.#resize();
     this.resampling = resampling;
-
-    dialogues.forEach((dialogue) => {
-      setKeyframes(dialogue, this.#store);
-    });
 
     const observer = new ResizeObserver(this.#resize);
     observer.observe(video);

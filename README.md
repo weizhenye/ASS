@@ -148,6 +148,7 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | Auto resize | [ResizeObserver](https://caniuse.com/resizeobserver) | 64 | 69 | 13.1 |
 | `\[i]clip` | [clip-path](https://caniuse.com/css-clip-path) and [path()](https://caniuse.com/mdn-css_types_basic-shape_path) | 88 | 97 | 13.1 |
 | Animations (`\t`) | [registerProperty()](https://caniuse.com/mdn-api_css_registerproperty_static) | 78 | 128 | 16.4 |
+| accel in `\t` | [linear()](https://caniuse.com/mdn-css_types_easing-function_linear-function) | 113 | 112 | 17.2 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
 | BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
 | `\blur` with `\bord0` | [sign()](https://caniuse.com/mdn-css_types_sign) | - | 118 | 15.4 |
@@ -155,7 +156,5 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 ## Known issues
 
 * `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
-* A dialogue with multiple `\t` is not rendered correctly, for transforms in browsers are order-sensitive.
-* When a dialogue has Effect (Banner, Scroll up, Scroll down) and `\move` at the same time, only `\move` works.
 * `\be` is just treated as `\blur`.
-* `\q3` is just treated as `\q1`.
+* `\q3` is just treated as `\q0`.
