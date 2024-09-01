@@ -1,5 +1,5 @@
 function parseEffect(text) {
-  const param = text
+  var param = text
     .toLowerCase()
     .trim()
     .split(/\s*;\s*/);
@@ -27,7 +27,7 @@ function parseEffect(text) {
 }
 
 function parseDrawing(text) {
-  if (!text) return [];
+  if (!text) { return []; }
   return text
     .toLowerCase()
     // numbers
@@ -37,26 +37,29 @@ function parseDrawing(text) {
     .trim()
     .replace(/\s+/g, ' ')
     .split(/\s(?=[mnlbspc])/)
-    .map((cmd) => (
+    .map(function (cmd) { return (
       cmd.split(' ')
-        .filter((x, i) => !(i && Number.isNaN(x * 1)))
-    ));
+        .filter(function (x, i) { return !(i && isNaN(x * 1)); })
+    ); });
 }
 
-const numTags = [
+var numTags = [
   'b', 'i', 'u', 's', 'fsp',
   'k', 'K', 'kf', 'ko', 'kt',
   'fe', 'q', 'p', 'pbo', 'a', 'an',
   'fscx', 'fscy', 'fax', 'fay', 'frx', 'fry', 'frz', 'fr',
-  'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad',
-];
+  'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad' ];
 
-const numRegexs = numTags.map((nt) => ({ name: nt, regex: new RegExp(`^${nt}-?\\d`) }));
+var numRegexs = numTags.map(function (nt) { return ({ name: nt, regex: new RegExp(("^" + nt + "-?\\d")) }); });
 
 function parseTag(text) {
-  const tag = {};
-  for (let i = 0; i < numRegexs.length; i++) {
-    const { name, regex } = numRegexs[i];
+  var assign;
+
+  var tag = {};
+  for (var i = 0; i < numRegexs.length; i++) {
+    var ref = numRegexs[i];
+    var name = ref.name;
+    var regex = ref.regex;
     if (regex.test(text)) {
       tag[name] = text.slice(name.length) * 1;
       return tag;
@@ -69,22 +72,28 @@ function parseTag(text) {
   } else if (/^fs[\d+-]/.test(text)) {
     tag.fs = text.slice(2);
   } else if (/^\d?c&?H?[0-9a-fA-F]+|^\d?c$/.test(text)) {
-    const [, num, color] = text.match(/^(\d?)c&?H?(\w*)/);
-    tag[`c${num || 1}`] = color && `000000${color}`.slice(-6);
+    var ref$1 = text.match(/^(\d?)c&?H?(\w*)/);
+    var num = ref$1[1];
+    var color = ref$1[2];
+    tag[("c" + (num || 1))] = color && ("000000" + color).slice(-6);
   } else if (/^\da&?H?[0-9a-fA-F]+/.test(text)) {
-    const [, num, alpha] = text.match(/^(\d)a&?H?([0-9a-f]+)/i);
-    tag[`a${num}`] = `00${alpha}`.slice(-2);
+    var ref$2 = text.match(/^(\d)a&?H?([0-9a-f]+)/i);
+    var num$1 = ref$2[1];
+    var alpha = ref$2[2];
+    tag[("a" + num$1)] = ("00" + alpha).slice(-2);
   } else if (/^alpha&?H?[0-9a-fA-F]+/.test(text)) {
-    [, tag.alpha] = text.match(/^alpha&?H?([0-9a-f]+)/i);
-    tag.alpha = `00${tag.alpha}`.slice(-2);
+    (assign = text.match(/^alpha&?H?([0-9a-f]+)/i), tag.alpha = assign[1]);
+    tag.alpha = ("00" + (tag.alpha)).slice(-2);
   } else if (/^(?:pos|org|move|fad|fade)\([^)]+/.test(text)) {
-    const [, key, value] = text.match(/^(\w+)\((.*?)\)?$/);
+    var ref$3 = text.match(/^(\w+)\((.*?)\)?$/);
+    var key = ref$3[1];
+    var value = ref$3[2];
     tag[key] = value
       .trim()
       .split(/\s*,\s*/)
       .map(Number);
   } else if (/^i?clip\([^)]+/.test(text)) {
-    const p = text
+    var p = text
       .match(/^i?clip\((.*?)\)?$/)[1]
       .trim()
       .split(/\s*,\s*/);
@@ -105,33 +114,33 @@ function parseTag(text) {
       tag.clip.dots = p.map(Number);
     }
   } else if (/^t\(/.test(text)) {
-    const p = text
+    var p$1 = text
       .match(/^t\((.*?)\)?$/)[1]
       .trim()
-      .replace(/\\.*/, (x) => x.replace(/,/g, '\n'))
+      .replace(/\\.*/, function (x) { return x.replace(/,/g, '\n'); })
       .split(/\s*,\s*/);
-    if (!p[0]) return tag;
+    if (!p$1[0]) { return tag; }
     tag.t = {
       t1: 0,
       t2: 0,
       accel: 1,
-      tags: p[p.length - 1]
+      tags: p$1[p$1.length - 1]
         .replace(/\n/g, ',')
         .split('\\')
         .slice(1)
         .map(parseTag),
     };
-    if (p.length === 2) {
-      tag.t.accel = p[0] * 1;
+    if (p$1.length === 2) {
+      tag.t.accel = p$1[0] * 1;
     }
-    if (p.length === 3) {
-      tag.t.t1 = p[0] * 1;
-      tag.t.t2 = p[1] * 1;
+    if (p$1.length === 3) {
+      tag.t.t1 = p$1[0] * 1;
+      tag.t.t2 = p$1[1] * 1;
     }
-    if (p.length === 4) {
-      tag.t.t1 = p[0] * 1;
-      tag.t.t2 = p[1] * 1;
-      tag.t.accel = p[2] * 1;
+    if (p$1.length === 4) {
+      tag.t.t1 = p$1[0] * 1;
+      tag.t.t2 = p$1[1] * 1;
+      tag.t.accel = p$1[2] * 1;
     }
   }
 
@@ -139,17 +148,17 @@ function parseTag(text) {
 }
 
 function parseTags(text) {
-  const tags = [];
-  let depth = 0;
-  let str = '';
+  var tags = [];
+  var depth = 0;
+  var str = '';
   // `\b\c` -> `b\c\`
   // `a\b\c` -> `b\c\`
-  const transText = text.split('\\').slice(1).concat('').join('\\');
-  for (let i = 0; i < transText.length; i++) {
-    const x = transText[i];
-    if (x === '(') depth++;
-    if (x === ')') depth--;
-    if (depth < 0) depth = 0;
+  var transText = text.split('\\').slice(1).concat('').join('\\');
+  for (var i = 0; i < transText.length; i++) {
+    var x = transText[i];
+    if (x === '(') { depth++; }
+    if (x === ')') { depth--; }
+    if (depth < 0) { depth = 0; }
     if (!depth && x === '\\') {
       if (str) {
         tags.push(str);
@@ -163,44 +172,44 @@ function parseTags(text) {
 }
 
 function parseText(text) {
-  const pairs = text.split(/{([^{}]*?)}/);
-  const parsed = [];
+  var pairs = text.split(/{([^{}]*?)}/);
+  var parsed = [];
   if (pairs[0].length) {
     parsed.push({ tags: [], text: pairs[0], drawing: [] });
   }
-  for (let i = 1; i < pairs.length; i += 2) {
-    const tags = parseTags(pairs[i]);
-    const isDrawing = tags.reduce((v, tag) => (tag.p === undefined ? v : !!tag.p), false);
+  for (var i = 1; i < pairs.length; i += 2) {
+    var tags = parseTags(pairs[i]);
+    var isDrawing = tags.reduce(function (v, tag) { return (tag.p === undefined ? v : !!tag.p); }, false);
     parsed.push({
-      tags,
+      tags: tags,
       text: isDrawing ? '' : pairs[i + 1],
       drawing: isDrawing ? parseDrawing(pairs[i + 1]) : [],
     });
   }
   return {
     raw: text,
-    combined: parsed.map((frag) => frag.text).join(''),
-    parsed,
+    combined: parsed.map(function (frag) { return frag.text; }).join(''),
+    parsed: parsed,
   };
 }
 
 function parseTime(time) {
-  const t = time.split(':');
+  var t = time.split(':');
   return t[0] * 3600 + t[1] * 60 + t[2] * 1;
 }
 
 function parseDialogue(text, format) {
-  let fields = text.split(',');
+  var fields = text.split(',');
   if (fields.length > format.length) {
-    const textField = fields.slice(format.length - 1).join();
+    var textField = fields.slice(format.length - 1).join();
     fields = fields.slice(0, format.length - 1);
     fields.push(textField);
   }
 
-  const dia = {};
-  for (let i = 0; i < fields.length; i++) {
-    const fmt = format[i];
-    const fld = fields[i].trim();
+  var dia = {};
+  for (var i = 0; i < fields.length; i++) {
+    var fmt = format[i];
+    var fld = fields[i].trim();
     switch (fmt) {
       case 'Layer':
       case 'MarginL':
@@ -226,45 +235,51 @@ function parseDialogue(text, format) {
   return dia;
 }
 
-const stylesFormat = ['Name', 'Fontname', 'Fontsize', 'PrimaryColour', 'SecondaryColour', 'OutlineColour', 'BackColour', 'Bold', 'Italic', 'Underline', 'StrikeOut', 'ScaleX', 'ScaleY', 'Spacing', 'Angle', 'BorderStyle', 'Outline', 'Shadow', 'Alignment', 'MarginL', 'MarginR', 'MarginV', 'Encoding'];
-const eventsFormat = ['Layer', 'Start', 'End', 'Style', 'Name', 'MarginL', 'MarginR', 'MarginV', 'Effect', 'Text'];
+var stylesFormat = ['Name', 'Fontname', 'Fontsize', 'PrimaryColour', 'SecondaryColour', 'OutlineColour', 'BackColour', 'Bold', 'Italic', 'Underline', 'StrikeOut', 'ScaleX', 'ScaleY', 'Spacing', 'Angle', 'BorderStyle', 'Outline', 'Shadow', 'Alignment', 'MarginL', 'MarginR', 'MarginV', 'Encoding'];
+var eventsFormat = ['Layer', 'Start', 'End', 'Style', 'Name', 'MarginL', 'MarginR', 'MarginV', 'Effect', 'Text'];
 
 function parseFormat(text) {
-  const fields = stylesFormat.concat(eventsFormat);
+  var fields = stylesFormat.concat(eventsFormat);
   return text.match(/Format\s*:\s*(.*)/i)[1]
     .split(/\s*,\s*/)
-    .map((field) => {
-      const caseField = fields.find((f) => f.toLowerCase() === field.toLowerCase());
+    .map(function (field) {
+      var caseField = fields.find(function (f) { return f.toLowerCase() === field.toLowerCase(); });
       return caseField || field;
     });
 }
 
 function parseStyle(text, format) {
-  const values = text.match(/Style\s*:\s*(.*)/i)[1].split(/\s*,\s*/);
-  return Object.assign({}, ...format.map((fmt, idx) => ({ [fmt]: values[idx] })));
+  var values = text.match(/Style\s*:\s*(.*)/i)[1].split(/\s*,\s*/);
+  return Object.assign.apply(Object, [ {} ].concat( format.map(function (fmt, idx) {
+    var obj;
+
+    return (( obj = {}, obj[fmt] = values[idx], obj ));
+  }) ));
 }
 
 function parse(text) {
-  const tree = {
+  var tree = {
     info: {},
     styles: { format: [], style: [] },
     events: { format: [], comment: [], dialogue: [] },
   };
-  const lines = text.split(/\r?\n/);
-  let state = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (/^;/.test(line)) continue;
+  var lines = text.split(/\r?\n/);
+  var state = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (/^;/.test(line)) { continue; }
 
-    if (/^\[Script Info\]/i.test(line)) state = 1;
-    else if (/^\[V4\+? Styles\]/i.test(line)) state = 2;
-    else if (/^\[Events\]/i.test(line)) state = 3;
-    else if (/^\[.*\]/.test(line)) state = 0;
+    if (/^\[Script Info\]/i.test(line)) { state = 1; }
+    else if (/^\[V4\+? Styles\]/i.test(line)) { state = 2; }
+    else if (/^\[Events\]/i.test(line)) { state = 3; }
+    else if (/^\[.*\]/.test(line)) { state = 0; }
 
-    if (state === 0) continue;
+    if (state === 0) { continue; }
     if (state === 1) {
       if (/:/.test(line)) {
-        const [, key, value] = line.match(/(.*?)\s*:\s*(.*)/);
+        var ref = line.match(/(.*?)\s*:\s*(.*)/);
+        var key = ref[1];
+        var value = ref[2];
         tree.info[key] = value;
       }
     }
@@ -281,8 +296,10 @@ function parse(text) {
         tree.events.format = parseFormat(line);
       }
       if (/^(?:Comment|Dialogue)\s*:/i.test(line)) {
-        const [, key, value] = line.match(/^(\w+?)\s*:\s*(.*)/i);
-        tree.events[key.toLowerCase()].push(parseDialogue(value, tree.events.format));
+        var ref$1 = line.match(/^(\w+?)\s*:\s*(.*)/i);
+        var key$1 = ref$1[1];
+        var value$1 = ref$1[2];
+        tree.events[key$1.toLowerCase()].push(parseDialogue(value$1, tree.events.format));
       }
     }
   }
@@ -291,7 +308,7 @@ function parse(text) {
 }
 
 function createCommand(arr) {
-  const cmd = {
+  var cmd = {
     type: null,
     prev: null,
     next: null,
@@ -303,7 +320,7 @@ function createCommand(arr) {
       .replace('N', 'L')
       .replace('B', 'C');
   }
-  for (let len = arr.length - !(arr.length & 1), i = 1; i < len; i += 2) {
+  for (var len = arr.length - !(arr.length & 1), i = 1; i < len; i += 2) {
     cmd.points.push({ x: arr[i] * 1, y: arr[i + 1] * 1 });
   }
   return cmd;
@@ -320,19 +337,28 @@ function isValid(cmd) {
 }
 
 function getViewBox(commands) {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  [].concat(...commands.map(({ points }) => points)).forEach(({ x, y }) => {
+  var ref;
+
+  var minX = Infinity;
+  var minY = Infinity;
+  var maxX = -Infinity;
+  var maxY = -Infinity;
+  (ref = []).concat.apply(ref, commands.map(function (ref) {
+    var points = ref.points;
+
+    return points;
+  })).forEach(function (ref) {
+    var x = ref.x;
+    var y = ref.y;
+
     minX = Math.min(minX, x);
     minY = Math.min(minY, y);
     maxX = Math.max(maxX, x);
     maxY = Math.max(maxY, y);
   });
   return {
-    minX,
-    minY,
+    minX: minX,
+    minY: minY,
     width: maxX - minX,
     height: maxY - minY,
   };
@@ -347,18 +373,18 @@ function getViewBox(commands) {
  * @return {Array}         converted commands
  */
 function s2b(points, prev, next) {
-  const results = [];
-  const bb1 = [0, 2 / 3, 1 / 3, 0];
-  const bb2 = [0, 1 / 3, 2 / 3, 0];
-  const bb3 = [0, 1 / 6, 2 / 3, 1 / 6];
-  const dot4 = (a, b) => (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
-  let px = [points[points.length - 1].x, points[0].x, points[1].x, points[2].x];
-  let py = [points[points.length - 1].y, points[0].y, points[1].y, points[2].y];
+  var results = [];
+  var bb1 = [0, 2 / 3, 1 / 3, 0];
+  var bb2 = [0, 1 / 3, 2 / 3, 0];
+  var bb3 = [0, 1 / 6, 2 / 3, 1 / 6];
+  var dot4 = function (a, b) { return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]); };
+  var px = [points[points.length - 1].x, points[0].x, points[1].x, points[2].x];
+  var py = [points[points.length - 1].y, points[0].y, points[1].y, points[2].y];
   results.push({
     type: prev === 'M' ? 'M' : 'L',
     points: [{ x: dot4(bb3, px), y: dot4(bb3, py) }],
   });
-  for (let i = 3; i < points.length; i++) {
+  for (var i = 3; i < points.length; i++) {
     px = [points[i - 3].x, points[i - 2].x, points[i - 1].x, points[i].x];
     py = [points[i - 3].y, points[i - 2].y, points[i - 1].y, points[i].y];
     results.push({
@@ -366,33 +392,46 @@ function s2b(points, prev, next) {
       points: [
         { x: dot4(bb1, px), y: dot4(bb1, py) },
         { x: dot4(bb2, px), y: dot4(bb2, py) },
-        { x: dot4(bb3, px), y: dot4(bb3, py) },
-      ],
+        { x: dot4(bb3, px), y: dot4(bb3, py) } ],
     });
   }
   if (next === 'L' || next === 'C') {
-    const last = points[points.length - 1];
+    var last = points[points.length - 1];
     results.push({ type: 'L', points: [{ x: last.x, y: last.y }] });
   }
   return results;
 }
 
 function toSVGPath(instructions) {
-  return instructions.map(({ type, points }) => (
-    type + points.map(({ x, y }) => `${x},${y}`).join(',')
-  )).join('');
+  return instructions.map(function (ref) {
+    var type = ref.type;
+    var points = ref.points;
+
+    return (
+    type + points.map(function (ref) {
+      var x = ref.x;
+      var y = ref.y;
+
+      return (x + "," + y);
+    }).join(',')
+  );
+  }).join('');
 }
 
 function compileDrawing(rawCommands) {
-  const commands = [];
-  let i = 0;
+  var ref$1;
+
+  var commands = [];
+  var i = 0;
   while (i < rawCommands.length) {
-    const arr = rawCommands[i];
-    const cmd = createCommand(arr);
+    var arr = rawCommands[i];
+    var cmd = createCommand(arr);
     if (isValid(cmd)) {
       if (cmd.type === 'S') {
-        const { x, y } = (commands[i - 1] || { points: [{ x: 0, y: 0 }] }).points.slice(-1)[0];
-        cmd.points.unshift({ x, y });
+        var ref = (commands[i - 1] || { points: [{ x: 0, y: 0 }] }).points.slice(-1)[0];
+        var x = ref.x;
+        var y = ref.y;
+        cmd.points.unshift({ x: x, y: y });
       }
       if (i) {
         cmd.prev = commands[i - 1].type;
@@ -402,68 +441,100 @@ function compileDrawing(rawCommands) {
       i++;
     } else {
       if (i && commands[i - 1].type === 'S') {
-        const additionPoints = {
+        var additionPoints = {
           p: cmd.points,
           c: commands[i - 1].points.slice(0, 3),
         };
         commands[i - 1].points = commands[i - 1].points.concat(
-          (additionPoints[arr[0]] || []).map(({ x, y }) => ({ x, y })),
+          (additionPoints[arr[0]] || []).map(function (ref) {
+            var x = ref.x;
+            var y = ref.y;
+
+            return ({ x: x, y: y });
+        })
         );
       }
       rawCommands.splice(i, 1);
     }
   }
-  const instructions = [].concat(
-    ...commands.map(({ type, points, prev, next }) => (
+  var instructions = (ref$1 = []).concat.apply(
+    ref$1, commands.map(function (ref) {
+      var type = ref.type;
+      var points = ref.points;
+      var prev = ref.prev;
+      var next = ref.next;
+
+      return (
       type === 'S'
         ? s2b(points, prev, next)
-        : { type, points }
-    )),
+        : { type: type, points: points }
+    );
+  })
   );
 
-  return Object.assign({ instructions, d: toSVGPath(instructions) }, getViewBox(commands));
+  return Object.assign({ instructions: instructions, d: toSVGPath(instructions) }, getViewBox(commands));
 }
 
-const tTags = [
+var tTags = [
   'fs', 'fsp', 'clip',
   'c1', 'c2', 'c3', 'c4', 'a1', 'a2', 'a3', 'a4', 'alpha',
   'fscx', 'fscy', 'fax', 'fay', 'frx', 'fry', 'frz', 'fr',
-  'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad',
-];
+  'be', 'blur', 'bord', 'xbord', 'ybord', 'shad', 'xshad', 'yshad' ];
 
-function compileTag(tag, key, presets = {}) {
-  let value = tag[key];
+function compileTag(tag, key, presets) {
+  var obj, obj$1, obj$2;
+
+  if ( presets === void 0 ) presets = {};
+  var value = tag[key];
   if (value === undefined) {
     return null;
   }
   if (key === 'pos' || key === 'org') {
-    return value.length === 2 ? { [key]: { x: value[0], y: value[1] } } : null;
+    return value.length === 2 ? ( obj = {}, obj[key] = { x: value[0], y: value[1] }, obj ) : null;
   }
   if (key === 'move') {
-    const [x1, y1, x2, y2, t1 = 0, t2 = 0] = value;
+    var x1 = value[0];
+    var y1 = value[1];
+    var x2 = value[2];
+    var y2 = value[3];
+    var t1 = value[4]; if ( t1 === void 0 ) t1 = 0;
+    var t2 = value[5]; if ( t2 === void 0 ) t2 = 0;
     return value.length === 4 || value.length === 6
-      ? { move: { x1, y1, x2, y2, t1, t2 } }
+      ? { move: { x1: x1, y1: y1, x2: x2, y2: y2, t1: t1, t2: t2 } }
       : null;
   }
   if (key === 'fad' || key === 'fade') {
     if (value.length === 2) {
-      const [t1, t2] = value;
-      return { fade: { type: 'fad', t1, t2 } };
+      var t1$1 = value[0];
+      var t2$1 = value[1];
+      return { fade: { type: 'fad', t1: t1$1, t2: t2$1 } };
     }
     if (value.length === 7) {
-      const [a1, a2, a3, t1, t2, t3, t4] = value;
-      return { fade: { type: 'fade', a1, a2, a3, t1, t2, t3, t4 } };
+      var a1 = value[0];
+      var a2 = value[1];
+      var a3 = value[2];
+      var t1$2 = value[3];
+      var t2$2 = value[4];
+      var t3 = value[5];
+      var t4 = value[6];
+      return { fade: { type: 'fade', a1: a1, a2: a2, a3: a3, t1: t1$2, t2: t2$2, t3: t3, t4: t4 } };
     }
     return null;
   }
   if (key === 'clip') {
-    const { inverse, scale, drawing, dots } = value;
+    var inverse = value.inverse;
+    var scale = value.scale;
+    var drawing = value.drawing;
+    var dots = value.dots;
     if (drawing) {
-      return { clip: { inverse, scale, drawing: compileDrawing(drawing), dots } };
+      return { clip: { inverse: inverse, scale: scale, drawing: compileDrawing(drawing), dots: dots } };
     }
     if (dots) {
-      const [x1, y1, x2, y2] = dots;
-      return { clip: { inverse, scale, drawing, dots: { x1, y1, x2, y2 } } };
+      var x1$1 = dots[0];
+      var y1$1 = dots[1];
+      var x2$1 = dots[2];
+      var y2$1 = dots[3];
+      return { clip: { inverse: inverse, scale: scale, drawing: drawing, dots: { x1: x1$1, y1: y1$1, x2: x2$1, y2: y2$1 } } };
     }
     return null;
   }
@@ -477,7 +548,7 @@ function compileTag(tag, key, presets = {}) {
     return { xshad: value, yshad: value };
   }
   if (/^c\d$/.test(key)) {
-    return { [key]: value || presets[key] };
+    return ( obj$1 = {}, obj$1[key] = value || presets[key], obj$1 );
   }
   if (key === 'alpha') {
     return { a1: value, a2: value, a3: value, a4: value };
@@ -496,27 +567,28 @@ function compileTag(tag, key, presets = {}) {
     return { kf: value };
   }
   if (key === 't') {
-    const { t1, accel, tags } = value;
-    const t2 = value.t2 || (presets.end - presets.start) * 1e3;
-    const compiledTag = {};
-    tags.forEach((t) => {
-      const k = Object.keys(t)[0];
+    var t1$3 = value.t1;
+    var accel = value.accel;
+    var tags = value.tags;
+    var t2$3 = value.t2 || (presets.end - presets.start) * 1e3;
+    var compiledTag = {};
+    tags.forEach(function (t) {
+      var k = Object.keys(t)[0];
       if (~tTags.indexOf(k) && !(k === 'clip' && !t[k].dots)) {
         Object.assign(compiledTag, compileTag(t, k, presets));
       }
     });
-    return { t: { t1, t2, accel, tag: compiledTag } };
+    return { t: { t1: t1$3, t2: t2$3, accel: accel, tag: compiledTag } };
   }
-  return { [key]: value };
+  return ( obj$2 = {}, obj$2[key] = value, obj$2 );
 }
 
-const a2an = [
+var a2an = [
   null, 1, 2, 3,
   null, 7, 8, 9,
-  null, 4, 5, 6,
-];
+  null, 4, 5, 6 ];
 
-const globalTags = ['r', 'a', 'an', 'pos', 'org', 'move', 'fade', 'fad', 'clip'];
+var globalTags = ['r', 'a', 'an', 'pos', 'org', 'move', 'fade', 'fad', 'clip'];
 
 function inheritTag(pTag) {
   return JSON.parse(JSON.stringify(Object.assign({}, pTag, {
@@ -527,42 +599,56 @@ function inheritTag(pTag) {
   })));
 }
 
-function compileText({ styles, style, parsed, start, end }) {
-  let alignment;
-  let pos;
-  let org;
-  let move;
-  let fade;
-  let clip;
-  const slices = [];
-  let slice = { style, fragments: [] };
-  let prevTag = {};
-  for (let i = 0; i < parsed.length; i++) {
-    const { tags, text, drawing } = parsed[i];
-    let reset;
-    for (let j = 0; j < tags.length; j++) {
-      const tag = tags[j];
+function compileText(ref) {
+  var styles = ref.styles;
+  var style = ref.style;
+  var parsed = ref.parsed;
+  var start = ref.start;
+  var end = ref.end;
+
+  var alignment;
+  var q = { q: styles[style].tag.q };
+  var pos;
+  var org;
+  var move;
+  var fade;
+  var clip;
+  var slices = [];
+  var slice = { style: style, fragments: [] };
+  var prevTag = {};
+  for (var i = 0; i < parsed.length; i++) {
+    var ref$1 = parsed[i];
+    var tags = ref$1.tags;
+    var text = ref$1.text;
+    var drawing = ref$1.drawing;
+    var reset = (void 0);
+    for (var j = 0; j < tags.length; j++) {
+      var tag = tags[j];
       reset = tag.r === undefined ? reset : tag.r;
     }
-    const fragment = {
+    var fragment = {
       tag: reset === undefined ? inheritTag(prevTag) : {},
-      text,
+      text: text,
       drawing: drawing.length ? compileDrawing(drawing) : null,
     };
-    for (let j = 0; j < tags.length; j++) {
-      const tag = tags[j];
-      alignment = alignment || a2an[tag.a || 0] || tag.an;
-      pos = pos || compileTag(tag, 'pos');
-      org = org || compileTag(tag, 'org');
-      move = move || compileTag(tag, 'move');
-      fade = fade || compileTag(tag, 'fade') || compileTag(tag, 'fad');
-      clip = compileTag(tag, 'clip') || clip;
-      const key = Object.keys(tag)[0];
+    for (var j$1 = 0; j$1 < tags.length; j$1++) {
+      var tag$1 = tags[j$1];
+      alignment = alignment || a2an[tag$1.a || 0] || tag$1.an;
+      q = compileTag(tag$1, 'q') || q;
+      pos = pos || compileTag(tag$1, 'pos');
+      org = org || compileTag(tag$1, 'org');
+      move = move || compileTag(tag$1, 'move');
+      fade = fade || compileTag(tag$1, 'fade') || compileTag(tag$1, 'fad');
+      clip = compileTag(tag$1, 'clip') || clip;
+      var key = Object.keys(tag$1)[0];
       if (key && !~globalTags.indexOf(key)) {
-        const sliceTag = styles[style].tag;
-        const { c1, c2, c3, c4 } = sliceTag;
-        const fs = prevTag.fs || sliceTag.fs;
-        const compiledTag = compileTag(tag, key, { start, end, c1, c2, c3, c4, fs });
+        var sliceTag = styles[style].tag;
+        var c1 = sliceTag.c1;
+        var c2 = sliceTag.c2;
+        var c3 = sliceTag.c3;
+        var c4 = sliceTag.c4;
+        var fs = prevTag.fs || sliceTag.fs;
+        var compiledTag = compileTag(tag$1, key, { start: start, end: end, c1: c1, c2: c2, c3: c3, c4: c4, fs: fs });
         if (key === 't') {
           fragment.tag.t = fragment.tag.t || [];
           fragment.tag.t.push(compiledTag.t);
@@ -577,7 +663,7 @@ function compileText({ styles, style, parsed, start, end }) {
       slice = { style: styles[reset] ? reset : style, fragments: [] };
     }
     if (fragment.text || fragment.drawing) {
-      const prev = slice.fragments[slice.fragments.length - 1] || {};
+      var prev = slice.fragments[slice.fragments.length - 1] || {};
       if (prev.text && fragment.text && !Object.keys(fragment.tag).length) {
         // merge fragment to previous if its tag is empty
         prev.text += fragment.text;
@@ -588,29 +674,32 @@ function compileText({ styles, style, parsed, start, end }) {
   }
   slices.push(slice);
 
-  return Object.assign({ alignment, slices }, pos, org, move, fade, clip);
+  return Object.assign({ alignment: alignment, slices: slices }, q, pos, org, move, fade, clip);
 }
 
-function compileDialogues({ styles, dialogues }) {
-  let minLayer = Infinity;
-  const results = [];
-  for (let i = 0; i < dialogues.length; i++) {
-    const dia = dialogues[i];
+function compileDialogues(ref) {
+  var styles = ref.styles;
+  var dialogues = ref.dialogues;
+
+  var minLayer = Infinity;
+  var results = [];
+  for (var i = 0; i < dialogues.length; i++) {
+    var dia = dialogues[i];
     if (dia.Start >= dia.End) {
       continue;
     }
     if (!styles[dia.Style]) {
       dia.Style = 'Default';
     }
-    const stl = styles[dia.Style].style;
-    const compiledText = compileText({
-      styles,
+    var stl = styles[dia.Style].style;
+    var compiledText = compileText({
+      styles: styles,
       style: dia.Style,
       parsed: dia.Text.parsed,
       start: dia.Start,
       end: dia.End,
     });
-    const alignment = compiledText.alignment || stl.Alignment;
+    var alignment = compiledText.alignment || stl.Alignment;
     minLayer = Math.min(minLayer, dia.Layer);
     results.push(Object.assign({
       layer: dia.Layer,
@@ -625,17 +714,17 @@ function compileDialogues({ styles, dialogues }) {
         vertical: dia.MarginV || stl.MarginV,
       },
       effect: dia.Effect,
-    }, compiledText, { alignment }));
+    }, compiledText, { alignment: alignment }));
   }
-  for (let i = 0; i < results.length; i++) {
-    results[i].layer -= minLayer;
+  for (var i$1 = 0; i$1 < results.length; i$1++) {
+    results[i$1].layer -= minLayer;
   }
-  return results.sort((a, b) => a.start - b.start || a.end - b.end);
+  return results.sort(function (a, b) { return a.start - b.start || a.end - b.end; });
 }
 
 // same as Aegisub
 // https://github.com/Aegisub/Aegisub/blob/master/src/ass_style.h
-const DEFAULT_STYLE = {
+var DEFAULT_STYLE = {
   Name: 'Default',
   Fontname: 'Arial',
   Fontsize: '20',
@@ -667,53 +756,67 @@ const DEFAULT_STYLE = {
  */
 function parseStyleColor(color) {
   if (/^(&|H|&H)[0-9a-f]{6,}/i.test(color)) {
-    const [, a, c] = color.match(/&?H?([0-9a-f]{2})?([0-9a-f]{6})/i);
+    var ref = color.match(/&?H?([0-9a-f]{2})?([0-9a-f]{6})/i);
+    var a = ref[1];
+    var c = ref[2];
     return [a || '00', c];
   }
-  const num = parseInt(color, 10);
-  if (!Number.isNaN(num)) {
-    const min = -2147483648;
-    const max = 2147483647;
+  var num = parseInt(color, 10);
+  if (!isNaN(num)) {
+    var min = -2147483648;
+    var max = 2147483647;
     if (num < min) {
       return ['00', '000000'];
     }
-    const aabbggrr = (min <= num && num <= max)
-      ? `00000000${(num < 0 ? num + 4294967296 : num).toString(16)}`.slice(-8)
+    var aabbggrr = (min <= num && num <= max)
+      ? ("00000000" + ((num < 0 ? num + 4294967296 : num).toString(16))).slice(-8)
       : String(num).slice(0, 8);
     return [aabbggrr.slice(0, 2), aabbggrr.slice(2)];
   }
   return ['00', '000000'];
 }
 
-function compileStyles({ info, style, defaultStyle }) {
-  const result = {};
-  const styles = [Object.assign({}, defaultStyle, { Name: 'Default' })].concat(style);
-  for (let i = 0; i < styles.length; i++) {
-    const s = Object.assign({}, DEFAULT_STYLE, styles[i]);
+function compileStyles(ref) {
+  var info = ref.info;
+  var style = ref.style;
+  var defaultStyle = ref.defaultStyle;
+
+  var result = {};
+  var styles = [Object.assign({}, defaultStyle, { Name: 'Default' })].concat(style);
+  var loop = function ( i ) {
+    var s = Object.assign({}, DEFAULT_STYLE, styles[i]);
     // this behavior is same as Aegisub by black-box testing
     if (/^(\*+)Default$/.test(s.Name)) {
       s.Name = 'Default';
     }
-    Object.keys(s).forEach((key) => {
+    Object.keys(s).forEach(function (key) {
       if (key !== 'Name' && key !== 'Fontname' && !/Colour/.test(key)) {
         s[key] *= 1;
       }
     });
-    const [a1, c1] = parseStyleColor(s.PrimaryColour);
-    const [a2, c2] = parseStyleColor(s.SecondaryColour);
-    const [a3, c3] = parseStyleColor(s.OutlineColour);
-    const [a4, c4] = parseStyleColor(s.BackColour);
-    const tag = {
+    var ref$1 = parseStyleColor(s.PrimaryColour);
+    var a1 = ref$1[0];
+    var c1 = ref$1[1];
+    var ref$2 = parseStyleColor(s.SecondaryColour);
+    var a2 = ref$2[0];
+    var c2 = ref$2[1];
+    var ref$3 = parseStyleColor(s.OutlineColour);
+    var a3 = ref$3[0];
+    var c3 = ref$3[1];
+    var ref$4 = parseStyleColor(s.BackColour);
+    var a4 = ref$4[0];
+    var c4 = ref$4[1];
+    var tag = {
       fn: s.Fontname,
       fs: s.Fontsize,
-      c1,
-      a1,
-      c2,
-      a2,
-      c3,
-      a3,
-      c4,
-      a4,
+      c1: c1,
+      a1: a1,
+      c2: c2,
+      a2: a2,
+      c3: c3,
+      a3: a3,
+      c4: c4,
+      a4: a4,
       b: Math.abs(s.Bold),
       i: Math.abs(s.Italic),
       u: Math.abs(s.Underline),
@@ -727,16 +830,21 @@ function compileStyles({ info, style, defaultStyle }) {
       xshad: s.Shadow,
       yshad: s.Shadow,
       fe: s.Encoding,
+      // TODO: [breaking change] remove `q` from style
       q: /^[0-3]$/.test(info.WrapStyle) ? info.WrapStyle * 1 : 2,
     };
-    result[s.Name] = { style: s, tag };
-  }
+    result[s.Name] = { style: s, tag: tag };
+  };
+
+  for (var i = 0; i < styles.length; i++) loop( i );
   return result;
 }
 
-function compile(text, options = {}) {
-  const tree = parse(text);
-  const styles = compileStyles({
+function compile(text, options) {
+  if ( options === void 0 ) options = {};
+
+  var tree = parse(text);
+  var styles = compileStyles({
     info: tree.info,
     style: tree.styles.style,
     defaultStyle: options.defaultStyle || {},
@@ -745,13 +853,48 @@ function compile(text, options = {}) {
     info: tree.info,
     width: tree.info.PlayResX * 1 || null,
     height: tree.info.PlayResY * 1 || null,
+    wrapStyle: /^[0-3]$/.test(tree.info.WrapStyle) ? tree.info.WrapStyle * 1 : 2,
     collisions: tree.info.Collisions || 'Normal',
-    styles,
+    styles: styles,
     dialogues: compileDialogues({
-      styles,
+      styles: styles,
       dialogues: tree.events.dialogue,
     }),
   };
+}
+
+// https://github.com/weizhenye/ASS/wiki/Font-Size-in-ASS
+
+const useTextMetrics = 'fontBoundingBoxAscent' in TextMetrics.prototype;
+
+// It seems max line-height is 1200px in Firefox.
+const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+const unitsPerEm = !useTextMetrics && isFirefox ? 512 : 2048;
+const lineSpacing = Object.create(null);
+
+const ctx = document.createElement('canvas').getContext('2d');
+
+const $div = document.createElement('div');
+$div.className = 'ASS-fix-font-size';
+$div.style.fontSize = `${unitsPerEm}px`;
+const $span = document.createElement('span');
+$span.textContent = '0';
+$div.append($span);
+
+const $fixFontSize = useTextMetrics ? null : $div;
+
+function getRealFontSize(fn, fs) {
+  if (!lineSpacing[fn]) {
+    if (useTextMetrics) {
+      ctx.font = `${unitsPerEm}px "${fn}"`;
+      const tm = ctx.measureText('');
+      lineSpacing[fn] = tm.fontBoundingBoxAscent + tm.fontBoundingBoxDescent;
+    } else {
+      $span.style.fontFamily = `"${fn}"`;
+      lineSpacing[fn] = $span.clientHeight;
+    }
+  }
+  return fs * unitsPerEm / lineSpacing[fn];
 }
 
 function alpha2opacity(a) {
@@ -793,7 +936,7 @@ function createSVGEl(name, attrs = []) {
   return $el;
 }
 
-const GLOBAL_CSS = '.ASS-box{font-family:Arial;overflow:hidden;pointer-events:none;position:absolute}.ASS-dialogue{font-size:0;position:absolute;z-index:0}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{display:inline-block;color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px)}.ASS-dialogue [data-wrap-style="0"],.ASS-dialogue [data-wrap-style="3"]{text-wrap:balance}.ASS-dialogue [data-wrap-style="1"]{word-break:break-word;white-space:normal}.ASS-dialogue [data-wrap-style="2"]{word-break:normal;white-space:nowrap}.ASS-dialogue [data-border-style="1"]{position:relative}.ASS-dialogue [data-border-style="1"]::after,.ASS-dialogue [data-border-style="1"]::before{content:attr(data-text);position:absolute;top:0;left:0;z-index:-1;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="1"]::before{color:var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px));-webkit-text-stroke:var(--ass-border-width) var(--ass-shadow-color);text-shadow:var(--ass-shadow-delta);opacity:var(--ass-shadow-opacity)}.ASS-dialogue [data-border-style="1"]::after{color:transparent;-webkit-text-stroke:var(--ass-border-width) var(--ass-border-color);text-shadow:var(--ass-border-delta);opacity:var(--ass-border-opacity)}.ASS-dialogue [data-border-style="3"]{padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px) calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);position:relative;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="3"]::after,.ASS-dialogue [data-border-style="3"]::before{content:"";width:100%;height:100%;position:absolute;z-index:-1}.ASS-dialogue [data-border-style="3"]::before{background-color:var(--ass-shadow-color);left:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px);top:calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)}.ASS-dialogue [data-border-style="3"]::after{background-color:var(--ass-border-color);left:0;top:0}@container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0){.ASS-dialogue [data-border-style="3"]::after{background-color:transparent}}@container style(--ass-tag-xshad: 0) and style(--ass-tag-yshad: 0){.ASS-dialogue [data-border-style="3"]::before{background-color:transparent}}.ASS-dialogue [data-rotate]{transform:perspective(312.5px) rotateY(calc(var(--ass-tag-fry)*1deg)) rotateX(calc(var(--ass-tag-frx)*1deg)) rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-text][data-rotate]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{display:inline-block;transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy)) skew(calc(var(--ass-tag-fax)*1rad),calc(var(--ass-tag-fay)*1rad));transform-origin:var(--ass-align-h) var(--ass-align-v)}.ASS-fix-font-size{font-size:2048px;font-family:Arial;line-height:normal;width:0;height:0;position:absolute;visibility:hidden;overflow:hidden}.ASS-clip-area,.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;top:0;left:0}.ASS-scroll-area{position:absolute;width:100%;overflow:hidden}';
+const GLOBAL_CSS = '.ASS-box{font-family:Arial;overflow:hidden;pointer-events:none;position:absolute}.ASS-dialogue{font-size:0;width:max-content;position:absolute;z-index:0;transform:translate(calc(var(--ass-align-h)*-1),calc(var(--ass-align-v)*-1))}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{display:inline-block;color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px)}.ASS-dialogue[data-wrap-style="0"],.ASS-dialogue[data-wrap-style="3"]{text-wrap:balance;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="1"]{word-break:break-word;white-space:normal}.ASS-dialogue[data-wrap-style="2"]{word-break:normal;white-space:nowrap}.ASS-dialogue [data-border-style="1"]{position:relative;filter:blur(calc(var(--ass-tag-blur)*calc(1 - sign(var(--ass-tag-xbord)))*calc(1 - sign(var(--ass-tag-ybord)))*1px))}.ASS-dialogue [data-border-style="1"]::after,.ASS-dialogue [data-border-style="1"]::before{content:attr(data-text);position:absolute;top:0;left:0;z-index:-1;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="1"]::before{color:var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px));-webkit-text-stroke:var(--ass-border-width) var(--ass-shadow-color);text-shadow:var(--ass-shadow-delta);opacity:var(--ass-shadow-opacity)}.ASS-dialogue [data-border-style="1"]::after{color:transparent;-webkit-text-stroke:var(--ass-border-width) var(--ass-border-color);text-shadow:var(--ass-border-delta);opacity:var(--ass-border-opacity)}.ASS-dialogue [data-border-style="3"]{padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px) calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);position:relative;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="3"]::after,.ASS-dialogue [data-border-style="3"]::before{content:"";width:100%;height:100%;position:absolute;z-index:-1}.ASS-dialogue [data-border-style="3"]::before{background-color:var(--ass-shadow-color);left:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px);top:calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)}.ASS-dialogue [data-border-style="3"]::after{background-color:var(--ass-border-color);left:0;top:0}@container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0){.ASS-dialogue [data-border-style="3"]::after{background-color:transparent}}@container style(--ass-tag-xshad: 0) and style(--ass-tag-yshad: 0){.ASS-dialogue [data-border-style="3"]::before{background-color:transparent}}.ASS-dialogue [data-rotate]{transform:perspective(312.5px) rotateY(calc(var(--ass-tag-fry)*1deg)) rotateX(calc(var(--ass-tag-frx)*1deg)) rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-text][data-rotate]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{display:inline-block;transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy)) skew(calc(var(--ass-tag-fax)*1rad),calc(var(--ass-tag-fay)*1rad));transform-origin:var(--ass-align-h) var(--ass-align-v)}.ASS-fix-font-size{font-family:Arial;line-height:normal;width:0;height:0;position:absolute;visibility:hidden;overflow:hidden}.ASS-clip-area,.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;top:0;left:0}.ASS-effect-area{position:absolute;display:flex;width:100%;height:fit-content;overflow:hidden;mask-composite:intersect}.ASS-effect-area[data-effect=banner]{flex-direction:column;height:100%}.ASS-effect-area .ASS-dialogue{position:static;transform:none}';
 /**
  * @param {HTMLElement} container
  */
@@ -822,23 +965,232 @@ function batchAnimate(dia, action) {
   });
 }
 
-// https://github.com/weizhenye/ASS/wiki/Font-Size-in-ASS
+function createEffect(effect, duration) {
+  // TODO: when effect and move both exist, its behavior is weird, for now only move works.
+  const { name, delay, leftToRight } = effect;
+  const translate = name === 'banner' ? 'X' : 'Y';
+  const dir = ({
+    X: leftToRight ? 1 : -1,
+    Y: /up/.test(name) ? -1 : 1,
+  })[translate];
+  const start = -100 * dir;
+  // speed is 1000px/s when delay=1
+  const distance = (duration / (delay || 1)) * dir;
+  const keyframes = [
+    { offset: 0, transform: `translate${translate}(${start}%)` },
+    { offset: 1, transform: `translate${translate}(calc(${start}% + var(--ass-scale) * ${distance}px))` },
+  ];
+  return [keyframes, { duration, fill: 'forwards' }];
+}
 
-const $fixFontSize = document.createElement('div');
-$fixFontSize.className = 'ASS-fix-font-size';
-const $span = document.createElement('span');
-$span.textContent = '0';
-$fixFontSize.append($span);
+function multiplyScale(v) {
+  return `calc(var(--ass-scale) * ${v}px)`;
+}
 
-const unitsPerEm = 2048;
-const lineSpacing = Object.create(null);
+function createMove(move, duration) {
+  const { x1, y1, x2, y2, t1, t2 } = move;
+  const start = `translate(${multiplyScale(x1)}, ${multiplyScale(y1)})`;
+  const end = `translate(${multiplyScale(x2)}, ${multiplyScale(y2)})`;
+  const moveDuration = Math.max(t2, duration);
+  const keyframes = [
+    { offset: 0, transform: start },
+    t1 > 0 ? { offset: t1 / moveDuration, transform: start } : null,
+    (t2 > 0 && t2 < duration) ? { offset: t2 / moveDuration, transform: end } : null,
+    { offset: 1, transform: end },
+  ].filter(Boolean);
+  const options = { duration: moveDuration, fill: 'forwards' };
+  return [keyframes, options];
+}
 
-function getRealFontSize(fn, fs) {
-  if (!lineSpacing[fn]) {
-    $span.style.fontFamily = fn;
-    lineSpacing[fn] = $span.clientHeight;
+function createFadeList(fade, duration) {
+  const { type, a1, a2, a3, t1, t2, t3, t4 } = fade;
+  // \fad(<t1>, <t2>)
+  if (type === 'fad') {
+    // For example dialogue starts at 0 and ends at 5000 with \fad(4000, 4000)
+    // * <t1> means opacity from 0 to 1 in (0, 4000)
+    // * <t2> means opacity from 1 to 0 in (1000, 5000)
+    // <t1> and <t2> are overlaped in (1000, 4000), <t1> will take affect
+    // so the result is:
+    // * opacity from 0 to 1 in (0, 4000)
+    // * opacity from 0.25 to 0 in (4000, 5000)
+    const t1Keyframes = [{ offset: 0, opacity: 0 }, { offset: 1, opacity: 1 }];
+    const t2Keyframes = [{ offset: 0, opacity: 1 }, { offset: 1, opacity: 0 }];
+    return [
+      [t2Keyframes, { duration: t2, delay: duration - t2, fill: 'forwards' }],
+      [t1Keyframes, { duration: t1, composite: 'replace' }],
+    ];
   }
-  return fs * unitsPerEm / lineSpacing[fn];
+  // \fade(<a1>, <a2>, <a3>, <t1>, <t2>, <t3>, <t4>)
+  const fadeDuration = Math.max(duration, t4);
+  const opacities = [a1, a2, a3].map((a) => 1 - a / 255);
+  const offsets = [0, t1, t2, t3, t4].map((t) => t / fadeDuration);
+  const keyframes = offsets.map((t, i) => ({ offset: t, opacity: opacities[i >> 1] }));
+  return [
+    [keyframes, { duration: fadeDuration, fill: 'forwards' }],
+  ];
+}
+
+function createAnimatableVars(tag) {
+  return [
+    ['real-fs', getRealFontSize(tag.fn, tag.fs)],
+    ['tag-fs', tag.fs],
+    ['tag-fsp', tag.fsp],
+    ['fill-color', color2rgba(tag.a1 + tag.c1)],
+  ]
+    .filter(([, v]) => v)
+    .map(([k, v]) => [`--ass-${k}`, v]);
+}
+
+if (window.CSS.registerProperty) {
+  ['real-fs', 'tag-fs', 'tag-fsp'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: '0',
+    });
+  });
+  window.CSS.registerProperty({
+    name: '--ass-fill-color',
+    syntax: '<color>',
+    inherits: true,
+    initialValue: 'transparent',
+  });
+}
+
+// use linear() to simulate accel
+function getEasing(duration, accel) {
+  if (accel === 1) return 'linear';
+  // 60fps
+  const frames = Math.ceil(duration / 1000 * 60);
+  const points = Array.from({ length: frames + 1 })
+    .map((_, i) => (i / frames) ** accel);
+  return `linear(${points.join(',')})`;
+}
+
+function createDialogueAnimations(el, dialogue) {
+  const { start, end, effect, move, fade } = dialogue;
+  const duration = (end - start) * 1000;
+  return [
+    effect && !move ? createEffect(effect, duration) : null,
+    move ? createMove(move, duration) : null,
+    ...(fade ? createFadeList(fade, duration) : []),
+  ]
+    .filter(Boolean)
+    .map(([keyframes, options]) => initAnimation(el, keyframes, options));
+}
+
+function createTagKeyframes(fromTag, tag, key) {
+  const value = tag[key];
+  if (value === undefined) return [];
+  if (key === 'clip') return [];
+  if (key === 'a1' || key === 'c1') {
+    return [['fill-color', color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1))]];
+  }
+  if (key === 'c3') {
+    return [['border-color', color2rgba(`00${tag.c3}`)]];
+  }
+  if (key === 'a3') {
+    return [['border-opacity', alpha2opacity(tag.a3)]];
+  }
+  if (key === 'c4') {
+    return [['shadow-color', color2rgba(`00${tag.c4}`)]];
+  }
+  if (key === 'a4') {
+    return [['shadow-opacity', alpha2opacity(tag.a4)]];
+  }
+  if (key === 'fs') {
+    return [
+      ['real-fs', getRealFontSize(tag.fn || fromTag.fn, tag.fs)],
+      ['tag-fs', value],
+    ];
+  }
+  if (key === 'fscx' || key === 'fscy') {
+    return [[`tag-${key}`, (value || 100) / 100]];
+  }
+  return [[`tag-${key}`, value]];
+}
+
+function createTagAnimations(el, fragment, sliceTag) {
+  const fromTag = { ...sliceTag, ...fragment.tag };
+  return (fragment.tag.t || []).map(({ t1, t2, accel, tag }) => {
+    const keyframe = Object.fromEntries(
+      Object.keys(tag)
+        .flatMap((key) => createTagKeyframes(fromTag, tag, key))
+        .map(([k, v]) => [`--ass-${k}`, v])
+        // .concat(tag.clip ? [['clipPath', ]] : [])
+        .concat([['offset', 1]]),
+    );
+    const duration = Math.max(0, t2 - t1);
+    return initAnimation(el, [keyframe], {
+      duration,
+      delay: t1,
+      fill: 'forwards',
+      easing: getEasing(duration, accel),
+    });
+  });
+}
+
+function createClipAnimations(el, dialogue, store) {
+  return dialogue.slices
+    .flatMap((slice) => slice.fragments)
+    .flatMap((fragment) => fragment.tag.t || [])
+    .filter(({ tag }) => tag.clip)
+    .map(({ t1, t2, accel, tag }) => {
+      const keyframe = {
+        offset: 1,
+        clipPath: createRectClip(tag.clip, store.scriptRes.width, store.scriptRes.height),
+      };
+      const duration = Math.max(0, t2 - t1);
+      return initAnimation(el, [keyframe], {
+        duration,
+        delay: t1,
+        fill: 'forwards',
+        easing: getEasing(duration, accel),
+      });
+    });
+}
+
+// eslint-disable-next-line import/no-cycle
+
+function createRectClip(clip, sw, sh) {
+  if (!clip.dots) return '';
+  const { x1, y1, x2, y2 } = clip.dots;
+  const polygon = [[x1, y1], [x1, y2], [x2, y2], [x2, y1], [x1, y1]]
+    .map(([x, y]) => [x / sw, y / sh])
+    .concat(clip.inverse ? [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]] : [])
+    .map((pair) => pair.map((n) => `${n * 100}%`).join(' '))
+    .join(',');
+  return `polygon(evenodd, ${polygon})`;
+}
+
+function createPathClip(clip, sw, sh, store) {
+  if (!clip.drawing) return '';
+  const scale = store.scale / (1 << (clip.scale - 1));
+  let d = clip.drawing.instructions.map(({ type, points }) => (
+    type + points.map(({ x, y }) => `${x * scale},${y * scale}`).join(',')
+  )).join('');
+  if (clip.inverse) {
+    d += `M0,0L0,${sh},${sw},${sh},${sw},0,0,0Z`;
+  }
+  return `path(evenodd, "${d}")`;
+}
+
+function getClipPath(dialogue, store) {
+  const { clip, animations } = dialogue;
+  if (!clip) return {};
+  const { width, height } = store.scriptRes;
+  const $clipArea = document.createElement('div');
+  store.box.insertBefore($clipArea, dialogue.$div);
+  $clipArea.append(dialogue.$div);
+  $clipArea.className = 'ASS-clip-area';
+  $clipArea.style.zIndex = dialogue.$div.style.zIndex;
+  $clipArea.style.clipPath = clip.dots
+    ? createRectClip(clip, width, height)
+    : createPathClip(clip, width, height, store);
+  animations.push(...createClipAnimations($clipArea, dialogue, store));
+
+  return { $div: $clipArea };
 }
 
 function createSVGStroke(tag, id, scale) {
@@ -1021,276 +1373,6 @@ if (window.CSS.registerProperty) {
   });
 }
 
-const rotateTags = ['frx', 'fry', 'frz'];
-const scaleTags = ['fscx', 'fscy'];
-const skewTags = ['fax', 'fay'];
-
-if (window.CSS.registerProperty) {
-  [...rotateTags, ...skewTags].forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 0,
-    });
-  });
-  scaleTags.forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 1,
-    });
-  });
-}
-
-function createTransform(tag) {
-  return [
-    ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),
-    ...scaleTags.map((x) => ([`--ass-tag-${x}`, tag.p ? 1 : (tag[x] || 100) / 100])),
-  ];
-}
-
-function setTransformOrigin(dialogue, scale) {
-  const { align, width, height, x, y, $div } = dialogue;
-  const org = {};
-  if (dialogue.org) {
-    org.x = dialogue.org.x * scale;
-    org.y = dialogue.org.y * scale;
-  } else {
-    org.x = [x, x + width / 2, x + width][align.h];
-    org.y = [y + height, y + height / 2, y][align.v];
-  }
-  for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
-    const node = $div.childNodes[i];
-    if (node.dataset.rotate === '') {
-      // It's not extremely precise for offsets are round the value to an integer.
-      const tox = org.x - x - node.offsetLeft;
-      const toy = org.y - y - node.offsetTop;
-      node.style.cssText += `transform-origin:${tox}px ${toy}px;`;
-    }
-  }
-}
-
-// TODO: multi \t can't be merged directly
-function mergeT(ts) {
-  return ts.reduceRight((results, t) => {
-    let merged = false;
-    return results
-      .map((r) => {
-        merged = t.t1 === r.t1 && t.t2 === r.t2 && t.accel === r.accel;
-        return { ...r, ...(merged ? { tag: { ...r.tag, ...t.tag } } : {}) };
-      })
-      .concat(merged ? [] : t);
-  }, []);
-}
-
-function createEffectKeyframes({ effect, duration }) {
-  // TODO: when effect and move both exist, its behavior is weird, for now only move works.
-  const { name, delay, leftToRight } = effect;
-  if (name === 'banner') {
-    const tx = (duration / (delay || 1)) * (leftToRight ? 1 : -1);
-    return [0, `calc(var(--ass-scale) * ${tx}px)`].map((x, i) => ({
-      offset: i,
-      transform: `translateX(${x})`,
-    }));
-  }
-  if (name.startsWith('scroll')) {
-    // speed is 1000px/s when delay=1
-    const updown = /up/.test(name) ? -1 : 1;
-    const y = duration / (delay || 1) * updown;
-    return [
-      { offset: 0, transform: 'translateY(-100%)' },
-      { offset: 1, transform: `translateY(calc(var(--ass-scale) * ${y}px))` },
-    ];
-  }
-  return [];
-}
-
-function createMoveKeyframes({ move, duration, dialogue }) {
-  const { x1, y1, x2, y2, t1, t2 } = move;
-  const t = [t1, t2 || duration];
-  const pos = dialogue.pos || { x: 0, y: 0 };
-  return [[x1, y1], [x2, y2]]
-    .map(([x, y]) => [(x - pos.x), (y - pos.y)])
-    .map(([x, y], index) => ({
-      offset: Math.min(t[index] / duration, 1),
-      transform: `translate(calc(var(--ass-scale) * ${x}px), calc(var(--ass-scale) * ${y}px))`,
-    }));
-}
-
-function createFadeKeyframes(fade, duration) {
-  if (fade.type === 'fad') {
-    const { t1, t2 } = fade;
-    const kfs = [];
-    if (t1) {
-      kfs.push([0, 0]);
-    }
-    if (t1 < duration) {
-      if (t2 <= duration) {
-        kfs.push([t1 / duration, 1]);
-      }
-      if (t1 + t2 < duration) {
-        kfs.push([(duration - t2) / duration, 1]);
-      }
-      if (t2 > duration) {
-        kfs.push([0, (t2 - duration) / t2]);
-      } else if (t1 + t2 > duration) {
-        kfs.push([(t1 + 0.5) / duration, 1 - (t1 + t2 - duration) / t2]);
-      }
-      if (t2) {
-        kfs.push([1, 0]);
-      }
-    } else {
-      kfs.push([1, duration / t1]);
-    }
-    return kfs.map(([offset, opacity]) => ({ offset, opacity }));
-  }
-  const { a1, a2, a3, t1, t2, t3, t4 } = fade;
-  const opacities = [a1, a2, a3].map((a) => 1 - a / 255);
-  return [0, t1, t2, t3, t4, duration]
-    .map((t) => t / duration)
-    .map((t, i) => ({ offset: t, opacity: opacities[i >> 1] }))
-    .filter(({ offset }) => offset <= 1);
-}
-
-function createTransformKeyframes({ fromTag, tag, fragment }) {
-  const toTag = { ...fromTag, ...tag };
-  if (fragment.drawing) {
-    // scales will be handled inside svg
-    Object.assign(toTag, {
-      p: 0,
-      fscx: ((tag.fscx || fromTag.fscx) / fromTag.fscx) * 100,
-      fscy: ((tag.fscy || fromTag.fscy) / fromTag.fscy) * 100,
-    });
-    Object.assign(fromTag, { fscx: 100, fscy: 100 });
-  }
-  return Object.fromEntries(createTransform(toTag));
-}
-
-function createAnimatableVars(tag) {
-  return [
-    ['real-fs', getRealFontSize(tag.fn, tag.fs)],
-    ['tag-fs', tag.fs],
-    ['tag-fsp', tag.fsp],
-    ['fill-color', color2rgba(tag.a1 + tag.c1)],
-  ]
-    .filter(([, v]) => v)
-    .map(([k, v]) => [`--ass-${k}`, v]);
-}
-
-if (window.CSS.registerProperty) {
-  ['real-fs', 'tag-fs', 'tag-fsp'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-${k}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: '0',
-    });
-  });
-  window.CSS.registerProperty({
-    name: '--ass-fill-color',
-    syntax: '<color>',
-    inherits: true,
-    initialValue: 'transparent',
-  });
-}
-
-// TODO: accel is not implemented yet, maybe it can be simulated by cubic-bezier?
-function setKeyframes(dialogue, store) {
-  const { start, end, effect, move, fade, slices } = dialogue;
-  const duration = (end - start) * 1000;
-  const keyframes = [
-    ...(effect && !move ? createEffectKeyframes({ effect, duration }) : []),
-    ...(move ? createMoveKeyframes({ move, duration, dialogue }) : []),
-    ...(fade ? createFadeKeyframes(fade, duration) : []),
-  ].sort((a, b) => a.offset - b.offset);
-  if (keyframes.length > 0) {
-    Object.assign(dialogue, { keyframes });
-  }
-  slices.forEach((slice) => {
-    const sliceTag = store.styles[slice.style].tag;
-    slice.fragments.forEach((fragment) => {
-      if (!fragment.tag.t || fragment.tag.t.length === 0) {
-        return;
-      }
-      const fromTag = { ...sliceTag, ...fragment.tag };
-      const tTags = mergeT(fragment.tag.t).sort((a, b) => a.t2 - b.t2 || a.t1 - b.t1);
-      if (tTags[0].t1 > 0) {
-        tTags.unshift({ t1: 0, t2: tTags[0].t1, tag: fromTag });
-      }
-      tTags.reduce((prevTag, curr) => {
-        const tag = { ...prevTag, ...curr.tag };
-        tag.t = null;
-        Object.assign(curr.tag, tag);
-        return tag;
-      }, {});
-      const fDuration = Math.max(duration, ...tTags.map(({ t2 }) => t2));
-      const kfs = tTags.map(({ t2, tag }) => ({
-        offset: t2 / fDuration,
-        ...Object.fromEntries(createAnimatableVars({
-          ...tag,
-          a1: tag.a1 || fromTag.a1,
-          c1: tag.c1 || fromTag.c1,
-        })),
-        ...Object.fromEntries(createCSSStroke(
-          { ...fromTag, ...tag },
-          store.sbas ? store.scale : 1,
-        )),
-        ...createTransformKeyframes({ fromTag, tag, fragment }),
-      })).sort((a, b) => a.offset - b.offset);
-      if (kfs.length > 0) {
-        Object.assign(fragment, { keyframes: kfs, duration: fDuration });
-      }
-    });
-  });
-}
-
-function addClipPath($defs, clip, id, sw, sh) {
-  if ($defs.querySelector(`#${id}`)) return;
-  let d = '';
-  if (clip.dots !== null) {
-    let { x1, y1, x2, y2 } = clip.dots;
-    x1 /= sw;
-    y1 /= sh;
-    x2 /= sw;
-    y2 /= sh;
-    d = `M${x1},${y1}L${x1},${y2},${x2},${y2},${x2},${y1}Z`;
-  }
-  if (clip.drawing !== null) {
-    d = clip.drawing.instructions.map(({ type, points }) => (
-      type + points.map(({ x, y }) => `${x / sw},${y / sh}`).join(',')
-    )).join('');
-  }
-  const scale = 1 / (1 << (clip.scale - 1));
-  if (clip.inverse) {
-    d += `M0,0L0,${scale},${scale},${scale},${scale},0,0,0Z`;
-  }
-  const $clipPath = createSVGEl('clipPath', [
-    ['id', id],
-    ['clipPathUnits', 'objectBoundingBox'],
-  ]);
-  $clipPath.append(createSVGEl('path', [
-    ['d', d],
-    ['transform', `scale(${scale})`],
-    ['clip-rule', 'evenodd'],
-  ]));
-  $defs.append($clipPath);
-}
-
-function getClipPath(dialogue, store) {
-  const { id, clip } = dialogue;
-  if (!clip) return {};
-  const { width, height } = store.scriptRes;
-  addClipPath(store.defs, clip, id, width, height);
-  const $clipArea = document.createElement('div');
-  store.box.insertBefore($clipArea, dialogue.$div);
-  $clipArea.append(dialogue.$div);
-  $clipArea.className = 'ASS-clip-area';
-  $clipArea.style.clipPath = `url(#${id})`;
-  return { $div: $clipArea };
-}
-
 function createDrawing(fragment, styleTag, store) {
   if (!fragment.drawing.d) return null;
   const tag = { ...styleTag, ...fragment.tag };
@@ -1337,6 +1419,51 @@ function createDrawing(fragment, styleTag, store) {
   };
 }
 
+const rotateTags = ['frx', 'fry', 'frz'];
+const scaleTags = ['fscx', 'fscy'];
+const skewTags = ['fax', 'fay'];
+
+if (window.CSS.registerProperty) {
+  [...rotateTags, ...skewTags].forEach((tag) => {
+    window.CSS.registerProperty({
+      name: `--ass-tag-${tag}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 0,
+    });
+  });
+  scaleTags.forEach((tag) => {
+    window.CSS.registerProperty({
+      name: `--ass-tag-${tag}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 1,
+    });
+  });
+}
+
+function createTransform(tag) {
+  return [
+    ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),
+    ...scaleTags.map((x) => ([`--ass-tag-${x}`, tag.p ? 1 : (tag[x] || 100) / 100])),
+  ];
+}
+
+function setTransformOrigin(dialogue, scale) {
+  const { align, width, height, x, y, $div } = dialogue;
+  const orgX = (dialogue.org ? dialogue.org.x * scale : x) + [0, width / 2, width][align.h];
+  const orgY = (dialogue.org ? dialogue.org.y * scale : y) + [height, height / 2, 0][align.v];
+  for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
+    const node = $div.childNodes[i];
+    if (node.dataset.rotate === '') {
+      // It's not extremely precise for offsets are round the value to an integer.
+      const tox = orgX - x - node.offsetLeft;
+      const toy = orgY - y - node.offsetTop;
+      node.style.cssText += `transform-origin:${tox}px ${toy}px;`;
+    }
+  }
+}
+
 function encodeText(text, q) {
   return text
     .replace(/\\h/g, ' ')
@@ -1345,22 +1472,18 @@ function encodeText(text, q) {
 }
 
 function createDialogue(dialogue, store) {
-  const { video, styles } = store;
+  const { styles } = store;
   const $div = document.createElement('div');
   $div.className = 'ASS-dialogue';
+  $div.dataset.wrapStyle = dialogue.q;
   const df = document.createDocumentFragment();
-  const { align, slices, start, end } = dialogue;
+  const { align, slices } = dialogue;
   [
-    ['--ass-align-h', ['left', 'center', 'right'][align.h]],
-    ['--ass-align-v', ['bottom', 'center', 'top'][align.v]],
+    ['--ass-align-h', ['0%', '50%', '100%'][align.h]],
+    ['--ass-align-v', ['100%', '50%', '0%'][align.v]],
   ].forEach(([k, v]) => {
     $div.style.setProperty(k, v);
   });
-  const animationOptions = {
-    duration: (end - start) * 1000,
-    delay: Math.min(0, start - (video.currentTime - store.delay)) * 1000,
-    fill: 'forwards',
-  };
   const animations = [];
   slices.forEach((slice) => {
     const sliceTag = styles[slice.style].tag;
@@ -1394,8 +1517,6 @@ function createDialogue(dialogue, store) {
       encodeText(text, tag.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
-        $span.dataset.wrapStyle = tag.q;
-        $span.dataset.borderStyle = borderStyle;
         if (hasScale || hasSkew) {
           if (hasScale) {
             $ssspan.dataset.scale = '';
@@ -1415,7 +1536,6 @@ function createDialogue(dialogue, store) {
           $span.style.cssText = obj.cssText;
           $span.append(obj.$svg);
         } else {
-          $span.dataset.text = '';
           if (idx) {
             df.append(document.createElement('br'));
           }
@@ -1426,29 +1546,21 @@ function createDialogue(dialogue, store) {
             $span.textContent = content;
           }
           const el = hasScale || hasSkew ? $ssspan : $span;
+          el.dataset.text = content;
           if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
-            el.dataset.text = content;
+            el.dataset.borderStyle = borderStyle;
           }
         }
         $span.style.cssText += cssText;
         cssVars.forEach(([k, v]) => {
           $span.style.setProperty(k, v);
         });
-        if (fragment.keyframes) {
-          const animation = initAnimation(
-            $span,
-            fragment.keyframes,
-            { ...animationOptions, duration: fragment.duration },
-          );
-          animations.push(animation);
-        }
+        animations.push(...createTagAnimations($span, fragment, sliceTag));
         df.append($span);
       });
     });
   });
-  if (dialogue.keyframes) {
-    animations.push(initAnimation($div, dialogue.keyframes, animationOptions));
-  }
+  animations.push(...createDialogueAnimations($div, dialogue));
   $div.append(df);
   return { $div, animations };
 }
@@ -1530,17 +1642,10 @@ function allocate(dialogue, store) {
 
 function getPosition(dialogue, store) {
   const { scale } = store;
-  const { effect, move, align, width, height, margin, slices } = dialogue;
+  const { move, align, width, height, margin, slices } = dialogue;
   let x = 0;
   let y = 0;
-  if (effect && effect.name === 'banner') {
-    x = effect.lefttoright ? -width : store.width;
-    y = [
-      store.height - height - margin.vertical,
-      (store.height - height) / 2,
-      margin.vertical,
-    ][align.v];
-  } else if (dialogue.pos || move) {
+  if (dialogue.pos || move) {
     const pos = dialogue.pos || { x: 0, y: 0 };
     const sx = scale * pos.x;
     const sy = scale * pos.y;
@@ -1563,47 +1668,66 @@ function getPosition(dialogue, store) {
       ][align.v]
       : allocate(dialogue, store);
   }
-  // TODO: use % for x and y
-  return { x, y };
+  return {
+    x: x + [0, width / 2, width][align.h],
+    y: y + [height, height / 2, 0][align.v],
+  };
 }
 
 function createStyle(dialogue) {
-  const { layer, align, effect, pos, margin } = dialogue;
+  const { layer, align, effect, pos, margin, q } = dialogue;
   let cssText = '';
   if (layer) cssText += `z-index:${layer};`;
   cssText += `text-align:${['left', 'center', 'right'][align.h]};`;
   if (!effect) {
-    cssText += `max-width:calc(100% - var(--ass-scale) * ${margin.left + margin.right}px);`;
+    if (q !== 2) {
+      cssText += `max-width:calc(100% - var(--ass-scale) * ${margin.left + margin.right}px);`;
+    }
     if (!pos) {
       if (align.h !== 0) {
-        cssText += `margin-right:calc(var(--ass-scale) * ${margin.right}px);`;
+        cssText += `padding-right:calc(var(--ass-scale) * ${margin.right}px);`;
       }
       if (align.h !== 2) {
-        cssText += `margin-left:calc(var(--ass-scale) * ${margin.left}px);`;
+        cssText += `padding-left:calc(var(--ass-scale) * ${margin.left}px);`;
       }
     }
   }
   return cssText;
 }
 
-function getScrollEffect(dialogue, store) {
-  const $scrollArea = document.createElement('div');
-  $scrollArea.className = 'ASS-scroll-area';
-  store.box.insertBefore($scrollArea, dialogue.$div);
-  $scrollArea.append(dialogue.$div);
-  const { height } = store.scriptRes;
-  const { name, y1, y2 } = dialogue.effect;
+function setEffect(dialogue, store) {
+  const $area = document.createElement('div');
+  $area.className = 'ASS-effect-area';
+  store.box.insertBefore($area, dialogue.$div);
+  $area.append(dialogue.$div);
+  const { width, height } = store.scriptRes;
+  const { name, y1, y2, leftToRight, fadeAwayWidth, fadeAwayHeight } = dialogue.effect;
   const min = Math.min(y1, y2);
   const max = Math.max(y1, y2);
-  const top = min / height * 100;
-  const bottom = (height - max) / height * 100;
-  $scrollArea.style.cssText += `top:${top}%;bottom:${bottom}%;`;
-  const up = /up/.test(name);
-  // eslint-disable-next-line no-param-reassign
-  dialogue.$div.style.cssText += up ? 'top:100%;' : 'top:0%;';
-  return {
-    $div: $scrollArea,
-  };
+  $area.dataset.effect = name;
+  if (name === 'banner') {
+    $area.style.alignItems = leftToRight ? 'flex-start' : 'flex-end';
+    $area.style.justifyContent = ['flex-end', 'center', 'flex-start'][dialogue.align.v];
+  }
+  if (name.startsWith('scroll')) {
+    const top = min / height * 100;
+    const bottom = (height - max) / height * 100;
+    $area.style.cssText = `top:${top}%;bottom:${bottom}%;`;
+    $area.style.justifyContent = ['flex-start', 'center', 'flex-end'][dialogue.align.h];
+  }
+  if (fadeAwayHeight) {
+    const p = fadeAwayHeight / (max - min) * 100;
+    $area.style.maskImage = [
+      `linear-gradient(#000 ${100 - p}%, transparent)`,
+      `linear-gradient(transparent, #000 ${p}%)`,
+    ].join(',');
+  }
+  if (fadeAwayWidth) {
+    const p = fadeAwayWidth / width * 100;
+    // only left side has fade away effect in VSFilter
+    $area.style.maskImage = `linear-gradient(90deg, transparent, #000 ${p}%)`;
+  }
+  return $area;
 }
 
 function renderer(dialogue, store) {
@@ -1618,11 +1742,12 @@ function renderer(dialogue, store) {
   Object.assign(dialogue, { height });
   const { x, y } = getPosition(dialogue, store);
   Object.assign(dialogue, { x, y });
-  $div.style.cssText += `width:${width}px;height:${height}px;left:${x}px;top:${y}px;`;
+  $div.style.cssText += `left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);
+  // TODO: refactor to create .clip-area or .effect-area wrappers in `createDialogue`
   Object.assign(dialogue, getClipPath(dialogue, store));
-  if (dialogue.effect?.name?.startsWith('scroll')) {
-    Object.assign(dialogue, getScrollEffect(dialogue, store));
+  if (dialogue.effect) {
+    Object.assign(dialogue, { $div: setEffect(dialogue, store) });
   }
   return dialogue;
 }
@@ -1655,6 +1780,9 @@ function framing(store) {
   ) {
     if (vct < dialogues[store.index].end) {
       const dia = renderer(dialogues[store.index], store);
+      (dia.animations || []).forEach((animation) => {
+        animation.currentTime = (vct - dia.start) * 1000;
+      });
       if (!video.paused) {
         batchAnimate(dia, 'play');
       }
@@ -1706,7 +1834,7 @@ function createPause(store) {
 }
 
 function createResize(that, store) {
-  const { video, box, svg, layoutRes } = store;
+  const { video, box, layoutRes } = store;
   return function resize() {
     const cw = video.clientWidth;
     const ch = video.clientHeight;
@@ -1736,11 +1864,9 @@ function createResize(that, store) {
     store.height = bh;
     store.resampledRes = { width: rw, height: rh };
 
-    const cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
-    box.style.cssText = cssText;
+    box.style.cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
     box.style.setProperty('--ass-scale', store.scale);
     box.style.setProperty('--ass-scale-stroke', store.sbas ? store.scale : 1);
-    svg.style.cssText = cssText;
 
     createSeek(store)();
   };
@@ -1769,10 +1895,6 @@ class ASS {
     video: null,
     /** the box to display subtitles */
     box: document.createElement('div'),
-    /** use for \clip */
-    svg: createSVGEl('svg'),
-    /** use for \clip */
-    defs: createSVGEl('defs'),
     /**
      * video resize observer
      * @type {ResizeObserver}
@@ -1860,7 +1982,7 @@ class ASS {
     };
     this.#store.styles = styles;
     this.#store.dialogues = dialogues.map((dia) => Object.assign(dia, {
-      id: `ASS-${uuid()}`,
+      effect: ['banner', 'scroll up', 'scroll down'].includes(dia.effect?.name) ? dia.effect : null,
       align: {
         // 0: left, 1: center, 2: right
         h: (dia.alignment + 2) % 3,
@@ -1869,14 +1991,11 @@ class ASS {
       },
     }));
 
-    container.append($fixFontSize);
+    if ($fixFontSize) {
+      container.append($fixFontSize);
+    }
 
-    const { svg, defs, scriptRes, box } = this.#store;
-    svg.setAttributeNS(null, 'viewBox', `0 0 ${scriptRes.width} ${scriptRes.height}`);
-
-    svg.append(defs);
-    container.append(svg);
-
+    const { box } = this.#store;
     box.className = 'ASS-box';
     container.append(box);
 
@@ -1895,10 +2014,6 @@ class ASS {
     this.#resize();
     this.resampling = resampling;
 
-    dialogues.forEach((dialogue) => {
-      setKeyframes(dialogue, this.#store);
-    });
-
     const observer = new ResizeObserver(this.#resize);
     observer.observe(video);
     this.#store.observer = observer;
@@ -1911,7 +2026,7 @@ class ASS {
    * @returns {ASS}
    */
   destroy() {
-    const { video, box, svg, observer } = this.#store;
+    const { video, box, observer } = this.#store;
     this.#pause();
     clear(this.#store);
     video.removeEventListener('play', this.#play);
@@ -1920,8 +2035,9 @@ class ASS {
     video.removeEventListener('waiting', this.#pause);
     video.removeEventListener('seeking', this.#seek);
 
-    $fixFontSize.remove();
-    svg.remove();
+    if ($fixFontSize) {
+      $fixFontSize.remove();
+    }
     box.remove();
     observer.unobserve(this.#store.video);
 
