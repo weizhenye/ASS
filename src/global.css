@@ -24,6 +24,7 @@
 .ASS-dialogue[data-wrap-style="0"],
 .ASS-dialogue[data-wrap-style="3"] {
   text-wrap: balance;
+  white-space: pre-wrap;
 }
 .ASS-dialogue[data-wrap-style="1"] {
   word-break: break-word;
