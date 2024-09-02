@@ -53,7 +53,7 @@ export function createDialogue(dialogue, store) {
       const hasScale = scaleTags.some((x) => tags.some((t) => t[x] !== undefined && t[x] !== 100));
       const hasSkew = skewTags.some((x) => tags.some((t) => t[x]));
 
-      encodeText(text, tag.q).split('\n').forEach((content, idx) => {
+      encodeText(text, dialogue.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
         if (hasScale || hasSkew) {
@@ -76,7 +76,10 @@ export function createDialogue(dialogue, store) {
           $span.append(obj.$svg);
         } else {
           if (idx) {
-            df.append(document.createElement('br'));
+            const br = document.createElement('div');
+            br.dataset.is = 'br';
+            br.style.setProperty('--ass-tag-fs', tag.fs);
+            df.append(br);
           }
           if (!content) return;
           if (hasScale || hasSkew) {

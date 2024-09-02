@@ -2,7 +2,7 @@
   "name": "assjs",
   "version": "0.1.2",
   "type": "module",
-  "description": "A JavaScript ASS subtitle format renderer",
+  "description": "A lightweight JavaScript ASS subtitle renderer",
   "main": "dist/ass.js",
   "types": "dist/ass.d.ts",
   "files": [

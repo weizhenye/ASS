@@ -21,8 +21,12 @@
   line-height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px);
   letter-spacing: calc(var(--ass-scale) * var(--ass-tag-fsp) * 1px);
 }
+.ASS-dialogue [data-is="br"] + [data-is="br"] {
+  height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px / 2);
+}
 .ASS-dialogue[data-wrap-style="0"],
 .ASS-dialogue[data-wrap-style="3"] {
+  /* \q3 is just treated the same as \q0 in libass */
   text-wrap: balance;
   white-space: pre-wrap;
 }

@@ -13,9 +13,7 @@
 <a href="https://github.com/weizhenye/ass-compiler">ass-compiler</a>
 <span>・</span>
 
-ASS.js renders ASS subtitles on HTML5 video, with almost full ASS features.
-
-(Karaoke tags `\k`, `\kf`, `\ko`, `\kt`, `\K` are still WIP.)
+ASS.js renders ASS subtitles on HTML5 video, with [almost full ASS features](https://github.com/weizhenye/ASS/wiki/Differences-with-Specs).
 
 It's lightweight and suitable for web, **60x** smaller than WebAssembly solutions:
 | | Solution | Size |
@@ -152,9 +150,3 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
 | BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
 | `\blur` with `\bord0` | [sign()](https://caniuse.com/mdn-css_types_sign) | - | 118 | 15.4 |
-
-## Known issues
-
-* `\N` in Aegisub has less height than `<br>` in browsers, subbers should avoid to use multiple `\N` to position a dialogue, use `\pos` instead.
-* `\be` is just treated as `\blur`.
-* `\q3` is just treated as `\q0`.
