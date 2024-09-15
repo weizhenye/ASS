@@ -1,5 +1,5 @@
 import { uuid, createSVGEl } from '../utils.js';
-import { createSVGStroke } from './stroke.js';
+import { createStrokeFilter } from './stroke.js';
 
 export function createDrawing(fragment, styleTag, store) {
   if (!fragment.drawing.d) return null;
@@ -19,9 +19,9 @@ export function createDrawing(fragment, styleTag, store) {
     ['viewBox', `${-vbx} ${-vby} ${vbw} ${vbh}`],
   ]);
   const strokeScale = store.sbas ? store.scale : 1;
-  const filterId = `ASS-${uuid()}`;
   const $defs = createSVGEl('defs');
-  $defs.append(createSVGStroke(tag, filterId, strokeScale));
+  const filter = createStrokeFilter(tag, strokeScale);
+  $defs.append(filter.el);
   $svg.append($defs);
   const symbolId = `ASS-${uuid()}`;
   const $symbol = createSVGEl('symbol', [
@@ -34,7 +34,7 @@ export function createDrawing(fragment, styleTag, store) {
     ['width', width * scaleX],
     ['height', height * scaleY],
     ['xlink:href', `#${symbolId}`],
-    ['filter', `url(#${filterId})`],
+    ['filter', `url(#${filter.id})`],
   ]));
   $svg.style.cssText = (
     'position:absolute;'

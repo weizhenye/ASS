@@ -149,4 +149,4 @@ ASS.js uses many Web APIs to render subtitles, some features will be disabled if
 | accel in `\t` | [linear()](https://caniuse.com/mdn-css_types_easing-function_linear-function) | 113 | 112 | 17.2 |
 | `\q0` | [text-wrap: balance](https://caniuse.com/css-text-wrap-balance) | 114 | 121 | 17.5 |
 | BorderStyle=3 with `\bord0` | [@container](https://caniuse.com/mdn-css_at-rules_container_style_queries_for_custom_properties) | 111 | - | 18.0 |
-| `\blur` with `\bord0` | [sign()](https://caniuse.com/mdn-css_types_sign) | - | 118 | 15.4 |
+| `\blur` with `\bord0` | [round()](https://caniuse.com/mdn-css_types_round) | 125 | 118 | 15.4 |

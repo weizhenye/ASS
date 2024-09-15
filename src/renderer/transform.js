@@ -2,25 +2,6 @@ export const rotateTags = ['frx', 'fry', 'frz'];
 export const scaleTags = ['fscx', 'fscy'];
 export const skewTags = ['fax', 'fay'];
 
-if (window.CSS.registerProperty) {
-  [...rotateTags, ...skewTags].forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 0,
-    });
-  });
-  scaleTags.forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 1,
-    });
-  });
-}
-
 export function createTransform(tag) {
   return [
     ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),

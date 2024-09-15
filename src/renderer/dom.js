@@ -1,7 +1,8 @@
 import { createDrawing } from './drawing.js';
 import { createAnimatableVars, createDialogueAnimations, createTagAnimations } from './animation.js';
-import { createCSSStroke } from './stroke.js';
+import { createStrokeVars, createStrokeFilter } from './stroke.js';
 import { rotateTags, scaleTags, skewTags, createTransform } from './transform.js';
+import { createSVGEl } from '../utils.js';
 
 function encodeText(text, q) {
   return text
@@ -32,11 +33,19 @@ export function createDialogue(dialogue, store) {
       const tag = { ...sliceTag, ...fragment.tag };
       let cssText = '';
       const cssVars = [];
-      if (!drawing) {
-        cssVars.push(...createAnimatableVars(tag));
-        const scale = store.sbas ? store.scale : 1;
-        cssVars.push(...createCSSStroke(tag, scale));
 
+      cssVars.push(...createStrokeVars(tag));
+      let stroke = null;
+      const hasStroke = tag.xbord || tag.ybord || tag.xshad || tag.yshad;
+      if (hasStroke && (drawing || tag.a1 !== '00' || tag.xbord !== tag.ybord)) {
+        const filter = createStrokeFilter(tag, store.sbas ? store.scale : 1);
+        const svg = createSVGEl('svg', [['width', 0], ['height', 0]]);
+        svg.append(filter.el);
+        stroke = { id: filter.id, el: svg };
+      }
+
+      cssVars.push(...createAnimatableVars(tag));
+      if (!drawing) {
         cssText += `font-family:"${tag.fn}";`;
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
@@ -89,8 +98,15 @@ export function createDialogue(dialogue, store) {
           }
           const el = hasScale || hasSkew ? $ssspan : $span;
           el.dataset.text = content;
-          if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
+          if (hasStroke) {
             el.dataset.borderStyle = borderStyle;
+            el.dataset.stroke = 'css';
+          }
+          if (stroke) {
+            el.dataset.stroke = 'svg';
+            // TODO: it doesn't support animation
+            el.style.filter = `url(#${stroke.id})`;
+            el.append(stroke.el);
           }
         }
         $span.style.cssText += cssText;

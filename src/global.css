@@ -10,20 +10,31 @@
   position: absolute;
   z-index: 0;
   transform: translate(calc(var(--ass-align-h) * -1), calc(var(--ass-align-v) * -1));
+  span {
+    display: inline-block;
+  }
+  [data-text] {
+    display: inline-block;
+    color: var(--ass-fill-color);
+    font-size: calc(var(--ass-scale) * var(--ass-real-fs) * 1px);
+    line-height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px);
+    letter-spacing: calc(var(--ass-scale) * var(--ass-tag-fsp) * 1px);
+    /* for \bord0\blur4 */
+    /* when x > 0, round(up, sin(x) * sin(x)) === sign(x) */
+    /* sign() requires higher browser version */
+    filter: blur(calc(
+      var(--ass-scale-stroke)
+      * var(--ass-tag-blur)
+      * (1 - round(up, sin(var(--ass-tag-xbord)) * sin(var(--ass-tag-xbord))))
+      * (1 - round(up, sin(var(--ass-tag-ybord)) * sin(var(--ass-tag-ybord))))
+      * 1px
+    ));
+  }
+  [data-is="br"] + [data-is="br"] {
+    height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px / 2);
+  }
 }
-.ASS-dialogue span {
-  display: inline-block;
-}
-.ASS-dialogue [data-text] {
-  display: inline-block;
-  color: var(--ass-fill-color);
-  font-size: calc(var(--ass-scale) * var(--ass-real-fs) * 1px);
-  line-height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px);
-  letter-spacing: calc(var(--ass-scale) * var(--ass-tag-fsp) * 1px);
-}
-.ASS-dialogue [data-is="br"] + [data-is="br"] {
-  height: calc(var(--ass-scale) * var(--ass-tag-fs) * 1px / 2);
-}
+
 .ASS-dialogue[data-wrap-style="0"],
 .ASS-dialogue[data-wrap-style="3"] {
   /* \q3 is just treated the same as \q0 in libass */
@@ -38,65 +49,71 @@
   word-break: normal;
   white-space: nowrap;
 }
+
 .ASS-dialogue [data-border-style="1"] {
   position: relative;
-  /* for \bord0\blur4 */
-  filter: blur(calc(
-    var(--ass-tag-blur)
-    * calc(1 - sign(var(--ass-tag-xbord)))
-    * calc(1 - sign(var(--ass-tag-ybord)))
-    * 1px
-  ));
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    filter: blur(calc(var(--ass-scale-stroke) * var(--ass-tag-blur) * 1px));
+  }
+  &::before {
+    color: var(--ass-shadow-color);
+    -webkit-text-stroke: calc(var(--ass-scale-stroke) * var(--ass-border-width) * 1px) var(--ass-shadow-color);
+    transform: translate(calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px),
+        calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px));
+  }
+  &::after {
+    color: var(--ass-border-color);
+    -webkit-text-stroke: calc(var(--ass-scale-stroke) * var(--ass-border-width) * 1px) var(--ass-border-color);
+  }
+  &[data-stroke="svg"] {
+    color: #000;
+    &::before,
+    &::after {
+      opacity: 0;
+    }
+  }
 }
-.ASS-dialogue [data-border-style="1"]::before,
-.ASS-dialogue [data-border-style="1"]::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
-  filter: blur(calc(var(--ass-tag-blur) * 1px));
+@container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0) {
+  .ASS-dialogue [data-border-style="1"]::after {
+    display: none;
+  }
 }
-.ASS-dialogue [data-border-style="1"]::before {
-  color: var(--ass-shadow-color);
-  transform: translate(
-    calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px),
-    calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px)
-  );
-  -webkit-text-stroke: var(--ass-border-width) var(--ass-shadow-color);
-  text-shadow: var(--ass-shadow-delta);
-  opacity: var(--ass-shadow-opacity);
+@container style(--ass-tag-xshad: 0) and style(--ass-tag-yshad: 0) {
+  .ASS-dialogue [data-border-style="1"]::before {
+    display: none;
+  }
 }
-.ASS-dialogue [data-border-style="1"]::after {
-  color: transparent;
-  -webkit-text-stroke: var(--ass-border-width) var(--ass-border-color);
-  text-shadow: var(--ass-border-delta);
-  opacity: var(--ass-border-opacity);
-}
+
 .ASS-dialogue [data-border-style="3"] {
   padding:
     calc(var(--ass-scale-stroke) * var(--ass-tag-xbord) * 1px)
     calc(var(--ass-scale-stroke) * var(--ass-tag-ybord) * 1px);
   position: relative;
-  filter: blur(calc(var(--ass-tag-blur) * 1px));
-}
-.ASS-dialogue [data-border-style="3"]::before,
-.ASS-dialogue [data-border-style="3"]::after {
-  content: "";
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  z-index: -1;
-}
-.ASS-dialogue [data-border-style="3"]::before {
-  background-color: var(--ass-shadow-color);
-  left: calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px);
-  top: calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px);
-}
-.ASS-dialogue [data-border-style="3"]::after {
-  background-color: var(--ass-border-color);
-  left: 0;
-  top: 0;
+  filter: blur(calc(var(--ass-scale-stroke) * var(--ass-tag-blur) * 1px));
+  &::before,
+  &::after {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: -1;
+  }
+  &::before {
+    background-color: var(--ass-shadow-color);
+    left: calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px);
+    top: calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px);
+  }
+  &::after {
+    background-color: var(--ass-border-color);
+    left: 0;
+    top: 0;
+  }
 }
 @container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0) {
   .ASS-dialogue [data-border-style="3"]::after {
@@ -108,18 +125,20 @@
     background-color: transparent;
   }
 }
+
 .ASS-dialogue [data-rotate] {
   /* TODO: {\an5\fs80\bord0\shad60\frx30\frz30\fry30}1234567890 */
+  /* TODO: {\frz-90\shad30} */
   /* https://github.com/libass/libass/issues/805 */
   transform: perspective(312.5px)
     rotateY(calc(var(--ass-tag-fry) * 1deg))
     rotateX(calc(var(--ass-tag-frx) * 1deg))
     rotateZ(calc(var(--ass-tag-frz) * -1deg));
-}
-.ASS-dialogue [data-text][data-rotate] {
-  transform-style: preserve-3d;
-  word-break: normal;
-  white-space: nowrap;
+  &[data-text] {
+    transform-style: preserve-3d;
+    word-break: normal;
+    white-space: nowrap;
+  }
 }
 .ASS-dialogue [data-scale],
 .ASS-dialogue [data-skew] {
@@ -128,6 +147,7 @@
     skew(calc(var(--ass-tag-fax) * 1rad), calc(var(--ass-tag-fay) * 1rad));
   transform-origin: var(--ass-align-h) var(--ass-align-v);
 }
+
 .ASS-fix-font-size {
   font-family: Arial;
   line-height: normal;
@@ -136,9 +156,9 @@
   position: absolute;
   visibility: hidden;
   overflow: hidden;
-}
-.ASS-fix-font-size span {
-  position: absolute;
+  span {
+    position: absolute;
+  }
 }
 .ASS-clip-area {
   width: 100%;
@@ -154,12 +174,12 @@
   height: fit-content;
   overflow: hidden;
   mask-composite: intersect;
-}
-.ASS-effect-area[data-effect="banner"] {
-  flex-direction: column;
-  height: 100%;
-}
-.ASS-effect-area .ASS-dialogue {
-  position: static;
-  transform: none;
+  &[data-effect="banner"] {
+    flex-direction: column;
+    height: 100%;
+  }
+  .ASS-dialogue {
+    position: static;
+    transform: none;
+  }
 }

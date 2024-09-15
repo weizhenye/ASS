@@ -1,7 +1,42 @@
-import { color2rgba, alpha2opacity, initAnimation } from '../utils.js';
+import { color2rgba, initAnimation } from '../utils.js';
 import { getRealFontSize } from './font-size.js';
 // eslint-disable-next-line import/no-cycle
 import { createRectClip } from './clip.js';
+import { rotateTags, skewTags, scaleTags } from './transform.js';
+
+const strokeTags = ['blur', 'xbord', 'ybord', 'xshad', 'yshad'];
+if (window.CSS.registerProperty) {
+  [
+    'real-fs', 'tag-fs', 'tag-fsp', 'border-width',
+    ...[...strokeTags, ...rotateTags, ...skewTags].map((tag) => `tag-${tag}`),
+  ].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 0,
+    });
+  });
+  [
+    'border-opacity', 'shadow-opacity',
+    ...scaleTags.map((tag) => `tag-${tag}`),
+  ].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 1,
+    });
+  });
+  ['fill-color', 'border-color', 'shadow-color'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<color>',
+      inherits: true,
+      initialValue: 'transparent',
+    });
+  });
+}
 
 export function createEffect(effect, duration) {
   // TODO: when effect and move both exist, its behavior is weird, for now only move works.
@@ -79,23 +114,6 @@ export function createAnimatableVars(tag) {
     .map(([k, v]) => [`--ass-${k}`, v]);
 }
 
-if (window.CSS.registerProperty) {
-  ['real-fs', 'tag-fs', 'tag-fsp'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-${k}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: '0',
-    });
-  });
-  window.CSS.registerProperty({
-    name: '--ass-fill-color',
-    syntax: '<color>',
-    inherits: true,
-    initialValue: 'transparent',
-  });
-}
-
 // use linear() to simulate accel
 function getEasing(duration, accel) {
   if (accel === 1) return 'linear';
@@ -125,17 +143,11 @@ function createTagKeyframes(fromTag, tag, key) {
   if (key === 'a1' || key === 'c1') {
     return [['fill-color', color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1))]];
   }
-  if (key === 'c3') {
-    return [['border-color', color2rgba(`00${tag.c3}`)]];
+  if (key === 'a3' || key === 'c3') {
+    return [['border-color', color2rgba((tag.a3 || fromTag.a3) + (tag.c3 || fromTag.c3))]];
   }
-  if (key === 'a3') {
-    return [['border-opacity', alpha2opacity(tag.a3)]];
-  }
-  if (key === 'c4') {
-    return [['shadow-color', color2rgba(`00${tag.c4}`)]];
-  }
-  if (key === 'a4') {
-    return [['shadow-opacity', alpha2opacity(tag.a4)]];
+  if (key === 'a4' || key === 'c4') {
+    return [['shadow-color', color2rgba((tag.a4 || fromTag.a4) + (tag.c4 || fromTag.c4))]];
   }
   if (key === 'fs') {
     return [
@@ -145,6 +157,9 @@ function createTagKeyframes(fromTag, tag, key) {
   }
   if (key === 'fscx' || key === 'fscy') {
     return [[`tag-${key}`, (value || 100) / 100]];
+  }
+  if (key === 'xbord' || key === 'ybord') {
+    return [['border-width', value * 2]];
   }
   return [[`tag-${key}`, value]];
 }
