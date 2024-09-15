@@ -1,8 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { minify } from 'csso';
-import replace from '@rollup/plugin-replace';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
+import { transform, Features } from 'lightningcss';
 
 /** @type {import('rollup').RollupOptions} */
 export default {
@@ -30,12 +28,20 @@ export default {
     },
   ],
   plugins: [
-    replace({
-      preventAssignment: true,
-      values: {
-        __GLOBAL_CSS__: minify(readFileSync('./src/global.css', 'utf8')).css,
-      },
-    }),
     nodeResolve(),
+    {
+      transform(code, id) {
+        if (id.endsWith('.css')) {
+          const result = transform({
+            filename: id,
+            code: new TextEncoder().encode(code),
+            minify: true,
+            include: Features.Nesting,
+          });
+          return { code: `export default '${result.code.toString()}';` };
+        }
+        return null;
+      },
+    },
   ],
 };

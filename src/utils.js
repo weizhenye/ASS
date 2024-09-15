@@ -1,3 +1,5 @@
+import GLOBAL_CSS from './global.css';
+
 export function alpha2opacity(a) {
   return 1 - `0x${a}` / 255;
 }
@@ -37,7 +39,6 @@ export function createSVGEl(name, attrs = []) {
   return $el;
 }
 
-const GLOBAL_CSS = '__GLOBAL_CSS__';
 /**
  * @param {HTMLElement} container
  */
