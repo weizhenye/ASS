@@ -11,9 +11,9 @@ export function clear(store) {
   store.space = [];
 }
 
-function framing(store) {
-  const { video, dialogues, actives } = store;
-  const vct = video.currentTime - store.delay;
+function framing(store, mediaTime) {
+  const { dialogues, actives } = store;
+  const vct = mediaTime - store.delay;
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
     const { end } = dia;
@@ -31,9 +31,6 @@ function framing(store) {
       (dia.animations || []).forEach((animation) => {
         animation.currentTime = (vct - dia.start) * 1000;
       });
-      if (!video.paused) {
-        batchAnimate(dia, 'play');
-      }
       actives.push(dia);
     }
     store.index += 1;
@@ -53,18 +50,28 @@ export function createSeek(store) {
       }
       return (dialogues.length || 1) - 1;
     })();
-    framing(store);
+    framing(store, video.currentTime);
   };
 }
 
+function createFrame(video) {
+  const useVFC = video.requestVideoFrameCallback;
+  return [
+    useVFC ? video.requestVideoFrameCallback.bind(video) : requestAnimationFrame,
+    useVFC ? video.cancelVideoFrameCallback.bind(video) : cancelAnimationFrame,
+  ];
+}
+
 export function createPlay(store) {
+  const { video } = store;
+  const [requestFrame, cancelFrame] = createFrame(video);
   return function play() {
-    const frame = () => {
-      framing(store);
-      store.requestId = requestAnimationFrame(frame);
+    const frame = (now, metadata) => {
+      framing(store, metadata?.mediaTime || video.currentTime);
+      store.requestId = requestFrame(frame);
     };
-    cancelAnimationFrame(store.requestId);
-    store.requestId = requestAnimationFrame(frame);
+    cancelFrame(store.requestId);
+    store.requestId = requestFrame(frame);
     store.actives.forEach((dia) => {
       batchAnimate(dia, 'play');
     });
@@ -72,8 +79,9 @@ export function createPlay(store) {
 }
 
 export function createPause(store) {
+  const [, cancelFrame] = createFrame(store.video);
   return function pause() {
-    cancelAnimationFrame(store.requestId);
+    cancelFrame(store.requestId);
     store.requestId = 0;
     store.actives.forEach((dia) => {
       batchAnimate(dia, 'pause');
