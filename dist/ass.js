@@ -897,6 +897,8 @@ function getRealFontSize(fn, fs) {
   return fs * unitsPerEm / lineSpacing[fn];
 }
 
+var GLOBAL_CSS = '.ASS-box{pointer-events:none;font-family:Arial;position:absolute;overflow:hidden}.ASS-dialogue{z-index:0;transform:translate(calc(var(--ass-align-h)*-1),calc(var(--ass-align-v)*-1));width:max-content;font-size:0;position:absolute}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*(1 - round(up,sin(var(--ass-tag-xbord))*sin(var(--ass-tag-xbord))))*(1 - round(up,sin(var(--ass-tag-ybord))*sin(var(--ass-tag-ybord))))*1px));display:inline-block}.ASS-dialogue [data-is=br]+[data-is=br]{height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px/2)}.ASS-dialogue[data-wrap-style="0"],.ASS-dialogue[data-wrap-style="3"]{text-wrap:balance;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="1"]{word-break:break-word;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="2"]{word-break:normal;white-space:pre}.ASS-dialogue [data-border-style="1"]{position:relative}.ASS-dialogue [data-border-style="1"]:before,.ASS-dialogue [data-border-style="1"]:after{content:attr(data-text);z-index:-1;filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));position:absolute;top:0;left:0}.ASS-dialogue [data-border-style="1"]:before{color:var(--ass-shadow-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px))}.ASS-dialogue [data-border-style="1"]:after{color:var(--ass-border-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-border-color)}.ASS-dialogue [data-border-style="1"][data-stroke=svg]{color:#000}.ASS-dialogue [data-border-style="1"][data-stroke=svg]:before,.ASS-dialogue [data-border-style="1"][data-stroke=svg]:after{opacity:0}@container style(--ass-tag-xbord:0) and style(--ass-tag-ybord:0){.ASS-dialogue [data-border-style="1"]:after{display:none}}@container style(--ass-tag-xshad:0) and style(--ass-tag-yshad:0){.ASS-dialogue [data-border-style="1"]:before{display:none}}.ASS-dialogue [data-border-style="3"]{padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px)calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));position:relative}.ASS-dialogue [data-border-style="3"]:before,.ASS-dialogue [data-border-style="3"]:after{content:"";z-index:-1;width:100%;height:100%;position:absolute}.ASS-dialogue [data-border-style="3"]:before{background-color:var(--ass-shadow-color);left:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px);top:calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)}.ASS-dialogue [data-border-style="3"]:after{background-color:var(--ass-border-color);top:0;left:0}@container style(--ass-tag-xbord:0) and style(--ass-tag-ybord:0){.ASS-dialogue [data-border-style="3"]:after{background-color:#0000}}@container style(--ass-tag-xshad:0) and style(--ass-tag-yshad:0){.ASS-dialogue [data-border-style="3"]:before{background-color:#0000}}.ASS-dialogue [data-rotate]{transform:perspective(312.5px)rotateY(calc(var(--ass-tag-fry)*1deg))rotateX(calc(var(--ass-tag-frx)*1deg))rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-rotate][data-text]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy))skew(calc(var(--ass-tag-fax)*57.2958deg),calc(var(--ass-tag-fay)*57.2958deg));transform-origin:var(--ass-align-h)var(--ass-align-v);display:inline-block}.ASS-fix-font-size{visibility:hidden;width:0;height:0;font-family:Arial;line-height:normal;position:absolute;overflow:hidden}.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-effect-area{width:100%;height:fit-content;display:flex;position:absolute;overflow:hidden;mask-composite:intersect}.ASS-effect-area[data-effect=banner]{flex-direction:column;height:100%}.ASS-effect-area .ASS-dialogue{position:static;transform:none}';
+
 function alpha2opacity(a) {
   return 1 - `0x${a}` / 255;
 }
@@ -936,7 +938,6 @@ function createSVGEl(name, attrs = []) {
   return $el;
 }
 
-const GLOBAL_CSS = '.ASS-box{font-family:Arial;overflow:hidden;pointer-events:none;position:absolute}.ASS-dialogue{font-size:0;width:max-content;position:absolute;z-index:0;transform:translate(calc(var(--ass-align-h)*-1),calc(var(--ass-align-v)*-1))}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{display:inline-block;color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px)}.ASS-dialogue[data-wrap-style="0"],.ASS-dialogue[data-wrap-style="3"]{text-wrap:balance;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="1"]{word-break:break-word;white-space:normal}.ASS-dialogue[data-wrap-style="2"]{word-break:normal;white-space:nowrap}.ASS-dialogue [data-border-style="1"]{position:relative;filter:blur(calc(var(--ass-tag-blur)*calc(1 - sign(var(--ass-tag-xbord)))*calc(1 - sign(var(--ass-tag-ybord)))*1px))}.ASS-dialogue [data-border-style="1"]::after,.ASS-dialogue [data-border-style="1"]::before{content:attr(data-text);position:absolute;top:0;left:0;z-index:-1;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="1"]::before{color:var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px));-webkit-text-stroke:var(--ass-border-width) var(--ass-shadow-color);text-shadow:var(--ass-shadow-delta);opacity:var(--ass-shadow-opacity)}.ASS-dialogue [data-border-style="1"]::after{color:transparent;-webkit-text-stroke:var(--ass-border-width) var(--ass-border-color);text-shadow:var(--ass-border-delta);opacity:var(--ass-border-opacity)}.ASS-dialogue [data-border-style="3"]{padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px) calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);position:relative;filter:blur(calc(var(--ass-tag-blur)*1px))}.ASS-dialogue [data-border-style="3"]::after,.ASS-dialogue [data-border-style="3"]::before{content:"";width:100%;height:100%;position:absolute;z-index:-1}.ASS-dialogue [data-border-style="3"]::before{background-color:var(--ass-shadow-color);left:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px);top:calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)}.ASS-dialogue [data-border-style="3"]::after{background-color:var(--ass-border-color);left:0;top:0}@container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0){.ASS-dialogue [data-border-style="3"]::after{background-color:transparent}}@container style(--ass-tag-xshad: 0) and style(--ass-tag-yshad: 0){.ASS-dialogue [data-border-style="3"]::before{background-color:transparent}}.ASS-dialogue [data-rotate]{transform:perspective(312.5px) rotateY(calc(var(--ass-tag-fry)*1deg)) rotateX(calc(var(--ass-tag-frx)*1deg)) rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-text][data-rotate]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{display:inline-block;transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy)) skew(calc(var(--ass-tag-fax)*1rad),calc(var(--ass-tag-fay)*1rad));transform-origin:var(--ass-align-h) var(--ass-align-v)}.ASS-fix-font-size{font-family:Arial;line-height:normal;width:0;height:0;position:absolute;visibility:hidden;overflow:hidden}.ASS-clip-area,.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;top:0;left:0}.ASS-effect-area{position:absolute;display:flex;width:100%;height:fit-content;overflow:hidden;mask-composite:intersect}.ASS-effect-area[data-effect=banner]{flex-direction:column;height:100%}.ASS-effect-area .ASS-dialogue{position:static;transform:none}';
 /**
  * @param {HTMLElement} container
  */
@@ -962,6 +963,66 @@ function initAnimation($el, keyframes, options) {
 function batchAnimate(dia, action) {
   (dia.animations || []).forEach((animation) => {
     animation[action]();
+  });
+}
+
+const rotateTags = ['frx', 'fry', 'frz'];
+const scaleTags = ['fscx', 'fscy'];
+const skewTags = ['fax', 'fay'];
+
+function createTransform(tag) {
+  return [
+    ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),
+    ...scaleTags.map((x) => ([`--ass-tag-${x}`, tag.p ? 1 : (tag[x] || 100) / 100])),
+  ];
+}
+
+function setTransformOrigin(dialogue, scale) {
+  const { align, width, height, x, y, $div } = dialogue;
+  const orgX = (dialogue.org ? dialogue.org.x * scale : x) + [0, width / 2, width][align.h];
+  const orgY = (dialogue.org ? dialogue.org.y * scale : y) + [height, height / 2, 0][align.v];
+  for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
+    const node = $div.childNodes[i];
+    if (node.dataset.rotate === '') {
+      // It's not extremely precise for offsets are round the value to an integer.
+      const tox = orgX - x - node.offsetLeft;
+      const toy = orgY - y - node.offsetTop;
+      node.style.cssText += `transform-origin:${tox}px ${toy}px;`;
+    }
+  }
+}
+
+const strokeTags = ['blur', 'xbord', 'ybord', 'xshad', 'yshad'];
+if (window.CSS.registerProperty) {
+  [
+    'real-fs', 'tag-fs', 'tag-fsp', 'border-width',
+    ...[...strokeTags, ...rotateTags, ...skewTags].map((tag) => `tag-${tag}`),
+  ].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 0,
+    });
+  });
+  [
+    'border-opacity', 'shadow-opacity',
+    ...scaleTags.map((tag) => `tag-${tag}`),
+  ].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<number>',
+      inherits: true,
+      initialValue: 1,
+    });
+  });
+  ['fill-color', 'border-color', 'shadow-color'].forEach((k) => {
+    window.CSS.registerProperty({
+      name: `--ass-${k}`,
+      syntax: '<color>',
+      inherits: true,
+      initialValue: 'transparent',
+    });
   });
 }
 
@@ -1041,23 +1102,6 @@ function createAnimatableVars(tag) {
     .map(([k, v]) => [`--ass-${k}`, v]);
 }
 
-if (window.CSS.registerProperty) {
-  ['real-fs', 'tag-fs', 'tag-fsp'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-${k}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: '0',
-    });
-  });
-  window.CSS.registerProperty({
-    name: '--ass-fill-color',
-    syntax: '<color>',
-    inherits: true,
-    initialValue: 'transparent',
-  });
-}
-
 // use linear() to simulate accel
 function getEasing(duration, accel) {
   if (accel === 1) return 'linear';
@@ -1087,17 +1131,11 @@ function createTagKeyframes(fromTag, tag, key) {
   if (key === 'a1' || key === 'c1') {
     return [['fill-color', color2rgba((tag.a1 || fromTag.a1) + (tag.c1 || fromTag.c1))]];
   }
-  if (key === 'c3') {
-    return [['border-color', color2rgba(`00${tag.c3}`)]];
+  if (key === 'a3' || key === 'c3') {
+    return [['border-color', color2rgba((tag.a3 || fromTag.a3) + (tag.c3 || fromTag.c3))]];
   }
-  if (key === 'a3') {
-    return [['border-opacity', alpha2opacity(tag.a3)]];
-  }
-  if (key === 'c4') {
-    return [['shadow-color', color2rgba(`00${tag.c4}`)]];
-  }
-  if (key === 'a4') {
-    return [['shadow-opacity', alpha2opacity(tag.a4)]];
+  if (key === 'a4' || key === 'c4') {
+    return [['shadow-color', color2rgba((tag.a4 || fromTag.a4) + (tag.c4 || fromTag.c4))]];
   }
   if (key === 'fs') {
     return [
@@ -1107,6 +1145,9 @@ function createTagKeyframes(fromTag, tag, key) {
   }
   if (key === 'fscx' || key === 'fscy') {
     return [[`tag-${key}`, (value || 100) / 100]];
+  }
+  if (key === 'xbord' || key === 'ybord') {
+    return [['border-width', value * 2]];
   }
   return [[`tag-${key}`, value]];
 }
@@ -1193,11 +1234,12 @@ function getClipPath(dialogue, store) {
   return { $div: $clipArea };
 }
 
-function createSVGStroke(tag, id, scale) {
+function createStrokeFilter(tag, scale) {
+  const id = `ASS-${uuid()}`;
   const hasBorder = tag.xbord || tag.ybord;
   const hasShadow = tag.xshad || tag.yshad;
-  const isOpaque = tag.a1 !== 'FF';
-  const blur = tag.blur || tag.be || 0;
+  const isOpaque = (tag.a1 || '00').toLowerCase() !== 'ff';
+  const blur = (tag.blur || tag.be || 0) * scale;
   const $filter = createSVGEl('filter', [['id', id]]);
   $filter.append(createSVGEl('feGaussianBlur', [
     ['stdDeviation', hasBorder ? 0 : blur],
@@ -1205,7 +1247,7 @@ function createSVGStroke(tag, id, scale) {
     ['result', 'sg_b'],
   ]));
   $filter.append(createSVGEl('feFlood', [
-    ['flood-color', color2rgba(tag.a1 + tag.c1)],
+    ['flood-color', 'var(--ass-fill-color)'],
     ['result', 'c1'],
   ]));
   $filter.append(createSVGEl('feComposite', [
@@ -1233,7 +1275,7 @@ function createSVGStroke(tag, id, scale) {
       ['result', 'dil_b_o'],
     ]));
     $filter.append(createSVGEl('feFlood', [
-      ['flood-color', color2rgba(tag.a3 + tag.c3)],
+      ['flood-color', 'var(--ass-border-color)'],
       ['result', 'c3'],
     ]));
     $filter.append(createSVGEl('feComposite', [
@@ -1247,7 +1289,7 @@ function createSVGStroke(tag, id, scale) {
     $filter.append(createSVGEl('feOffset', [
       ['dx', tag.xshad * scale],
       ['dy', tag.yshad * scale],
-      ['in', hasBorder ? 'dil' : 'SourceGraphic'],
+      ['in', hasBorder ? (isOpaque ? 'dil' : 'dil_b_o') : 'SourceGraphic'],
       ['result', 'off'],
     ]));
     $filter.append(createSVGEl('feGaussianBlur', [
@@ -1270,7 +1312,7 @@ function createSVGStroke(tag, id, scale) {
       ]));
     }
     $filter.append(createSVGEl('feFlood', [
-      ['flood-color', color2rgba(tag.a4 + tag.c4)],
+      ['flood-color', 'var(--ass-shadow-color)'],
       ['result', 'c4'],
     ]));
     $filter.append(createSVGEl('feComposite', [
@@ -1289,88 +1331,20 @@ function createSVGStroke(tag, id, scale) {
   }
   $merge.append(createSVGEl('feMergeNode', [['in', 'main']]));
   $filter.append($merge);
-  return $filter;
+  return { id, el: $filter };
 }
 
-function get4QuadrantPoints([x, y]) {
-  return [[0, 0], [0, 1], [1, 0], [1, 1]]
-    .filter(([i, j]) => (i || x) && (j || y))
-    .map(([i, j]) => [(i || -1) * x, (j || -1) * y]);
-}
-
-function getOffsets(x, y) {
-  if (x === y) return [];
-  const nx = Math.min(x, y);
-  const ny = Math.max(x, y);
-  // const offsets = [[nx, ny]];
-  // for (let i = 0; i < nx; i++) {
-  //   for (let j = Math.round(nx + 0.5); j < ny; j++) {
-  //     offsets.push([i, j]);
-  //   }
-  // }
-  // return [].concat(...offsets.map(get4QuadrantPoints));
-  return Array.from({ length: Math.ceil(ny) - 1 }, (_, i) => i + 1).concat(ny)
-    .map((n) => [(ny - n) / ny * nx, n])
-    .map(([i, j]) => (x > y ? [j, i] : [i, j]))
-    .flatMap(get4QuadrantPoints);
-}
-
-// TODO: a1 === 'ff'
-function createCSSStroke(tag, scale) {
-  const bc = color2rgba(`00${tag.c3}`);
-  const bx = tag.xbord * scale;
-  const by = tag.ybord * scale;
-  const sc = color2rgba(`00${tag.c4}`);
-  const blur = tag.blur || tag.be || 0;
-  // TODO: is there any way to remove this hack?
-  const deltaOffsets = getOffsets(bx, by);
+function createStrokeVars(tag) {
   return [
-    ['border-width', `${Math.min(bx, by) * 2}px`],
-    ['border-color', bc],
-    ['border-opacity', alpha2opacity(tag.a3)],
-    ['border-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${bc}`).join(',')],
-    ['shadow-color', sc],
-    ['shadow-opacity', alpha2opacity(tag.a4)],
-    ['shadow-delta', deltaOffsets.map(([x, y]) => `${x}px ${y}px ${sc}`).join(',')],
-    ['tag-blur', blur],
+    ['border-width', tag.xbord * 2],
+    ['border-color', color2rgba(`${tag.a3}${tag.c3}`)],
+    ['shadow-color', color2rgba(`${tag.a4}${tag.c4}`)],
+    ['tag-blur', tag.blur || tag.be || 0],
     ['tag-xbord', tag.xbord],
     ['tag-ybord', tag.ybord],
     ['tag-xshad', tag.xshad],
     ['tag-yshad', tag.yshad],
   ].map(([k, v]) => [`--ass-${k}`, v]);
-}
-
-if (window.CSS.registerProperty) {
-  window.CSS.registerProperty({
-    name: '--ass-border-width',
-    syntax: '<length>',
-    inherits: true,
-    initialValue: '0px',
-  });
-  ['border-color', 'shadow-color'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-${k}`,
-      syntax: '<color>',
-      inherits: true,
-      initialValue: 'transparent',
-    });
-  });
-  ['border-opacity', 'shadow-opacity'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-${k}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: '1',
-    });
-  });
-  ['blur', 'xbord', 'ybord', 'xshad', 'yshad'].forEach((k) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${k}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: '0',
-    });
-  });
 }
 
 function createDrawing(fragment, styleTag, store) {
@@ -1391,9 +1365,9 @@ function createDrawing(fragment, styleTag, store) {
     ['viewBox', `${-vbx} ${-vby} ${vbw} ${vbh}`],
   ]);
   const strokeScale = store.sbas ? store.scale : 1;
-  const filterId = `ASS-${uuid()}`;
   const $defs = createSVGEl('defs');
-  $defs.append(createSVGStroke(tag, filterId, strokeScale));
+  const filter = createStrokeFilter(tag, strokeScale);
+  $defs.append(filter.el);
   $svg.append($defs);
   const symbolId = `ASS-${uuid()}`;
   const $symbol = createSVGEl('symbol', [
@@ -1406,7 +1380,7 @@ function createDrawing(fragment, styleTag, store) {
     ['width', width * scaleX],
     ['height', height * scaleY],
     ['xlink:href', `#${symbolId}`],
-    ['filter', `url(#${filterId})`],
+    ['filter', `url(#${filter.id})`],
   ]));
   $svg.style.cssText = (
     'position:absolute;'
@@ -1417,51 +1391,6 @@ function createDrawing(fragment, styleTag, store) {
     $svg,
     cssText: `position:relative;width:${width * scaleX}px;height:${height * scaleY}px;`,
   };
-}
-
-const rotateTags = ['frx', 'fry', 'frz'];
-const scaleTags = ['fscx', 'fscy'];
-const skewTags = ['fax', 'fay'];
-
-if (window.CSS.registerProperty) {
-  [...rotateTags, ...skewTags].forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 0,
-    });
-  });
-  scaleTags.forEach((tag) => {
-    window.CSS.registerProperty({
-      name: `--ass-tag-${tag}`,
-      syntax: '<number>',
-      inherits: true,
-      initialValue: 1,
-    });
-  });
-}
-
-function createTransform(tag) {
-  return [
-    ...[...rotateTags, ...skewTags].map((x) => ([`--ass-tag-${x}`, `${tag[x] || 0}`])),
-    ...scaleTags.map((x) => ([`--ass-tag-${x}`, tag.p ? 1 : (tag[x] || 100) / 100])),
-  ];
-}
-
-function setTransformOrigin(dialogue, scale) {
-  const { align, width, height, x, y, $div } = dialogue;
-  const orgX = (dialogue.org ? dialogue.org.x * scale : x) + [0, width / 2, width][align.h];
-  const orgY = (dialogue.org ? dialogue.org.y * scale : y) + [height, height / 2, 0][align.v];
-  for (let i = $div.childNodes.length - 1; i >= 0; i -= 1) {
-    const node = $div.childNodes[i];
-    if (node.dataset.rotate === '') {
-      // It's not extremely precise for offsets are round the value to an integer.
-      const tox = orgX - x - node.offsetLeft;
-      const toy = orgY - y - node.offsetTop;
-      node.style.cssText += `transform-origin:${tox}px ${toy}px;`;
-    }
-  }
 }
 
 function encodeText(text, q) {
@@ -1493,11 +1422,19 @@ function createDialogue(dialogue, store) {
       const tag = { ...sliceTag, ...fragment.tag };
       let cssText = '';
       const cssVars = [];
-      if (!drawing) {
-        cssVars.push(...createAnimatableVars(tag));
-        const scale = store.sbas ? store.scale : 1;
-        cssVars.push(...createCSSStroke(tag, scale));
 
+      cssVars.push(...createStrokeVars(tag));
+      let stroke = null;
+      const hasStroke = tag.xbord || tag.ybord || tag.xshad || tag.yshad;
+      if (hasStroke && (drawing || tag.a1 !== '00' || tag.xbord !== tag.ybord)) {
+        const filter = createStrokeFilter(tag, store.sbas ? store.scale : 1);
+        const svg = createSVGEl('svg', [['width', 0], ['height', 0]]);
+        svg.append(filter.el);
+        stroke = { id: filter.id, el: svg };
+      }
+
+      cssVars.push(...createAnimatableVars(tag));
+      if (!drawing) {
         cssText += `font-family:"${tag.fn}";`;
         cssText += tag.b ? `font-weight:${tag.b === 1 ? 'bold' : tag.b};` : '';
         cssText += tag.i ? 'font-style:italic;' : '';
@@ -1514,7 +1451,7 @@ function createDialogue(dialogue, store) {
       const hasScale = scaleTags.some((x) => tags.some((t) => t[x] !== undefined && t[x] !== 100));
       const hasSkew = skewTags.some((x) => tags.some((t) => t[x]));
 
-      encodeText(text, tag.q).split('\n').forEach((content, idx) => {
+      encodeText(text, dialogue.q).split('\n').forEach((content, idx) => {
         const $span = document.createElement('span');
         const $ssspan = document.createElement('span');
         if (hasScale || hasSkew) {
@@ -1537,7 +1474,10 @@ function createDialogue(dialogue, store) {
           $span.append(obj.$svg);
         } else {
           if (idx) {
-            df.append(document.createElement('br'));
+            const br = document.createElement('div');
+            br.dataset.is = 'br';
+            br.style.setProperty('--ass-tag-fs', tag.fs);
+            df.append(br);
           }
           if (!content) return;
           if (hasScale || hasSkew) {
@@ -1547,8 +1487,15 @@ function createDialogue(dialogue, store) {
           }
           const el = hasScale || hasSkew ? $ssspan : $span;
           el.dataset.text = content;
-          if (tag.xbord || tag.ybord || tag.xshad || tag.yshad) {
+          if (hasStroke) {
             el.dataset.borderStyle = borderStyle;
+            el.dataset.stroke = 'css';
+          }
+          if (stroke) {
+            el.dataset.stroke = 'svg';
+            // TODO: it doesn't support animation
+            el.style.filter = `url(#${stroke.id})`;
+            el.append(stroke.el);
           }
         }
         $span.style.cssText += cssText;
@@ -1763,9 +1710,9 @@ function clear(store) {
   store.space = [];
 }
 
-function framing(store) {
-  const { video, dialogues, actives } = store;
-  const vct = video.currentTime - store.delay;
+function framing(store, mediaTime) {
+  const { dialogues, actives } = store;
+  const vct = mediaTime - store.delay;
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
     const { end } = dia;
@@ -1783,9 +1730,6 @@ function framing(store) {
       (dia.animations || []).forEach((animation) => {
         animation.currentTime = (vct - dia.start) * 1000;
       });
-      if (!video.paused) {
-        batchAnimate(dia, 'play');
-      }
       actives.push(dia);
     }
     store.index += 1;
@@ -1805,18 +1749,28 @@ function createSeek(store) {
       }
       return (dialogues.length || 1) - 1;
     })();
-    framing(store);
+    framing(store, video.currentTime);
   };
 }
 
+function createFrame(video) {
+  const useVFC = video.requestVideoFrameCallback;
+  return [
+    useVFC ? video.requestVideoFrameCallback.bind(video) : requestAnimationFrame,
+    useVFC ? video.cancelVideoFrameCallback.bind(video) : cancelAnimationFrame,
+  ];
+}
+
 function createPlay(store) {
+  const { video } = store;
+  const [requestFrame, cancelFrame] = createFrame(video);
   return function play() {
-    const frame = () => {
-      framing(store);
-      store.requestId = requestAnimationFrame(frame);
+    const frame = (now, metadata) => {
+      framing(store, metadata?.mediaTime || video.currentTime);
+      store.requestId = requestFrame(frame);
     };
-    cancelAnimationFrame(store.requestId);
-    store.requestId = requestAnimationFrame(frame);
+    cancelFrame(store.requestId);
+    store.requestId = requestFrame(frame);
     store.actives.forEach((dia) => {
       batchAnimate(dia, 'play');
     });
@@ -1824,8 +1778,9 @@ function createPlay(store) {
 }
 
 function createPause(store) {
+  const [, cancelFrame] = createFrame(store.video);
   return function pause() {
-    cancelAnimationFrame(store.requestId);
+    cancelFrame(store.requestId);
     store.requestId = 0;
     store.actives.forEach((dia) => {
       batchAnimate(dia, 'pause');
