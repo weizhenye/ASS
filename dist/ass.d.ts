@@ -44,9 +44,9 @@ declare class ASS {
      * ```
      */
     constructor(content: string, video: HTMLVideoElement, { container, resampling }?: ASSOption);
-    set resampling(r: "video_width" | "video_height" | "script_width" | "script_height");
+    set resampling(r: ASSOption["resampling"]);
     /** @type {ASSOption['resampling']} */
-    get resampling(): "video_width" | "video_height" | "script_width" | "script_height";
+    get resampling(): ASSOption["resampling"];
     /**
      * Desctroy the ASS instance
      * @returns {ASS}
