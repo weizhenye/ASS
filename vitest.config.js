@@ -18,11 +18,10 @@ export default defineConfig({
     browser: {
       enabled: true,
       provider: 'playwright',
-      name: 'chromium',
       headless: true,
-    },
-    coverage: {
-      provider: 'istanbul',
+      instances: [
+        { browser: 'chromium' },
+      ],
     },
   },
 });

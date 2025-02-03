@@ -37,20 +37,19 @@
   },
   "homepage": "https://ass.js.org/",
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.47.9",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@microsoft/api-extractor": "^7.49.2",
+    "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
-    "@vitest/browser": "2.0",
-    "@vitest/coverage-istanbul": "2.0",
-    "ass-compiler": "^0.1.14",
-    "eslint": "^8.57.0",
+    "@vitest/browser": "^3.0.4",
+    "ass-compiler": "^0.1.15",
+    "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.30.0",
-    "eslint-plugin-unicorn": "^55.0.0",
-    "lightningcss": "^1.27.0",
-    "playwright": "^1.45.3",
-    "rollup": "^4.21.3",
-    "typescript": "^5.6.2",
-    "vitest": "2.0"
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unicorn": "^56.0.1",
+    "lightningcss": "^1.29.1",
+    "playwright": "^1.50.1",
+    "rollup": "^4.34.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
   }
 }
