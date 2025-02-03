@@ -32,6 +32,9 @@ function framing(store, mediaTime) {
         animation.currentTime = (vct - dia.start) * 1000;
       });
       actives.push(dia);
+      if (!store.video.paused) {
+        batchAnimate(dia, 'play');
+      }
     }
     store.index += 1;
   }
