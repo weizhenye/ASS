@@ -97,25 +97,27 @@ export function createResize(that, store) {
   return function resize() {
     const cw = video.clientWidth;
     const ch = video.clientHeight;
-    const vw = layoutRes.width || video.videoWidth || cw;
-    const vh = layoutRes.height || video.videoHeight || ch;
+    const vw = video.videoWidth || cw;
+    const vh = video.videoHeight || ch;
+    const lw = layoutRes.width || vw;
+    const lh = layoutRes.height || vh;
     const sw = store.scriptRes.width;
     const sh = store.scriptRes.height;
     let rw = sw;
     let rh = sh;
-    const videoScale = Math.min(cw / vw, ch / vh);
+    const videoScale = Math.min(cw / lw, ch / lh);
     if (that.resampling === 'video_width') {
-      rh = sw / vw * vh;
+      rh = sw / lw * lh;
     }
     if (that.resampling === 'video_height') {
-      rw = sh / vh * vw;
+      rw = sh / lh * lw;
     }
     store.scale = Math.min(cw / rw, ch / rh);
     if (that.resampling === 'script_width') {
-      store.scale = videoScale * (vw / rw);
+      store.scale = videoScale * (lw / rw);
     }
     if (that.resampling === 'script_height') {
-      store.scale = videoScale * (vh / rh);
+      store.scale = videoScale * (lh / rh);
     }
     const bw = store.scale * rw;
     const bh = store.scale * rh;
@@ -126,6 +128,13 @@ export function createResize(that, store) {
     box.style.cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
     box.style.setProperty('--ass-scale', store.scale);
     box.style.setProperty('--ass-scale-stroke', store.sbas ? store.scale : 1);
+    const boxScale = (vw / lw) / (vh / lh);
+    if (boxScale > 1) {
+      box.style.transform = `scaleX(${boxScale})`;
+    }
+    if (boxScale < 1) {
+      box.style.transform = `scaleY(${1 / boxScale})`;
+    }
 
     createSeek(store)();
   };
