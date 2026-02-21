@@ -905,7 +905,7 @@ var ASS = (function () {
     return fs * unitsPerEm / lineSpacing[fn];
   }
 
-  var GLOBAL_CSS = '.ASS-box{pointer-events:none;font-family:Arial;position:absolute;overflow:hidden}.ASS-dialogue{z-index:0;width:max-content;transform:translate(calc(var(--ass-align-h)*-1),calc(var(--ass-align-v)*-1));font-size:0;position:absolute}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*(1 - round(up,sin(var(--ass-tag-xbord))*sin(var(--ass-tag-xbord))))*(1 - round(up,sin(var(--ass-tag-ybord))*sin(var(--ass-tag-ybord))))*1px));display:inline-block}.ASS-dialogue [data-is=br]+[data-is=br]{height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px/2)}.ASS-dialogue[data-wrap-style="0"],.ASS-dialogue[data-wrap-style="3"]{text-wrap:balance;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="1"]{word-break:break-word;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="2"]{word-break:normal;white-space:pre}.ASS-dialogue [data-border-style="1"]{position:relative}.ASS-dialogue [data-border-style="1"]:before,.ASS-dialogue [data-border-style="1"]:after{content:attr(data-text);z-index:-1;filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));position:absolute;top:0;left:0}.ASS-dialogue [data-border-style="1"]:before{color:var(--ass-shadow-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px))}.ASS-dialogue [data-border-style="1"]:after{color:var(--ass-border-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-border-color)}.ASS-dialogue [data-border-style="1"][data-stroke=svg]{color:#000}.ASS-dialogue [data-border-style="1"][data-stroke=svg]:before,.ASS-dialogue [data-border-style="1"][data-stroke=svg]:after{opacity:0}@container style(--ass-tag-xbord:0) and style(--ass-tag-ybord:0){.ASS-dialogue [data-border-style="1"]:after{display:none}}@container style(--ass-tag-xshad:0) and style(--ass-tag-yshad:0){.ASS-dialogue [data-border-style="1"]:before{display:none}}.ASS-dialogue [data-border-style="3"]{padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px)calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));position:relative}.ASS-dialogue [data-border-style="3"]:before,.ASS-dialogue [data-border-style="3"]:after{content:"";z-index:-1;width:100%;height:100%;position:absolute}.ASS-dialogue [data-border-style="3"]:before{background-color:var(--ass-shadow-color);left:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px);top:calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)}.ASS-dialogue [data-border-style="3"]:after{background-color:var(--ass-border-color);top:0;left:0}@container style(--ass-tag-xbord:0) and style(--ass-tag-ybord:0){.ASS-dialogue [data-border-style="3"]:after{background-color:#0000}}@container style(--ass-tag-xshad:0) and style(--ass-tag-yshad:0){.ASS-dialogue [data-border-style="3"]:before{background-color:#0000}}.ASS-dialogue [data-rotate]{transform:perspective(312.5px)rotateY(calc(var(--ass-tag-fry)*1deg))rotateX(calc(var(--ass-tag-frx)*1deg))rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-rotate][data-text]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy))skew(calc(var(--ass-tag-fax)*57.2958deg),calc(var(--ass-tag-fay)*57.2958deg));transform-origin:var(--ass-align-h)var(--ass-align-v);display:inline-block}.ASS-fix-font-size{visibility:hidden;width:0;height:0;font-family:Arial;line-height:normal;position:absolute;overflow:hidden}.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-effect-area{width:100%;height:fit-content;display:flex;position:absolute;overflow:hidden;mask-composite:intersect}.ASS-effect-area[data-effect=banner]{flex-direction:column;height:100%}.ASS-effect-area .ASS-dialogue{position:static;transform:none}';
+  var GLOBAL_CSS = '.ASS-box{pointer-events:none;font-family:Arial;position:absolute;overflow:hidden}.ASS-dialogue{z-index:0;width:max-content;transform:translate(calc(var(--ass-align-h)*-1),calc(var(--ass-align-v)*-1));font-size:0;position:absolute}.ASS-dialogue span{display:inline-block}.ASS-dialogue [data-text]{color:var(--ass-fill-color);font-size:calc(var(--ass-scale)*var(--ass-real-fs)*1px);line-height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px);letter-spacing:calc(var(--ass-scale)*var(--ass-tag-fsp)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*(1 - round(up,sin(var(--ass-tag-xbord))*sin(var(--ass-tag-xbord))))*(1 - round(up,sin(var(--ass-tag-ybord))*sin(var(--ass-tag-ybord))))*1px));display:inline-block}.ASS-dialogue [data-is=br]+[data-is=br]{height:calc(var(--ass-scale)*var(--ass-tag-fs)*1px/2)}.ASS-dialogue[data-wrap-style="0"],.ASS-dialogue[data-wrap-style="3"]{text-wrap:balance;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="1"]{word-break:break-word;white-space:pre-wrap}.ASS-dialogue[data-wrap-style="2"]{word-break:normal;white-space:pre}.ASS-dialogue [data-border-style="1"]{position:relative}.ASS-dialogue [data-border-style="1"]:before,.ASS-dialogue [data-border-style="1"]:after{content:attr(data-text);z-index:-1;filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));position:absolute;top:0;left:0}.ASS-dialogue [data-border-style="1"]:before{color:var(--ass-shadow-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-shadow-color);transform:translate(calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px),calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px))}.ASS-dialogue [data-border-style="1"]:after{color:var(--ass-border-color);-webkit-text-stroke:calc(var(--ass-scale-stroke)*var(--ass-border-width)*1px)var(--ass-border-color)}.ASS-dialogue [data-border-style="1"][data-stroke=svg]{color:#000}.ASS-dialogue [data-border-style="1"][data-stroke=svg]:before,.ASS-dialogue [data-border-style="1"][data-stroke=svg]:after{opacity:0}@container style(--ass-tag-xbord:0) and style(--ass-tag-ybord:0){.ASS-dialogue [data-border-style="1"]:after{display:none}}@container style(--ass-tag-xshad:0) and style(--ass-tag-yshad:0){.ASS-dialogue [data-border-style="1"]:before{display:none}}.ASS-dialogue [data-border-style="3"]{background-color:var(--ass-border-color);box-shadow:calc(var(--ass-scale-stroke)*var(--ass-tag-xshad)*1px)calc(var(--ass-scale-stroke)*var(--ass-tag-yshad)*1px)var(--ass-shadow-color);padding:calc(var(--ass-scale-stroke)*var(--ass-tag-xbord)*1px)calc(var(--ass-scale-stroke)*var(--ass-tag-ybord)*1px);filter:blur(calc(var(--ass-scale-stroke)*var(--ass-tag-blur)*1px));display:inline;position:relative}.ASS-dialogue [data-border-style="3"][data-no-border]{background-color:#0000}.ASS-dialogue [data-rotate]{transform:perspective(312.5px)rotateY(calc(var(--ass-tag-fry)*1deg))rotateX(calc(var(--ass-tag-frx)*1deg))rotateZ(calc(var(--ass-tag-frz)*-1deg))}.ASS-dialogue [data-rotate][data-text]{transform-style:preserve-3d;word-break:normal;white-space:nowrap}.ASS-dialogue [data-scale],.ASS-dialogue [data-skew]{transform:scale(var(--ass-tag-fscx),var(--ass-tag-fscy))skew(calc(var(--ass-tag-fax)*57.2958deg),calc(var(--ass-tag-fay)*57.2958deg));transform-origin:var(--ass-align-h)var(--ass-align-v);display:inline-block}.ASS-fix-font-size{visibility:hidden;width:0;height:0;font-family:Arial;line-height:normal;position:absolute;overflow:hidden}.ASS-fix-font-size span{position:absolute}.ASS-clip-area{width:100%;height:100%;position:absolute;top:0;left:0}.ASS-effect-area{width:100%;height:fit-content;display:flex;position:absolute;overflow:hidden;mask-composite:intersect}.ASS-effect-area[data-effect=banner]{flex-direction:column;height:100%}.ASS-effect-area .ASS-dialogue{position:static;transform:none}';
 
   function alpha2opacity(a) {
     return 1 - `0x${a}` / 255;
@@ -1497,6 +1497,9 @@ var ASS = (function () {
             el.dataset.text = content;
             if (hasStroke) {
               el.dataset.borderStyle = borderStyle;
+              if (!tag.xbord && !tag.ybord) {
+                el.dataset.noBorder = '';
+              }
               el.dataset.stroke = 'css';
             }
             if (stroke) {
@@ -1804,25 +1807,27 @@ var ASS = (function () {
     return function resize() {
       const cw = video.clientWidth;
       const ch = video.clientHeight;
-      const vw = layoutRes.width || video.videoWidth || cw;
-      const vh = layoutRes.height || video.videoHeight || ch;
+      const vw = video.videoWidth || cw;
+      const vh = video.videoHeight || ch;
+      const lw = layoutRes.width || vw;
+      const lh = layoutRes.height || vh;
       const sw = store.scriptRes.width;
       const sh = store.scriptRes.height;
       let rw = sw;
       let rh = sh;
-      const videoScale = Math.min(cw / vw, ch / vh);
+      const videoScale = Math.min(cw / lw, ch / lh);
       if (that.resampling === 'video_width') {
-        rh = sw / vw * vh;
+        rh = sw / lw * lh;
       }
       if (that.resampling === 'video_height') {
-        rw = sh / vh * vw;
+        rw = sh / lh * lw;
       }
       store.scale = Math.min(cw / rw, ch / rh);
       if (that.resampling === 'script_width') {
-        store.scale = videoScale * (vw / rw);
+        store.scale = videoScale * (lw / rw);
       }
       if (that.resampling === 'script_height') {
-        store.scale = videoScale * (vh / rh);
+        store.scale = videoScale * (lh / rh);
       }
       const bw = store.scale * rw;
       const bh = store.scale * rh;
@@ -1833,6 +1838,13 @@ var ASS = (function () {
       box.style.cssText = `width:${bw}px;height:${bh}px;top:${(ch - bh) / 2}px;left:${(cw - bw) / 2}px;`;
       box.style.setProperty('--ass-scale', store.scale);
       box.style.setProperty('--ass-scale-stroke', store.sbas ? store.scale : 1);
+      const boxScale = (vw / lw) / (vh / lh);
+      if (boxScale > 1) {
+        box.style.transform = `scaleX(${boxScale})`;
+      }
+      if (boxScale < 1) {
+        box.style.transform = `scaleY(${1 / boxScale})`;
+      }
 
       createSeek(store)();
     };
