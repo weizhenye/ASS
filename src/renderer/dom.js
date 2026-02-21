@@ -100,6 +100,9 @@ export function createDialogue(dialogue, store) {
           el.dataset.text = content;
           if (hasStroke) {
             el.dataset.borderStyle = borderStyle;
+            if (!tag.xbord && !tag.ybord) {
+              el.dataset.noBorder = '';
+            }
             el.dataset.stroke = 'css';
           }
           if (stroke) {

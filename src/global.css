@@ -91,37 +91,20 @@
 }
 
 .ASS-dialogue [data-border-style="3"] {
+  display: inline;
+  background-color: var(--ass-border-color);
+  /* TODO: \shad20\4c0000FF\3a80 */
+  /* shadow should not be clipped by border */
+  box-shadow:
+    calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px)
+    calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px)
+    var(--ass-shadow-color);
   padding:
     calc(var(--ass-scale-stroke) * var(--ass-tag-xbord) * 1px)
     calc(var(--ass-scale-stroke) * var(--ass-tag-ybord) * 1px);
   position: relative;
   filter: blur(calc(var(--ass-scale-stroke) * var(--ass-tag-blur) * 1px));
-  &::before,
-  &::after {
-    content: "";
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    z-index: -1;
-  }
-  &::before {
-    background-color: var(--ass-shadow-color);
-    left: calc(var(--ass-scale-stroke) * var(--ass-tag-xshad) * 1px);
-    top: calc(var(--ass-scale-stroke) * var(--ass-tag-yshad) * 1px);
-  }
-  &::after {
-    background-color: var(--ass-border-color);
-    left: 0;
-    top: 0;
-  }
-}
-@container style(--ass-tag-xbord: 0) and style(--ass-tag-ybord: 0) {
-  .ASS-dialogue [data-border-style="3"]::after {
-    background-color: transparent;
-  }
-}
-@container style(--ass-tag-xshad: 0) and style(--ass-tag-yshad: 0) {
-  .ASS-dialogue [data-border-style="3"]::before {
+  &[data-no-border] {
     background-color: transparent;
   }
 }
