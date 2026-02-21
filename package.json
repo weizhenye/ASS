@@ -19,7 +19,7 @@
     "postbuild": "tsc && api-extractor run --local",
     "preversion": "npm test",
     "version": "npm run build && git add -A ./dist",
-    "postversion": "git push && git push --tags && npm publish"
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
