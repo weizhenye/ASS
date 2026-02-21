@@ -20,7 +20,7 @@ It's lightweight and suitable for web, **60x** smaller than WebAssembly solution
 | - | - | - |
 | ASS.js | DOM | ![](https://img.shields.io/github/size/weizhenye/ASS/dist%2Fass.min.js?label=main)
 | [JavascriptSubtitlesOctopus](https://github.com/libass/JavascriptSubtitlesOctopus) | WebAssembly | ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus.js?branch=gh-pages&label=main) ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus-worker.js?branch=gh-pages&label=worker) ![](https://img.shields.io/github/size/libass/JavascriptSubtitlesOctopus/assets%2Fjs%2Fsubtitles-octopus-worker.wasm?branch=gh-pages&label=wasm) |
-| [JASSUB](https://github.com/ThaUnknown/jassub) | WebAssembly | ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub.umd.js?label=main) ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub-worker.js?label=worker) ![](https://img.shields.io/github/size/ThaUnknown/jassub/dist%2Fjassub-worker.wasm?label=wasm) |
+| [JASSUB](https://github.com/ThaUnknown/jassub) | WebAssembly | ![](https://img.shields.io/github/size/ThaUnknown/jassub/static%2Fsubtitles-octopus-worker.wasm?branch=gh-pages&label=wasm) and [others](https://app.unpkg.com/jassub) |
 
 WebAssembly solutions also requires to set fallback font to avoid CJK characters turning into tofu, it's a huge cost for web. In ASS.js font fallback is handled by browser, it just works.
 
