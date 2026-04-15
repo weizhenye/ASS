@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { renderer } from './renderer/renderer.js';
-import { batchAnimate } from './utils.js';
+import { batchAnimate, fixFloat } from './utils.js';
 
 export function clear(store) {
   const { box } = store;
@@ -13,7 +13,7 @@ export function clear(store) {
 
 function framing(store, mediaTime) {
   const { dialogues, actives } = store;
-  const vct = mediaTime - store.delay;
+  const vct = fixFloat(mediaTime - store.delay);
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
     const { end } = dia;
@@ -44,7 +44,7 @@ export function createSeek(store) {
   return function seek() {
     clear(store);
     const { video, dialogues } = store;
-    const vct = video.currentTime - store.delay;
+    const vct = fixFloat(video.currentTime - store.delay);
     store.index = (() => {
       for (let i = 0; i < dialogues.length; i += 1) {
         if (vct < dialogues[i].end) {
