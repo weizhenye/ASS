@@ -61,6 +61,10 @@ export function initAnimation($el, keyframes, options) {
   return animation;
 }
 
+export function fixFloat(n) {
+  return Math.round(n * 1e10) / 1e10;
+}
+
 export function batchAnimate(dia, action) {
   (dia.animations || []).forEach((animation) => {
     animation[action]();
