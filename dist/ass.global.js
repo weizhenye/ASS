@@ -968,6 +968,10 @@ var ASS = (function () {
     return animation;
   }
 
+  function fixFloat(n) {
+    return Math.round(n * 1e10) / 1e10;
+  }
+
   function batchAnimate(dia, action) {
     (dia.animations || []).forEach((animation) => {
       animation[action]();
@@ -1723,7 +1727,7 @@ var ASS = (function () {
 
   function framing(store, mediaTime) {
     const { dialogues, actives } = store;
-    const vct = mediaTime - store.delay;
+    const vct = fixFloat(mediaTime - store.delay);
     for (let i = actives.length - 1; i >= 0; i -= 1) {
       const dia = actives[i];
       const { end } = dia;
@@ -1754,7 +1758,7 @@ var ASS = (function () {
     return function seek() {
       clear(store);
       const { video, dialogues } = store;
-      const vct = video.currentTime - store.delay;
+      const vct = fixFloat(video.currentTime - store.delay);
       store.index = (() => {
         for (let i = 0; i < dialogues.length; i += 1) {
           if (vct < dialogues[i].end) {
