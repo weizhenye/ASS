@@ -116,7 +116,7 @@ export function createAnimatableVars(tag) {
 
 // use linear() to simulate accel
 function getEasing(duration, accel) {
-  if (accel === 1) return 'linear';
+  if (accel === 1 || duration <= 0) return 'linear';
   // 60fps
   const frames = Math.ceil(duration / 1000 * 60);
   const points = Array.from({ length: frames + 1 })
