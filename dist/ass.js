@@ -1525,12 +1525,12 @@ function createDialogue(dialogue, store) {
 }
 
 function allocate(dialogue, store) {
-  const { video, space, scale } = store;
+  const { video, space, scale, delay } = store;
   const { layer, margin, width, height, alignment, end } = dialogue;
   const stageWidth = store.width - Math.trunc(scale * (margin.left + margin.right));
   const stageHeight = store.height;
   const vertical = Math.trunc(scale * margin.vertical);
-  const vct = video.currentTime * 100;
+  const vct = (video.currentTime - delay) * 100;
   space[layer] = space[layer] || {
     left: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
     center: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
