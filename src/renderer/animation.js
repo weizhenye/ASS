@@ -56,14 +56,14 @@ export function createEffect(effect, duration) {
   return [keyframes, { duration, fill: 'forwards' }];
 }
 
-function multiplyScale(v) {
-  return `calc(var(--ass-scale) * ${v}px)`;
+function multiplyScale(v, hv) {
+  return `calc(var(--ass-scale) * ${v}px - var(--ass-align-${hv}))`;
 }
 
 export function createMove(move, duration) {
   const { x1, y1, x2, y2, t1, t2 } = move;
-  const start = `translate(${multiplyScale(x1)}, ${multiplyScale(y1)})`;
-  const end = `translate(${multiplyScale(x2)}, ${multiplyScale(y2)})`;
+  const start = `translate(${multiplyScale(x1, 'h')}, ${multiplyScale(y1, 'v')})`;
+  const end = `translate(${multiplyScale(x2, 'h')}, ${multiplyScale(y2, 'v')})`;
   const moveDuration = Math.max(t2, duration);
   const keyframes = [
     { offset: 0, transform: start },

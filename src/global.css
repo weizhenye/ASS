@@ -6,6 +6,7 @@
 }
 .ASS-dialogue {
   font-size: 0;
+  box-sizing: content-box;
   width: max-content;
   position: absolute;
   z-index: 0;
