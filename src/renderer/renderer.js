@@ -9,12 +9,10 @@ export function renderer(dialogue, store) {
   const { $div, animations } = createDialogue(dialogue, store);
   Object.assign(dialogue, { $div, animations });
   store.box.append($div);
-  const { width } = $div.getBoundingClientRect();
-  Object.assign(dialogue, { width });
   $div.style.cssText += createStyle(dialogue);
-  // height may be changed after createStyle
-  const { height } = $div.getBoundingClientRect();
-  Object.assign(dialogue, { height });
+  // width and height may be changed after createStyle (e.g. max-width, padding from margins)
+  const { width, height } = $div.getBoundingClientRect();
+  Object.assign(dialogue, { width, height });
   const { x, y } = getPosition(dialogue, store);
   Object.assign(dialogue, { x, y });
   $div.style.cssText += `left:${x}px;top:${y}px;`;
