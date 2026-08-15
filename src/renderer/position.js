@@ -49,17 +49,17 @@ function allocate(dialogue, store) {
   };
   if (alignment <= 3) {
     result = stageHeight - vertical - 1;
-    for (let i = result; i > vertical; i -= 1) {
+    for (let i = result; i >= 0; i -= 1) {
       if (find(i)) break;
     }
   } else if (alignment >= 7) {
     result = vertical + 1;
-    for (let i = result; i < stageHeight - vertical; i += 1) {
+    for (let i = result; i < stageHeight; i += 1) {
       if (find(i)) break;
     }
   } else {
     result = (stageHeight - height) >> 1;
-    for (let i = result; i < stageHeight - vertical; i += 1) {
+    for (let i = result; i < stageHeight; i += 1) {
       if (find(i)) break;
     }
   }
