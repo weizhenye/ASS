@@ -17,13 +17,33 @@ export function createDialogue(dialogue, store) {
   $div.className = 'ASS-dialogue';
   $div.dataset.wrapStyle = dialogue.q;
   const df = document.createDocumentFragment();
-  const { align, slices } = dialogue;
+  const { align, layer, effect, pos, margin, q, slices } = dialogue;
+
+  const s = $div.style;
   [
     ['--ass-align-h', ['0%', '50%', '100%'][align.h]],
     ['--ass-align-v', ['100%', '50%', '0%'][align.v]],
   ].forEach(([k, v]) => {
-    $div.style.setProperty(k, v);
+    s.setProperty(k, v);
   });
+  s.textAlign = ['left', 'center', 'right'][align.h];
+  if (layer) {
+    s.zIndex = layer;
+  }
+  if (!effect) {
+    if (q !== 2) {
+      s.maxWidth = `calc(100% - var(--ass-scale) * ${margin.left + margin.right}px)`;
+    }
+    if (!pos) {
+      if (align.h !== 0) {
+        s.paddingRight = `calc(var(--ass-scale) * ${margin.right}px)`;
+      }
+      if (align.h !== 2) {
+        s.paddingLeft = `calc(var(--ass-scale) * ${margin.left}px)`;
+      }
+    }
+  }
+
   const animations = [];
   slices.forEach((slice) => {
     const sliceTag = styles[slice.style].tag;
