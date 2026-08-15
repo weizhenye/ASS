@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { renderer } from './renderer/renderer.js';
-import { batchAnimate, fixFloat } from './utils.js';
+import { batchAnimate, fixFloat, getHigherPrecision } from './utils.js';
 
 export function clear(store) {
   const { box } = store;
@@ -11,9 +11,8 @@ export function clear(store) {
   store.space = [];
 }
 
-function framing(store, mediaTime) {
+function framing(store, vct) {
   const { dialogues, actives } = store;
-  const vct = fixFloat(mediaTime - store.delay);
   for (let i = actives.length - 1; i >= 0; i -= 1) {
     const dia = actives[i];
     const { end } = dia;
@@ -27,7 +26,7 @@ function framing(store, mediaTime) {
     && vct >= dialogues[store.index].start
   ) {
     if (vct < dialogues[store.index].end) {
-      const dia = renderer(dialogues[store.index], store);
+      const dia = renderer(dialogues[store.index], store, vct);
       (dia.animations || []).forEach((animation) => {
         animation.currentTime = (vct - dia.start) * 1000;
       });
@@ -53,7 +52,7 @@ export function createSeek(store) {
       }
       return (dialogues.length || 1) - 1;
     })();
-    framing(store, video.currentTime);
+    framing(store, vct);
   };
 }
 
@@ -70,7 +69,11 @@ export function createPlay(store) {
   const [requestFrame, cancelFrame] = createFrame(video);
   return function play() {
     const frame = (now, metadata) => {
-      framing(store, metadata?.mediaTime || video.currentTime);
+      const mediaTime = getHigherPrecision(
+        metadata?.mediaTime || video.currentTime,
+        video.currentTime,
+      );
+      framing(store, fixFloat(mediaTime - store.delay));
       store.requestId = requestFrame(frame);
     };
     cancelFrame(store.requestId);

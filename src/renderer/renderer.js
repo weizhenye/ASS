@@ -4,13 +4,13 @@ import { getPosition } from './position.js';
 import { setTransformOrigin } from './transform.js';
 import { setEffect } from './effect.js';
 
-export function renderer(dialogue, store) {
+export function renderer(dialogue, store, vct) {
   const { $div, animations } = createDialogue(dialogue, store);
   Object.assign(dialogue, { $div, animations });
   store.box.append($div);
   const { width, height } = $div.getBoundingClientRect();
   Object.assign(dialogue, { width, height });
-  const { x, y } = getPosition(dialogue, store);
+  const { x, y } = getPosition(dialogue, store, vct);
   Object.assign(dialogue, { x, y });
   $div.style.cssText += `left:${x}px;top:${y}px;`;
   setTransformOrigin(dialogue, store.scale);

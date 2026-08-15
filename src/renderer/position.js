@@ -1,10 +1,10 @@
-function allocate(dialogue, store) {
-  const { video, space, scale, delay } = store;
+function allocate(dialogue, store, _vct) {
+  const { space, scale } = store;
   const { layer, margin, width, height, alignment, end } = dialogue;
   const stageWidth = store.width - Math.trunc(scale * (margin.left + margin.right));
-  const stageHeight = store.height;
+  const stageHeight = Math.round(store.height);
   const vertical = Math.trunc(scale * margin.vertical);
-  const vct = (video.currentTime - delay) * 100;
+  const vct = _vct * 100;
   space[layer] = space[layer] || {
     left: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
     center: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
@@ -73,7 +73,7 @@ function allocate(dialogue, store) {
   return result;
 }
 
-export function getPosition(dialogue, store) {
+export function getPosition(dialogue, store, vct) {
   const { scale } = store;
   const { move, align, width, height, margin, slices } = dialogue;
   let x = 0;
@@ -99,7 +99,7 @@ export function getPosition(dialogue, store) {
         (store.height - height) / 2,
         margin.vertical,
       ][align.v]
-      : allocate(dialogue, store);
+      : allocate(dialogue, store, vct);
   }
   return {
     x: x + [0, width / 2, width][align.h],

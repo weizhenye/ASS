@@ -65,6 +65,10 @@ export function fixFloat(n) {
   return Math.round(n * 1e10) / 1e10;
 }
 
+export function getHigherPrecision(a, b) {
+  return a.toString().length > b.toString().length ? a : b;
+}
+
 export function batchAnimate(dia, action) {
   (dia.animations || []).forEach((animation) => {
     animation[action]();
