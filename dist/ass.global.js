@@ -972,6 +972,10 @@ var ASS = (function () {
     return Math.round(n * 1e10) / 1e10;
   }
 
+  function getHigherPrecision(a, b) {
+    return a.toString().length > b.toString().length ? a : b;
+  }
+
   function batchAnimate(dia, action) {
     (dia.animations || []).forEach((animation) => {
       animation[action]();
@@ -1418,13 +1422,33 @@ var ASS = (function () {
     $div.className = 'ASS-dialogue';
     $div.dataset.wrapStyle = dialogue.q;
     const df = document.createDocumentFragment();
-    const { align, slices } = dialogue;
+    const { align, layer, effect, pos, margin, q, slices } = dialogue;
+
+    const s = $div.style;
     [
       ['--ass-align-h', ['0%', '50%', '100%'][align.h]],
       ['--ass-align-v', ['100%', '50%', '0%'][align.v]],
     ].forEach(([k, v]) => {
-      $div.style.setProperty(k, v);
+      s.setProperty(k, v);
     });
+    s.textAlign = ['left', 'center', 'right'][align.h];
+    if (layer) {
+      s.zIndex = layer;
+    }
+    if (!effect) {
+      if (q !== 2) {
+        s.maxWidth = `calc(100% - var(--ass-scale) * ${margin.left + margin.right}px)`;
+      }
+      if (!pos) {
+        if (align.h !== 0) {
+          s.paddingRight = `calc(var(--ass-scale) * ${margin.right}px)`;
+        }
+        if (align.h !== 2) {
+          s.paddingLeft = `calc(var(--ass-scale) * ${margin.left}px)`;
+        }
+      }
+    }
+
     const animations = [];
     slices.forEach((slice) => {
       const sliceTag = styles[slice.style].tag;
@@ -1527,13 +1551,13 @@ var ASS = (function () {
     return { $div, animations };
   }
 
-  function allocate(dialogue, store) {
-    const { video, space, scale, delay } = store;
+  function allocate(dialogue, store, _vct) {
+    const { space, scale } = store;
     const { layer, margin, width, height, alignment, end } = dialogue;
     const stageWidth = store.width - Math.trunc(scale * (margin.left + margin.right));
-    const stageHeight = store.height;
+    const stageHeight = Math.round(store.height);
     const vertical = Math.trunc(scale * margin.vertical);
-    const vct = (video.currentTime - delay) * 100;
+    const vct = _vct * 100;
     space[layer] = space[layer] || {
       left: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
       center: { width: new Uint16Array(stageHeight + 1), end: new Uint32Array(stageHeight + 1) },
@@ -1578,17 +1602,17 @@ var ASS = (function () {
     };
     if (alignment <= 3) {
       result = stageHeight - vertical - 1;
-      for (let i = result; i > vertical; i -= 1) {
+      for (let i = result; i >= 0; i -= 1) {
         if (find(i)) break;
       }
     } else if (alignment >= 7) {
       result = vertical + 1;
-      for (let i = result; i < stageHeight - vertical; i += 1) {
+      for (let i = result; i < stageHeight; i += 1) {
         if (find(i)) break;
       }
     } else {
       result = (stageHeight - height) >> 1;
-      for (let i = result; i < stageHeight - vertical; i += 1) {
+      for (let i = result; i < stageHeight; i += 1) {
         if (find(i)) break;
       }
     }
@@ -1602,7 +1626,7 @@ var ASS = (function () {
     return result;
   }
 
-  function getPosition(dialogue, store) {
+  function getPosition(dialogue, store, vct) {
     const { scale } = store;
     const { move, align, width, height, margin, slices } = dialogue;
     let x = 0;
@@ -1628,33 +1652,12 @@ var ASS = (function () {
           (store.height - height) / 2,
           margin.vertical,
         ][align.v]
-        : allocate(dialogue, store);
+        : allocate(dialogue, store, vct);
     }
     return {
       x: x + [0, width / 2, width][align.h],
       y: y + [height, height / 2, 0][align.v],
     };
-  }
-
-  function createStyle(dialogue) {
-    const { layer, align, effect, pos, margin, q } = dialogue;
-    let cssText = '';
-    if (layer) cssText += `z-index:${layer};`;
-    cssText += `text-align:${['left', 'center', 'right'][align.h]};`;
-    if (!effect) {
-      if (q !== 2) {
-        cssText += `max-width:calc(100% - var(--ass-scale) * ${margin.left + margin.right}px);`;
-      }
-      if (!pos) {
-        if (align.h !== 0) {
-          cssText += `padding-right:calc(var(--ass-scale) * ${margin.right}px);`;
-        }
-        if (align.h !== 2) {
-          cssText += `padding-left:calc(var(--ass-scale) * ${margin.left}px);`;
-        }
-      }
-    }
-    return cssText;
   }
 
   function setEffect(dialogue, store) {
@@ -1692,17 +1695,13 @@ var ASS = (function () {
     return $area;
   }
 
-  function renderer(dialogue, store) {
+  function renderer(dialogue, store, vct) {
     const { $div, animations } = createDialogue(dialogue, store);
     Object.assign(dialogue, { $div, animations });
     store.box.append($div);
-    const { width } = $div.getBoundingClientRect();
-    Object.assign(dialogue, { width });
-    $div.style.cssText += createStyle(dialogue);
-    // height may be changed after createStyle
-    const { height } = $div.getBoundingClientRect();
-    Object.assign(dialogue, { height });
-    const { x, y } = getPosition(dialogue, store);
+    const { width, height } = $div.getBoundingClientRect();
+    Object.assign(dialogue, { width, height });
+    const { x, y } = getPosition(dialogue, store, vct);
     Object.assign(dialogue, { x, y });
     $div.style.cssText += `left:${x}px;top:${y}px;`;
     setTransformOrigin(dialogue, store.scale);
@@ -1725,9 +1724,8 @@ var ASS = (function () {
     store.space = [];
   }
 
-  function framing(store, mediaTime) {
+  function framing(store, vct) {
     const { dialogues, actives } = store;
-    const vct = fixFloat(mediaTime - store.delay);
     for (let i = actives.length - 1; i >= 0; i -= 1) {
       const dia = actives[i];
       const { end } = dia;
@@ -1741,7 +1739,7 @@ var ASS = (function () {
       && vct >= dialogues[store.index].start
     ) {
       if (vct < dialogues[store.index].end) {
-        const dia = renderer(dialogues[store.index], store);
+        const dia = renderer(dialogues[store.index], store, vct);
         (dia.animations || []).forEach((animation) => {
           animation.currentTime = (vct - dia.start) * 1000;
         });
@@ -1767,7 +1765,7 @@ var ASS = (function () {
         }
         return (dialogues.length || 1) - 1;
       })();
-      framing(store, video.currentTime);
+      framing(store, vct);
     };
   }
 
@@ -1784,7 +1782,11 @@ var ASS = (function () {
     const [requestFrame, cancelFrame] = createFrame(video);
     return function play() {
       const frame = (now, metadata) => {
-        framing(store, metadata?.mediaTime || video.currentTime);
+        const mediaTime = getHigherPrecision(
+          metadata?.mediaTime || video.currentTime,
+          video.currentTime,
+        );
+        framing(store, fixFloat(mediaTime - store.delay));
         store.requestId = requestFrame(frame);
       };
       cancelFrame(store.requestId);

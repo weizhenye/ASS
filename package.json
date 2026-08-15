@@ -1,6 +1,6 @@
 {
   "name": "assjs",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "type": "module",
   "description": "A lightweight JavaScript ASS subtitle renderer",
   "main": "dist/ass.js",
