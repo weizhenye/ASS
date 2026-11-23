@@ -57,7 +57,8 @@ export function createDialogue(dialogue, store) {
       cssVars.push(...createStrokeVars(tag));
       let stroke = null;
       const hasStroke = tag.xbord || tag.ybord || tag.xshad || tag.yshad;
-      if (hasStroke && (drawing || tag.a1 !== '00' || tag.xbord !== tag.ybord)) {
+      const isBS3Text = !drawing && +borderStyle === 3;
+      if (hasStroke && !isBS3Text && (drawing || tag.a1 !== '00' || tag.xbord !== tag.ybord)) {
         const filter = createStrokeFilter(tag, store.sbas ? store.scale : 1);
         const svg = createSVGEl('svg', [['width', 0], ['height', 0]]);
         svg.append(filter.el);
